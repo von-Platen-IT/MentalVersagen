@@ -79,6 +79,16 @@ SELECT u."Id", r."Id" FROM "AspNetUsers" u, "AspNetRoles" r
 WHERE u."Email" = 'admin@example.com' AND r."Name" = 'Admin';
 ```
 
+Es gibt **keinen vorkonfigurierten Admin-Benutzer** — die Rolle wird immer manuell
+vergeben. Nach einer Rollenänderung muss man sich neu anmelden, damit die
+Rollen-Claims im Auth-Cookie aktualisiert werden. Eine ausführliche Anleitung
+(Admin/„Root" werden, Admin-Status in der DB prüfen, Rollen entziehen) sowie die
+Nutzung von Admin-Bereich und Blog liegen unter [`docs/`](docs/README.md):
+
+- [`docs/01-rollen-und-admin.md`](docs/01-rollen-und-admin.md)
+- [`docs/02-admin-artikelverwaltung.md`](docs/02-admin-artikelverwaltung.md)
+- [`docs/03-blog-nutzen.md`](docs/03-blog-nutzen.md)
+
 ## Sicherheit (Modul-übergreifend)
 
 - **Markdown/XSS**: Rendering erfolgt serverseitig über Markdig und wird zwingend

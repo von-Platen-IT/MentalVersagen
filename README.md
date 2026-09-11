@@ -13,6 +13,7 @@ Dieses Verzeichnis enthält das Pflichtenheft für das selbst programmierte CMS 
 | `03-Medien-Upload-und-Embedding.md` | Bild-Uploads, Video-Verknüpfung (oEmbed) |
 | `04-Monetarisierung.md` | Membership/Paywall, Stripe, Spenden, Newsletter |
 | `05-Benutzerverwaltung-Auth.md` | Rollen, Auth, Rechte |
+| `docs/` | Praxisnahe Anleitungen (Rollen/Admin, Admin-Bereich, Blog-Nutzung) — siehe [`docs/README.md`](docs/README.md) |
 
 ## Arbeitsweise für Coding Agents
 
