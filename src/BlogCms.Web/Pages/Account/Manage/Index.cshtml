@@ -1,0 +1,38 @@
+@page
+@model BlogCms.Web.Pages.Account.Manage.IndexModel
+@{
+    ViewData["Title"] = "Mein Konto";
+}
+
+<h1>Mein Konto</h1>
+
+@if (Model.CurrentUser is not null)
+{
+    <dl class="row">
+        <dt class="col-sm-3">Anzeigename</dt>
+        <dd class="col-sm-9">@Model.CurrentUser.DisplayName</dd>
+
+        <dt class="col-sm-3">E-Mail</dt>
+        <dd class="col-sm-9">@Model.CurrentUser.Email</dd>
+
+        <dt class="col-sm-3">Rolle</dt>
+        <dd class="col-sm-9">@Model.CurrentUser.Role</dd>
+
+        <dt class="col-sm-3">Abo-Status</dt>
+        <dd class="col-sm-9">@Model.CurrentUser.SubscriptionStatus</dd>
+    </dl>
+}
+
+<hr />
+
+<h2 class="h4">Konto löschen</h2>
+<p>
+    Dein Konto wird deaktiviert und deine personenbezogenen Daten (E-Mail, Anzeigename)
+    werden anonymisiert. Deine Beiträge bleiben erhalten, erscheinen aber als
+    "Gelöschter Nutzer".
+</p>
+
+<form method="post" asp-page-handler="DeleteAccount"
+      onsubmit="return confirm('Konto wirklich löschen? Dies kann nicht rückgängig gemacht werden.');">
+    <button type="submit" class="btn btn-danger">Konto löschen</button>
+</form>

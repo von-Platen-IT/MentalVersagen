@@ -1,0 +1,33 @@
+@page
+@model BlogCms.Web.Pages.Membership.CheckoutModel
+@{
+    ViewData["Title"] = "Mitgliedschaft abschließen";
+}
+
+<h1>Mitgliedschaft abschließen</h1>
+
+@if (Model.IsSimulated)
+{
+    <div class="alert alert-info">
+        Entwicklungsmodus: Es ist kein Stripe-Schlüssel konfiguriert, daher wird ein
+        simulierter Checkout verwendet. Der Abo-Status wird direkt gesetzt; der echte
+        Webhook-Pfad ist über Tests abgedeckt.
+    </div>
+}
+
+<form method="post" class="row g-3">
+    <div class="col-md-6">
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="plan" value="monthly" id="planMonthly" checked />
+            <label class="form-check-label" for="planMonthly">Monatlich</label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="plan" value="yearly" id="planYearly" />
+            <label class="form-check-label" for="planYearly">Jährlich</label>
+        </div>
+    </div>
+    <div class="col-12">
+        <button type="submit" class="btn btn-primary">Weiter zur Zahlung</button>
+        <a class="btn btn-outline-secondary" asp-page="/Membership/Index">Abbrechen</a>
+    </div>
+</form>

@@ -1,0 +1,16 @@
+@page
+@model BlogCms.Web.Pages.Newsletter.UnsubscribeModel
+@{
+    ViewData["Title"] = "Newsletter abmelden";
+}
+
+<h1>Newsletter abmelden</h1>
+
+@if (Model.Succeeded)
+{
+    <p>Du wurdest erfolgreich vom Newsletter abgemeldet.</p>
+}
+else
+{
+    <p class="text-danger">Der Abmeldelink ist ungültig oder abgelaufen.</p>
+}

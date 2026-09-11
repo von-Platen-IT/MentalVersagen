@@ -1,0 +1,23 @@
+@page
+@model BlogCms.Web.Pages.Membership.CheckoutCompleteModel
+@{
+    ViewData["Title"] = "Zahlung abgeschlossen";
+}
+
+<h1>Danke!</h1>
+
+@if (Model.ActivationSimulated)
+{
+    <p class="text-success">Deine Mitgliedschaft wurde (simuliert) aktiviert. Premium-Artikel sind jetzt freigeschaltet.</p>
+}
+else
+{
+    <p>
+        Deine Zahlung wird verarbeitet. Sobald Stripe den Webhook bestätigt hat, wird
+        dein Premium-Zugriff automatisch freigeschaltet.
+    </p>
+}
+
+<p>
+    <a asp-page="/Articles/Index">Zu den Artikeln</a>
+</p>

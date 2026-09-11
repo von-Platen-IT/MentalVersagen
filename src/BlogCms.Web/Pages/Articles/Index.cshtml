@@ -1,0 +1,90 @@
+@page
+@using BlogCms.Domain.Enums
+@using BlogCms.Web.Content
+@model BlogCms.Web.Pages.Articles.IndexModel
+@{
+    ViewData["Title"] = "Artikel";
+}
+
+<h1>Artikel</h1>
+
+<form method="get" class="row g-2 align-items-end mb-4">
+    <div class="col-auto">
+        <label class="form-label" for="category">Kategorie</label>
+        <select class="form-select" id="category" name="category">
+            <option value="">Alle</option>
+            @foreach (var value in Enum.GetValues<ArticleCategory>())
+            {
+                <option value="@value" selected="@(Model.Category == value)">@CategoryDisplay.Label(value)</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <label class="form-label" for="tag">Tag</label>
+        <select class="form-select" id="tag" name="tag">
+            <option value="">Alle</option>
+            @foreach (var t in Model.AllTags)
+            {
+                <option value="@t.Slug" selected="@(Model.TagSlug == t.Slug)">@t.Name</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Filtern</button>
+        <a class="btn btn-outline-secondary" asp-page="/Articles/Index">Zurücksetzen</a>
+    </div>
+</form>
+
+@if (Model.Articles.Count == 0)
+{
+    <p class="text-muted">Keine Artikel gefunden.</p>
+}
+
+@foreach (var article in Model.Articles)
+{
+    <article class="mb-4 pb-3 border-bottom">
+        <h2 class="h4">
+            <a asp-page="/Articles/Details" asp-route-slug="@article.Slug">@article.Title</a>
+        </h2>
+        <p class="text-muted small mb-2">
+            <span class="badge @CategoryDisplay.BadgeClass(article.Category)">@CategoryDisplay.Label(article.Category)</span>
+            @if (article.IsPremium)
+            {
+                <span class="badge bg-dark">Premium</span>
+            }
+            · @(article.Author?.DisplayName ?? "Unbekannt")
+            · @article.PublishedAt?.ToString("yyyy-MM-dd")
+        </p>
+        @if (!string.IsNullOrWhiteSpace(article.Excerpt))
+        {
+            <p>@article.Excerpt</p>
+        }
+        @if (article.ArticleTags.Count > 0)
+        {
+            <p class="mb-0">
+                @foreach (var at in article.ArticleTags)
+                {
+                    <a class="badge bg-light text-dark text-decoration-none"
+                       asp-page="/Articles/Index" asp-route-tag="@at.Tag?.Slug">#@at.Tag?.Name</a>
+                }
+            </p>
+        }
+    </article>
+}
+
+@if (Model.TotalPages > 1)
+{
+    <nav aria-label="Seitennavigation">
+        <ul class="pagination">
+            @for (var i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                    <a class="page-link" asp-page="/Articles/Index"
+                       asp-route-pageNumber="@i"
+                       asp-route-category="@Model.Category"
+                       asp-route-tag="@Model.TagSlug">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

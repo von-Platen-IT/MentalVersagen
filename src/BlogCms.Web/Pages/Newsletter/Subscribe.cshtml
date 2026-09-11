@@ -1,0 +1,26 @@
+@page
+@model BlogCms.Web.Pages.Newsletter.SubscribeModel
+@{
+    ViewData["Title"] = "Newsletter abonnieren";
+}
+
+<h1>Newsletter abonnieren</h1>
+<p>Erhalte neue Artikel bequem per E-Mail. Die Anmeldung erfolgt per Double-Opt-in.</p>
+
+@if (Model.Message is not null)
+{
+    <div class="alert alert-info">@Model.Message</div>
+}
+
+<form method="post" style="max-width:420px;">
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" autocomplete="email" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Abonnieren</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

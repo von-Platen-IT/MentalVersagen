@@ -1,0 +1,17 @@
+@page
+@model BlogCms.Web.Pages.Membership.IndexModel
+@{
+    ViewData["Title"] = "Mitglied werden";
+}
+
+<h1>Mitglied werden</h1>
+<p>
+    Mit einer Mitgliedschaft unterstützt du unabhängigen Journalismus und erhältst
+    Zugriff auf alle Premium-Artikel.
+</p>
+
+@* Subscription checkout is wired up in module 04 (Monetarisierung). *@
+<p>
+    <a class="btn btn-primary" asp-page="/Membership/Checkout">Mitgliedschaft abschließen</a>
+    <a class="btn btn-outline-secondary" asp-page="/Donate/Index">Einmalig spenden</a>
+</p>

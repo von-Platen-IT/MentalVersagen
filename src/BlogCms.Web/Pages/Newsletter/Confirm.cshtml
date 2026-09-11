@@ -1,0 +1,16 @@
+@page
+@model BlogCms.Web.Pages.Newsletter.ConfirmModel
+@{
+    ViewData["Title"] = "Newsletter bestätigen";
+}
+
+<h1>Newsletter bestätigen</h1>
+
+@if (Model.Succeeded)
+{
+    <p class="text-success">Deine Anmeldung wurde bestätigt. Danke!</p>
+}
+else
+{
+    <p class="text-danger">Der Bestätigungslink ist ungültig oder abgelaufen.</p>
+}

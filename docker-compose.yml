@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: blogcms-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-blogcms}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-blogcms_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-blogcms}
+    # Host port 5433 avoids clashes with an existing local PostgreSQL on 5432.
+    # Override with POSTGRES_PORT if needed.
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - blogcms-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-blogcms} -d ${POSTGRES_DB:-blogcms}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  blogcms-postgres-data:

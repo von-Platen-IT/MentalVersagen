@@ -1,0 +1,38 @@
+@page
+@model BlogCms.Web.Pages.Donate.IndexModel
+@{
+    ViewData["Title"] = "Spenden";
+}
+
+<h1>Einmalig spenden</h1>
+<p>Unterstütze unabhängigen Journalismus mit einer einmaligen Spende — ganz ohne Abo.</p>
+
+@if (Model.Message is not null)
+{
+    <div class="alert alert-success">@Model.Message</div>
+}
+
+<form method="post" class="row g-3" style="max-width:480px;">
+    <div class="col-6">
+        <label class="form-label" for="Amount">Betrag</label>
+        <input class="form-control" id="Amount" name="Amount" type="number" min="1" step="1" value="@Model.Amount" />
+    </div>
+    <div class="col-6">
+        <label class="form-label" for="Currency">Währung</label>
+        <select class="form-select" id="Currency" name="Currency">
+            <option value="EUR" selected="@(Model.Currency == "EUR")">EUR</option>
+            <option value="USD" selected="@(Model.Currency == "USD")">USD</option>
+        </select>
+    </div>
+    <div class="col-12">
+        <label class="form-label" for="Email">E-Mail (optional)</label>
+        <input class="form-control" id="Email" name="Email" type="email" value="@Model.Email" />
+    </div>
+    <div class="col-12">
+        <button type="submit" class="btn btn-primary">Spenden</button>
+    </div>
+</form>
+
+<p class="text-muted mt-3">
+    Spenden sind auch ohne Anmeldung möglich. Anonyme Spenden werden ohne Nutzerkonto gespeichert.
+</p>

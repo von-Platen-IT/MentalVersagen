@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="../tests/BlogCms.Tests/BlogCms.Tests.csproj" />
+  <Project Path="BlogCms.Domain/BlogCms.Domain.csproj" />
+  <Project Path="BlogCms.Infrastructure/BlogCms.Infrastructure.csproj" />
+  <Project Path="BlogCms.Web/BlogCms.Web.csproj" />
+</Solution>

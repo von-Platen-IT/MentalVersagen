@@ -1,0 +1,289 @@
+@page
+@using BlogCms.Web.Content
+@model BlogCms.Web.Pages.Articles.DetailsModel
+@{
+    ViewData["Title"] = Model.Article?.Title ?? "Artikel";
+}
+
+@if (Model.Article is null)
+{
+    <h1>Artikel nicht gefunden</h1>
+    return;
+}
+
+@{
+    var article = Model.Article;
+    var disclaimer = CategoryDisplay.Disclaimer(article.Category);
+}
+
+<article>
+    <header class="mb-4">
+        <h1>@article.Title</h1>
+        <p class="text-muted">
+            <span class="badge @CategoryDisplay.BadgeClass(article.Category)">@CategoryDisplay.Label(article.Category)</span>
+            @if (article.IsPremium)
+            {
+                <span class="badge bg-dark">Premium</span>
+            }
+            · @(article.Author?.DisplayName ?? "Gelöschter Nutzer")
+            · @article.PublishedAt?.ToString("yyyy-MM-dd")
+        </p>
+    </header>
+
+    @if (disclaimer is not null)
+    {
+        <div class="alert alert-warning" role="alert">
+            <strong>Hinweis:</strong> @disclaimer
+        </div>
+    }
+
+    @if (Model.CanReadContent)
+    {
+        <div class="article-content">
+            @Html.Raw(Model.ContentHtml)
+        </div>
+    }
+    else
+    {
+        @if (!string.IsNullOrWhiteSpace(article.Excerpt))
+        {
+            <p class="lead">@article.Excerpt</p>
+        }
+        <div class="alert alert-secondary">
+            <p class="mb-2">Dieser Artikel ist nur für Mitglieder zugänglich.</p>
+            <a class="btn btn-primary" asp-page="/Membership/Index">Mitglied werden</a>
+            @if (!User.Identity?.IsAuthenticated ?? true)
+            {
+                <a class="btn btn-outline-secondary" asp-page="/Account/Login">Anmelden</a>
+            }
+        </div>
+    }
+
+    @if (Model.CanReadContent && article.VideoEmbeds.Count > 0)
+    {
+        foreach (var video in article.VideoEmbeds)
+        {
+            @Html.Raw(BlogCms.Web.Content.VideoEmbedRenderer.Render(video))
+        }
+    }
+
+    @if (Model.CanReadContent && Model.Images.Count > 0)
+    {
+        <div class="row g-3 my-2">
+            @foreach (var img in Model.Images)
+            {
+                <div class="col-md-6">
+                    <img src="@Model.GetImageUrl(img)" alt="@(img.AltText ?? article.Title)" class="img-fluid rounded" />
+                </div>
+            }
+        </div>
+    }
+
+    @if (article.ArticleTags.Count > 0)
+    {
+        <p class="mt-4">
+            @foreach (var at in article.ArticleTags)
+            {
+                <a class="badge bg-light text-dark text-decoration-none"
+                   asp-page="/Articles/Index" asp-route-tag="@at.Tag?.Slug">#@at.Tag?.Name</a>
+            }
+        </p>
+    }
+</article>
+
+@{
+    Guid RootOf(BlogCms.Domain.Entities.Comment c)
+    {
+        var current = c;
+        var guard = 0;
+        while (current.ParentCommentId is not null && guard++ < 10)
+        {
+            var parent = Model.Comments.FirstOrDefault(x => x.Id == current.ParentCommentId);
+            if (parent is null) break;
+            current = parent;
+        }
+        return current.Id;
+    }
+
+    var roots = Model.Comments.Where(c => c.ParentCommentId is null).ToList();
+    var repliesOf = (Guid rootId) => Model.Comments
+        .Where(c => c.ParentCommentId is not null && RootOf(c) == rootId)
+        .OrderBy(c => c.CreatedAt)
+        .ToList();
+    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+}
+
+<section id="comments" class="mt-5">
+    <h2 class="h4">Kommentare (@Model.Comments.Count(c => c.DeletedAt is null))</h2>
+
+    @if (TempData["CommentMessage"] is string okMessage)
+    {
+        <div class="alert alert-success">@okMessage</div>
+    }
+    @if (TempData["CommentError"] is string errorMessage)
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    @if (!User.Identity?.IsAuthenticated ?? true)
+    {
+        <p>
+            <a asp-page="/Account/Login" asp-route-returnUrl="@Url.Page("/Articles/Details", new { slug = article.Slug })">Anmelden</a>,
+            um zu kommentieren.
+        </p>
+    }
+    else
+    {
+        <form method="post" asp-page-handler="AddComment" asp-route-slug="@article.Slug" enctype="multipart/form-data" class="mb-4">
+            <div class="mb-2">
+                <textarea name="content" class="form-control" rows="3" maxlength="5000" placeholder="Dein Kommentar ..." required></textarea>
+            </div>
+            <div class="mb-2">
+                <input type="file" name="image" accept="image/*" class="form-control form-control-sm" />
+                <div class="form-text">Optional: Bild anhängen (max. 5 MB, JPEG/PNG/WebP/GIF).</div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Kommentar absenden</button>
+        </form>
+    }
+
+    @foreach (var root in roots)
+    {
+        var rootDeleted = root.DeletedAt is not null;
+        <div class="border rounded p-3 mb-3" id="comment-@root.Id">
+            <div class="d-flex justify-content-between">
+                <strong>@(root.User?.DisplayName ?? "Gelöschter Nutzer")</strong>
+                <small class="text-muted">
+                    @root.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+                    @if (root.EditedAt is not null)
+                    {
+                        <text> · bearbeitet</text>
+                    }
+                </small>
+            </div>
+
+            @if (rootDeleted)
+            {
+                <p class="text-muted fst-italic mb-1">Kommentar gelöscht</p>
+            }
+            else
+            {
+                <p class="mb-1" style="white-space: pre-wrap;">@root.ContentText</p>
+                @foreach (var img in root.MediaAssets)
+                {
+                    <img src="@Model.GetImageUrl(img)" alt="@(img.AltText ?? "Kommentarbild")" class="img-fluid rounded mb-2" style="max-height:320px;" />
+                }
+            }
+
+            @if (!rootDeleted && User.Identity?.IsAuthenticated == true)
+            {
+                var isOwner = root.UserId.ToString() == currentUserId;
+                <div class="small">
+                    <details>
+                        <summary class="text-primary" style="cursor:pointer;">Antworten</summary>
+                        <form method="post" asp-page-handler="AddComment" asp-route-slug="@article.Slug" class="mt-2">
+                            <input type="hidden" name="parentId" value="@root.Id" />
+                            <textarea name="content" class="form-control form-control-sm" rows="2" required></textarea>
+                            <button type="submit" class="btn btn-outline-primary btn-sm mt-1">Antwort senden</button>
+                        </form>
+                    </details>
+
+                    @if (isOwner || Model.IsModerator)
+                    {
+                        <form method="post" asp-page-handler="DeleteComment" asp-route-slug="@article.Slug" class="d-inline"
+                              onsubmit="return confirm('Kommentar löschen?');">
+                            <input type="hidden" name="commentId" value="@root.Id" />
+                            <button type="submit" class="btn btn-link btn-sm text-danger p-0">Löschen</button>
+                        </form>
+                    }
+
+                    @if (isOwner)
+                    {
+                        <details class="mt-1">
+                            <summary class="text-secondary" style="cursor:pointer;">Bearbeiten</summary>
+                            <form method="post" asp-page-handler="EditComment" asp-route-slug="@article.Slug" class="mt-2">
+                                <input type="hidden" name="commentId" value="@root.Id" />
+                                <textarea name="content" class="form-control form-control-sm" rows="2" required>@root.ContentText</textarea>
+                                <button type="submit" class="btn btn-outline-secondary btn-sm mt-1">Speichern</button>
+                            </form>
+                        </details>
+                    }
+
+                    @if (!isOwner)
+                    {
+                        <details class="mt-1">
+                            <summary class="text-secondary" style="cursor:pointer;">Melden</summary>
+                            <form method="post" asp-page-handler="ReportComment" asp-route-slug="@article.Slug" class="mt-2">
+                                <input type="hidden" name="commentId" value="@root.Id" />
+                                <select name="reason" class="form-select form-select-sm mb-1" asp-items="Html.GetEnumSelectList<BlogCms.Domain.Enums.ReportReason>()"></select>
+                                <input name="note" class="form-control form-control-sm mb-1" placeholder="Optionaler Hinweis" />
+                                <button type="submit" class="btn btn-outline-danger btn-sm">Meldung senden</button>
+                            </form>
+                        </details>
+                    }
+                </div>
+            }
+
+            @foreach (var reply in repliesOf(root.Id))
+            {
+                var replyDeleted = reply.DeletedAt is not null;
+                <div class="border-start ps-3 mt-3 ms-3" id="comment-@reply.Id">
+                    <div class="d-flex justify-content-between">
+                        <strong>@(reply.User?.DisplayName ?? "Gelöschter Nutzer")</strong>
+                        <small class="text-muted">
+                            @reply.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+                            @if (reply.EditedAt is not null)
+                            {
+                                <text> · bearbeitet</text>
+                            }
+                        </small>
+                    </div>
+
+                    @if (replyDeleted)
+                    {
+                        <p class="text-muted fst-italic mb-1">Kommentar gelöscht</p>
+                    }
+                    else
+                    {
+                        <p class="mb-1" style="white-space: pre-wrap;">@reply.ContentText</p>
+                        @foreach (var img in reply.MediaAssets)
+                        {
+                            <img src="@Model.GetImageUrl(img)" alt="@(img.AltText ?? "Kommentarbild")" class="img-fluid rounded mb-2" style="max-height:320px;" />
+                        }
+                    }
+
+                    @if (!replyDeleted && User.Identity?.IsAuthenticated == true)
+                    {
+                        var replyIsOwner = reply.UserId.ToString() == currentUserId;
+                        <div class="small">
+                            @if (replyIsOwner || Model.IsModerator)
+                            {
+                                <form method="post" asp-page-handler="DeleteComment" asp-route-slug="@article.Slug" class="d-inline"
+                                      onsubmit="return confirm('Kommentar löschen?');">
+                                    <input type="hidden" name="commentId" value="@reply.Id" />
+                                    <button type="submit" class="btn btn-link btn-sm text-danger p-0">Löschen</button>
+                                </form>
+                            }
+                            @if (!replyIsOwner)
+                            {
+                                <details class="mt-1">
+                                    <summary class="text-secondary" style="cursor:pointer;">Melden</summary>
+                                    <form method="post" asp-page-handler="ReportComment" asp-route-slug="@article.Slug" class="mt-2">
+                                        <input type="hidden" name="commentId" value="@reply.Id" />
+                                        <select name="reason" class="form-select form-select-sm mb-1" asp-items="Html.GetEnumSelectList<BlogCms.Domain.Enums.ReportReason>()"></select>
+                                        <input name="note" class="form-control form-control-sm mb-1" placeholder="Optionaler Hinweis" />
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">Meldung senden</button>
+                                    </form>
+                                </details>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+
+    @if (roots.Count == 0)
+    {
+        <p class="text-muted">Noch keine Kommentare.</p>
+    }
+</section>

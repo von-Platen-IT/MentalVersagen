@@ -1,0 +1,16 @@
+@page
+@model BlogCms.Web.Pages.Account.RegisterConfirmationModel
+@{
+    ViewData["Title"] = "Registrierung bestätigen";
+}
+
+<h1>Fast geschafft</h1>
+
+<p>
+    Wir haben eine E-Mail an <strong>@(Model.Email ?? "deine Adresse")</strong> gesendet.
+    Bitte klicke auf den darin enthaltenen Link, um deine E-Mail-Adresse zu bestätigen.
+</p>
+<p class="text-muted">
+    In der lokalen Entwicklung schreibt der Dev-Versand die Nachricht als HTML-Datei
+    unter <code>App_Data/emails</code> im Build-Ausgabeverzeichnis.
+</p>

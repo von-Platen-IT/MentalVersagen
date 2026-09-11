@@ -1,0 +1,17 @@
+## .NET build output
+bin/
+obj/
+
+## User-specific / secrets
+*.user
+appsettings.*.local.json
+
+## Rider / VS
+.idea/
+.vs/
+
+## OS
+.DS_Store
+
+## Local media storage (dev fake)
+src/BlogCms.Web/wwwroot/uploads/
