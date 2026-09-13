@@ -34,6 +34,14 @@ public interface ICommentService
     Task<CommentResult> ModerateAsync(
         Guid commentId, bool approve, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Highlights/unhighlights a comment (FeatureFix1 BR-063). Allowed for admins and
+    /// for the author of the comment's article; enforced server-side.
+    /// </summary>
+    Task<CommentResult> SetHighlightAsync(
+        Guid commentId, bool highlighted, Guid actorUserId, bool isAdmin,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<ReportGroup>> GetOpenReportsAsync(CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Comment>> GetPendingAndFlaggedAsync(CancellationToken cancellationToken = default);
@@ -275,6 +283,30 @@ public sealed class CommentService : ICommentService
             comment.DeletedAt = DateTime.UtcNow;
         }
 
+        await _db.SaveChangesAsync(cancellationToken);
+        return CommentResult.Ok(comment);
+    }
+
+    public async Task<CommentResult> SetHighlightAsync(
+        Guid commentId, bool highlighted, Guid actorUserId, bool isAdmin,
+        CancellationToken cancellationToken = default)
+    {
+        var comment = await _db.Comments
+            .Include(c => c.Article)
+            .FirstOrDefaultAsync(c => c.Id == commentId, cancellationToken);
+
+        if (comment is null)
+        {
+            return CommentResult.Fail("Kommentar nicht gefunden.");
+        }
+
+        var isArticleAuthor = comment.Article?.AuthorId == actorUserId;
+        if (!isAdmin && !isArticleAuthor)
+        {
+            return CommentResult.Fail("Nur Admins oder der Autor des Beitrags dürfen Kommentare auszeichnen.");
+        }
+
+        comment.IsHighlighted = highlighted;
         await _db.SaveChangesAsync(cancellationToken);
         return CommentResult.Ok(comment);
     }

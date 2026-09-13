@@ -4,6 +4,15 @@ Referenzierte Entitäten aus `DataSchema.md`: `Subscription`, `Donation`, `Newsl
 
 ## Teil A — Membership / Paywall
 
+Fachliche Referenz: [`FeatureFix1.MD`](FeatureFix1.MD) (Regeln BR-110 bis BR-114).
+
+### Zugriffsstufen (BR-110/113)
+- Beiträge tragen eine `AccessLevel`-Stufe:
+  - `Public` — für alle lesbar,
+  - `Registered` — nur für angemeldete Benutzer,
+  - `Premium` — nur mit aktiver Berechtigung (`SubscriptionStatus = Active`) oder als `Admin`.
+- Ein Benutzerkonto allein berechtigt **nicht** automatisch zum Premium-Zugriff.
+
 ### Funktionale Anforderungen
 - Nutzer können ein kostenpflichtiges Abo abschließen (monatlich/jährlich, Plan-Definition liegt in Stripe, nicht in der eigenen DB dupliziert — `Subscription.PlanId` referenziert nur die Stripe-Plan-ID).
 - Checkout erfolgt über **Stripe Checkout** (gehostete Zahlungsseite) — reduziert PCI-Compliance-Aufwand, da keine Kartendaten die eigene Infrastruktur berühren.
@@ -35,6 +44,8 @@ Referenzierte Entitäten aus `DataSchema.md`: `Subscription`, `Donation`, `Newsl
 
 - [ ] Ein Stripe-Webhook mit ungültiger Signatur wird abgelehnt und nicht verarbeitet.
 - [ ] Nach Kündigung im Stripe Customer Portal verliert der Nutzer spätestens nach Verarbeitung des `customer.subscription.deleted`-Events den Premium-Zugriff.
+- [ ] Ein `Registered`-Beitrag ist nur für angemeldete Benutzer lesbar; für Anonyme erscheint der Teaser mit Login-CTA.
+- [ ] Ein `Premium`-Beitrag ist nur mit aktiver Berechtigung lesbar; für Nicht-Berechtigte erscheint der Teaser mit CTA zur Mitgliedschaft.
 - [ ] Eine Spende ohne Login ist möglich und wird korrekt als `Donation` mit `UserId = null` gespeichert.
 - [ ] Newsletter-Eintrag ohne Bestätigung erhält keine weiteren Mails und wird nach Ablauf der Frist entfernt.
 - [ ] Abmeldelink funktioniert ohne Login (über eindeutigen Token, nicht nur E-Mail-Adresse).

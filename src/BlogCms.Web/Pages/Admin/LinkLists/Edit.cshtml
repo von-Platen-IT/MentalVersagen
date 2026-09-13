@@ -1,0 +1,99 @@
+@page
+@model BlogCms.Web.Pages.Admin.LinkLists.EditModel
+@{
+    ViewData["Title"] = "Linkliste bearbeiten";
+    var header = new BlogCms.Web.Models.PageHeaderModel
+    {
+        Slide = 3,
+        Title = "Linkliste bearbeiten",
+        Sub = Model.LinkList?.Title
+    };
+}
+
+<partial name="_PageHeader" model="header" />
+
+<div class="mv-doc mt-4">
+    @if (TempData["Message"] is string message)
+    {
+        <div class="mv-teaser mb-3">@message</div>
+    }
+    @if (TempData["Error"] is string error)
+    {
+        <div class="mv-teaser mb-3">@error</div>
+    }
+
+    <form method="post" asp-page-handler="Save" asp-route-id="@Model.LinkListId" class="mb-4">
+        <div class="row g-2">
+            <div class="col-md-4">
+                <label class="form-label" for="Title">Titel</label>
+                <input class="form-control" id="Title" name="Title" value="@Model.Title" required />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="Slug">Slug</label>
+                <input class="form-control" id="Slug" name="Slug" value="@Model.Slug" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="Description">Beschreibung</label>
+                <input class="form-control" id="Description" name="Description" value="@Model.Description" />
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary mt-2">Speichern</button>
+        <a class="btn btn-outline-secondary mt-2" asp-page="Index">Zurück</a>
+        @if (Model.LinkList is not null)
+        {
+            <a class="btn btn-outline-secondary mt-2" asp-page="/LinkLists/Details" asp-route-slug="@Model.LinkList.Slug" target="_blank">Öffentlich ansehen</a>
+            <div class="form-text">Einbettung: <code><iframe src="/embed/linklist/@Model.LinkList.Slug"></iframe></code></div>
+        }
+    </form>
+
+    <div class="row">
+        <div class="col-md-7">
+            <h2 class="h5">Akten in dieser Linkliste (Reihenfolge)</h2>
+            @if (Model.LinkList is not null && Model.LinkList.Items.Count > 0)
+            {
+                <ol class="list-group">
+                    @foreach (var item in Model.LinkList.Items.OrderBy(i => i.Position))
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>@item.Article?.Title</span>
+                            <span>
+                                <form method="post" asp-page-handler="Move" asp-route-id="@Model.LinkListId" asp-route-articleId="@item.ArticleId" asp-route-direction="up" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary" title="Nach oben">↑</button>
+                                </form>
+                                <form method="post" asp-page-handler="Move" asp-route-id="@Model.LinkListId" asp-route-articleId="@item.ArticleId" asp-route-direction="down" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary" title="Nach unten">↓</button>
+                                </form>
+                                <form method="post" asp-page-handler="RemoveItem" asp-route-id="@Model.LinkListId" asp-route-articleId="@item.ArticleId" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Entfernen</button>
+                                </form>
+                            </span>
+                        </li>
+                    }
+                </ol>
+            }
+            else
+            {
+                <p class="text-muted">Noch keine Akten in dieser Liste.</p>
+            }
+        </div>
+
+        <div class="col-md-5">
+            <h2 class="h5">Akte hinzufügen</h2>
+            <form method="post" asp-page-handler="AddItem" asp-route-id="@Model.LinkListId" class="row g-2">
+                <div class="col-8">
+                    <select name="articleId" class="form-select" required>
+                        <option value="">— Akte wählen —</option>
+                        @foreach (var article in Model.AvailableArticles)
+                        {
+                            <option value="@article.Id">@article.Title</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-4">
+                    <button type="submit" class="btn btn-primary w-100">Hinzufügen</button>
+                </div>
+            </form>
+            <p class="form-text mt-2">Es werden die zuletzt veröffentlichten Akten (max. 50) zur Auswahl angezeigt.</p>
+        </div>
+    </div>
+</div>

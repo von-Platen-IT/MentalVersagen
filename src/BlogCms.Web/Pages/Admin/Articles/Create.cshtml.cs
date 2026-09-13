@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace BlogCms.Web.Pages.Admin.Articles;
 
-[Authorize(Policy = Policies.RequireAdmin)]
+[Authorize(Policy = Policies.RequireAuthor)]
 public class CreateModel : PageModel
 {
     private readonly IArticleService _articles;
@@ -40,6 +40,8 @@ public class CreateModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        ValidateInput(hasExistingImage: false);
+
         if (!ModelState.IsValid)
         {
             return Page();
@@ -55,20 +57,42 @@ public class CreateModel : PageModel
         {
             Title = Input.Title,
             Slug = Input.Slug ?? string.Empty,
+            TitleImageUrl = Input.TitleImageUrl,
             ContentMarkdown = Input.ContentMarkdown,
             Excerpt = Input.Excerpt,
             Category = Input.Category,
-            IsPremium = Input.IsPremium,
+            AccessLevel = Input.AccessLevel,
             Status = Input.Status,
+            ScheduledAt = Input.Status == ArticleStatus.Scheduled ? Input.ScheduledAt : null,
             AuthorId = authorId
         };
 
-        var created = await _articles.CreateAsync(article, ArticleInputModel.ParseTags(Input.Tags));
+        var created = await _articles.CreateAsync(
+            article, ArticleInputModel.ParseTags(Input.Tags), ArticleInputModel.ParseHashtags(Input.Hashtags));
 
         await ApplyMediaAsync(created.Id, authorId);
 
         TempData["Message"] = $"Artikel „{article.Title}“ wurde angelegt.";
         return RedirectToPage("Index");
+    }
+
+    /// <summary>Applies FeatureFix1 requirements: teaser always, title image and schedule time.</summary>
+    private void ValidateInput(bool hasExistingImage)
+    {
+        if (!Input.HasTitleImageSource(hasExistingImage))
+        {
+            ModelState.AddModelError(
+                nameof(Input.ImageUpload),
+                "Bitte eine Titelbild-URL angeben oder ein Bild hochladen (FeatureFix1 BR-022).");
+        }
+
+        if (Input.Status == ArticleStatus.Scheduled &&
+            (Input.ScheduledAt is null || Input.ScheduledAt <= DateTime.UtcNow))
+        {
+            ModelState.AddModelError(
+                nameof(Input.ScheduledAt),
+                "Für eine geplante Veröffentlichung ist ein zukünftiger Zeitpunkt erforderlich.");
+        }
     }
 
     private async Task ApplyMediaAsync(Guid articleId, Guid authorId)

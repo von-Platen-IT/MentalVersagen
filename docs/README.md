@@ -27,10 +27,12 @@ Sie ergänzt die bestehenden Dokumente im Projekt-Root:
 |---|---|
 | Blog-Start / Artikelliste | `/` bzw. `/Articles` |
 | Artikel lesen | `/Articles/{slug}` |
+| Linkliste (redaktionell) | `/LinkLists/{slug}` |
 | RSS-Feed | `/feed` |
 | Registrieren / Anmelden | `/Account/Register`, `/Account/Login` |
 | Eigener Account | `/Account/Manage` |
-| **Artikelverwaltung (Admin)** | `/Admin/Articles` |
+| **Artikelverwaltung (Author/Admin)** | `/Admin/Articles` |
+| **Linklisten (Admin)** | `/Admin/LinkLists` |
 | **Moderation (Moderator/Admin)** | `/Moderation` |
 | Mitgliedschaft (Premium) | `/Membership` |
 | Spenden | `/Donate` |

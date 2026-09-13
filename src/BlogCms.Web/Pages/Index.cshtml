@@ -1,10 +1,71 @@
 ﻿@page
+@using BlogCms.Web.Content
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Mentalversagen";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<header class="page-header page-header--landing" style="--ph-img: url('/pics/background_landing_page.png');">
+    <div class="page-header__inner">
+        <img class="hero-logo" src="/pics/Mentalversagen_schriftzug.png" alt="Mentalversagen" />
+        <p class="hero-tagline">Fakten. Behauptungen. Was bleibt uorig?</p>
+        <div class="hero-cta">
+            <a class="btn btn-primary" asp-page="/Articles/Index">Aktuelle Akten</a>
+            <a class="btn btn-outline-secondary" asp-page="/Membership/Index">Mitglied werden</a>
+        </div>
+        <div class="d-flex gap-2 flex-wrap justify-content-center mt-2" aria-label="Kategorien">
+            @foreach (var cat in Enum.GetValues<BlogCms.Domain.Enums.ArticleCategory>())
+            {
+                <a class="mv-pill" asp-page="/Articles/Index" asp-route-category="@cat">@BlogCms.Web.Content.CategoryDisplay.Label(cat)</a>
+            }
+        </div>
+    </div>
+</header>
+
+<div class="mt-4">
+    <p class="meta-mono mb-3">Neueste Akten</p>
+
+    @if (Model.LatestArticles.Count == 0)
+    {
+        <p class="text-muted">Noch keine Akten veroeffentlicht.</p>
+    }
+    else
+    {
+        <div class="mv-cases">
+            @foreach (var article in Model.LatestArticles)
+            {
+                var image = Model.TitleImageUrl(article);
+                <article class="mv-case">
+                    <div class="mv-case__head">
+                        <span>ARCHIV @article.Category.ToString().ToUpperInvariant()</span>
+                        <span class="text-end">#@article.Id.ToString("N").Substring(0, 8).ToUpperInvariant()</span>
+                    </div>
+                    @if (image is not null)
+                    {
+                        <a class="mv-case__img" asp-page="/Articles/Details" asp-route-slug="@article.Slug">
+                            <img src="@image" alt="@article.Title" loading="lazy" decoding="async" />
+                        </a>
+                    }
+                    <div class="mv-case__body">
+                        <h3 class="mv-case__title">
+                            <a asp-page="/Articles/Details" asp-route-slug="@article.Slug">@article.Title</a>
+                        </h3>
+                        @if (!string.IsNullOrWhiteSpace(article.Excerpt))
+                        {
+                            <p class="mv-case__excerpt">@article.Excerpt</p>
+                        }
+                        <div class="mv-case__meta">
+                            <span class="mv-badge mv-badge--open">? OFFEN</span>
+                            <span>@article.AccessLevel</span>
+                            <span>@article.PublishedAt?.ToString("dd.MM.yyyy")</span>
+                        </div>
+                    </div>
+                    <div class="mv-case__footer">
+                        <span>@(article.Author?.DisplayName ?? "Archiv")</span>
+                        <a class="mv-case__next" asp-page="/Articles/Details" asp-route-slug="@article.Slug">WEITER &rarr;</a>
+                    </div>
+                </article>
+            }
+        </div>
+    }
 </div>

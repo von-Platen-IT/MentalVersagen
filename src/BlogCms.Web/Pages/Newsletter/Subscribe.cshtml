@@ -1,25 +1,32 @@
 @page
 @model BlogCms.Web.Pages.Newsletter.SubscribeModel
 @{
-    ViewData["Title"] = "Newsletter abonnieren";
+    ViewData["Title"] = "Archivpost";
+    var header = new BlogCms.Web.Models.PageHeaderModel
+    {
+        Slide = 2,
+        Title = "Archivpost",
+        Sub = "Neue Akten bequem per E-Mail – Double-Opt-in."
+    };
 }
 
-<h1>Newsletter abonnieren</h1>
-<p>Erhalte neue Artikel bequem per E-Mail. Die Anmeldung erfolgt per Double-Opt-in.</p>
+<partial name="_PageHeader" model="header" />
 
-@if (Model.Message is not null)
-{
-    <div class="alert alert-info">@Model.Message</div>
-}
+<div class="mv-doc mt-4">
+    @if (Model.Message is not null)
+    {
+        <div class="mv-teaser mb-3">@Model.Message</div>
+    }
 
-<form method="post" style="max-width:420px;">
-    <div class="mb-3">
-        <label asp-for="Email" class="form-label"></label>
-        <input asp-for="Email" class="form-control" autocomplete="email" />
-        <span asp-validation-for="Email" class="text-danger"></span>
-    </div>
-    <button type="submit" class="btn btn-primary">Abonnieren</button>
-</form>
+    <form method="post" style="max-width:460px;">
+        <div class="mb-3">
+            <label asp-for="Email" class="form-label"></label>
+            <input asp-for="Email" class="form-control" autocomplete="email" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+        <button type="submit" class="btn btn-primary">Abonnieren</button>
+    </form>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

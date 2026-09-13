@@ -4,6 +4,20 @@
 
 Ein selbst programmiertes CMS (ASP.NET) für einen Blog mit den Themenschwerpunkten **Politik, Satire und Verschwörungstheorien**. Ziel ist der Aufbau einer treuen Leserschaft in der Prelaunch-Phase mit späterer Monetarisierung über Membership/Spenden.
 
+## Fachliche Referenz (Block FeatureFix1)
+
+Die übergreifende, technologieunabhängige Regelsammlung für das Blog liegt in
+[`FeatureFix1.MD`](FeatureFix1.MD). Sie ist die fachliche Referenz für Rollen
+(Viewer/Autor/Administrator), Beiträge (inkl. Titelbild, Kurzbeschreibung, Tags/Hashtags,
+geplanter Veröffentlichung), Zugriffsstufen, Bewertungen, Kommentare, Linklisten und RSS.
+
+Der daraus abgeleitete Soll-Ist-Abgleich und der Umsetzungsplan liegen in
+[`feature_implementation1.md`](feature_implementation1.md); das fortgeschriebene Datenmodell
+in [`DataSchema.md`](DataSchema.md).
+
+**Rollen-Mapping:** Viewer ≙ `Reader`, Autor ≙ `Author`, Administrator ≙ `Admin`
+(`Moderator` und `Premium` bleiben als zusätzliche Rollen erhalten).
+
 ## Tech-Stack (angenommen, anpassbar)
 
 - Backend: ASP.NET Core (MVC oder Razor Pages), Entity Framework Core

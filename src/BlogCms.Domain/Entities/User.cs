@@ -32,4 +32,5 @@ public class User : IdentityUser<Guid>
     public ICollection<Donation> Donations { get; set; } = new List<Donation>();
     public ICollection<MediaAsset> MediaAssets { get; set; } = new List<MediaAsset>();
     public ICollection<Report> Reports { get; set; } = new List<Report>();
+    public ICollection<Rating> Ratings { get; set; } = new List<Rating>();
 }

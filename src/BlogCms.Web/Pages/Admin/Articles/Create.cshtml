@@ -1,17 +1,26 @@
 @page
 @model BlogCms.Web.Pages.Admin.Articles.CreateModel
 @{
-    ViewData["Title"] = "Neuer Artikel";
+    ViewData["Title"] = "Neue Akte";
+    var header = new BlogCms.Web.Models.PageHeaderModel
+    {
+        Slide = 1,
+        Title = "Neue Akte",
+        Sub = "Akte anlegen und veröffentlichen.",
+        Meta = "ARCHIV NEU"
+    };
 }
 
-<h1>Neuer Artikel</h1>
+<partial name="_PageHeader" model="header" />
 
-<form method="post" enctype="multipart/form-data">
+<div class="mv-doc mt-4">
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-    <partial name="_ArticleFormFields" model="Model.Input" />
-    <button type="submit" class="btn btn-primary">Anlegen</button>
-    <a class="btn btn-secondary" asp-page="/Admin/Articles/Index">Abbrechen</a>
-</form>
+    <form method="post" enctype="multipart/form-data">
+        <partial name="_ArticleFormFields" model="Model.Input" />
+        <button type="submit" class="btn btn-primary">Anlegen</button>
+        <a class="btn btn-outline-secondary" asp-page="/Admin/Articles/Index">Abbrechen</a>
+    </form>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

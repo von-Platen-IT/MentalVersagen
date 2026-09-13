@@ -1,0 +1,40 @@
+@page "/embed/linklist/{slug}"
+@model BlogCms.Web.Pages.LinkLists.EmbedModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@(Model.LinkList?.Title ?? "Linkliste")</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="p-3">
+    @if (Model.LinkList is null)
+    {
+        <p class="text-muted">Linkliste nicht gefunden.</p>
+    }
+    else
+    {
+        <h2 class="h5 mb-2">@Model.LinkList.Title</h2>
+        @if (!string.IsNullOrWhiteSpace(Model.LinkList.Description))
+        {
+            <p class="meta-mono mb-2">@Model.LinkList.Description</p>
+        }
+        <ul class="list-unstyled mb-0">
+            @foreach (var article in Model.Articles)
+            {
+                <li class="mb-1">
+                    <a href="/Articles/@article.Slug" target="_top">@article.Title</a>
+                </li>
+            }
+        </ul>
+        @if (Model.Articles.Count == 0)
+        {
+            <p class="text-muted small mb-0">Keine veröffentlichten Akten.</p>
+        }
+    }
+</body>
+</html>

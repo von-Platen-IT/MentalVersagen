@@ -22,6 +22,9 @@ public class Comment : EntityBase
 
     public CommentStatus Status { get; set; } = CommentStatus.Approved;
 
+    /// <summary>Highlighted/featured by an admin or by the author of the article (FeatureFix1 BR-063).</summary>
+    public bool IsHighlighted { get; set; }
+
     public DateTime? EditedAt { get; set; }
 
     /// <summary>Soft-delete marker; content is replaced by a placeholder to keep threads intact.</summary>
@@ -32,4 +35,5 @@ public class Comment : EntityBase
     public ICollection<MediaAsset> MediaAssets { get; set; } = new List<MediaAsset>();
     public ICollection<VideoEmbed> VideoEmbeds { get; set; } = new List<VideoEmbed>();
     public ICollection<Report> Reports { get; set; } = new List<Report>();
+    public ICollection<Rating> Ratings { get; set; } = new List<Rating>();
 }

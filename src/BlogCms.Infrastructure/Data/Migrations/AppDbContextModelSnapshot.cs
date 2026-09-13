@@ -28,6 +28,10 @@ namespace BlogCms.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AccessLevel")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<Guid>("AuthorId")
                         .HasColumnType("uuid");
 
@@ -49,10 +53,10 @@ namespace BlogCms.Infrastructure.Data.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
-                    b.Property<bool>("IsPremium")
-                        .HasColumnType("boolean");
-
                     b.Property<DateTime?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ScheduledAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Slug")
@@ -69,6 +73,9 @@ namespace BlogCms.Infrastructure.Data.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
 
+                    b.Property<string>("TitleImageUrl")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -80,6 +87,21 @@ namespace BlogCms.Infrastructure.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("Articles");
+                });
+
+            modelBuilder.Entity("BlogCms.Domain.Entities.ArticleHashtag", b =>
+                {
+                    b.Property<Guid>("ArticleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("HashtagId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("ArticleId", "HashtagId");
+
+                    b.HasIndex("HashtagId");
+
+                    b.ToTable("ArticleHashtags");
                 });
 
             modelBuilder.Entity("BlogCms.Domain.Entities.ArticleTag", b =>
@@ -118,6 +140,9 @@ namespace BlogCms.Infrastructure.Data.Migrations
 
                     b.Property<DateTime?>("EditedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsHighlighted")
+                        .HasColumnType("boolean");
 
                     b.Property<Guid?>("ParentCommentId")
                         .HasColumnType("uuid");
@@ -179,6 +204,94 @@ namespace BlogCms.Infrastructure.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Donations");
+                });
+
+            modelBuilder.Entity("BlogCms.Domain.Entities.Hashtag", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("Hashtags");
+                });
+
+            modelBuilder.Entity("BlogCms.Domain.Entities.LinkList", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("LinkLists");
+                });
+
+            modelBuilder.Entity("BlogCms.Domain.Entities.LinkListItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ArticleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("LinkListId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ArticleId");
+
+                    b.HasIndex("LinkListId", "Position");
+
+                    b.ToTable("LinkListItems");
                 });
 
             modelBuilder.Entity("BlogCms.Domain.Entities.MediaAsset", b =>
@@ -268,6 +381,46 @@ namespace BlogCms.Infrastructure.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("NewsletterSubscribers");
+                });
+
+            modelBuilder.Entity("BlogCms.Domain.Entities.Rating", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ArticleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CommentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ArticleId");
+
+                    b.HasIndex("CommentId");
+
+                    b.HasIndex("UserId", "ArticleId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "CommentId")
+                        .IsUnique();
+
+                    b.ToTable("Ratings");
                 });
 
             modelBuilder.Entity("BlogCms.Domain.Entities.Report", b =>
@@ -653,6 +806,25 @@ namespace BlogCms.Infrastructure.Data.Migrations
                     b.Navigation("Author");
                 });
 
+            modelBuilder.Entity("BlogCms.Domain.Entities.ArticleHashtag", b =>
+                {
+                    b.HasOne("BlogCms.Domain.Entities.Article", "Article")
+                        .WithMany("ArticleHashtags")
+                        .HasForeignKey("ArticleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BlogCms.Domain.Entities.Hashtag", "Hashtag")
+                        .WithMany("ArticleHashtags")
+                        .HasForeignKey("HashtagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Article");
+
+                    b.Navigation("Hashtag");
+                });
+
             modelBuilder.Entity("BlogCms.Domain.Entities.ArticleTag", b =>
                 {
                     b.HasOne("BlogCms.Domain.Entities.Article", "Article")
@@ -708,6 +880,25 @@ namespace BlogCms.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("BlogCms.Domain.Entities.LinkListItem", b =>
+                {
+                    b.HasOne("BlogCms.Domain.Entities.Article", "Article")
+                        .WithMany("LinkListItems")
+                        .HasForeignKey("ArticleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BlogCms.Domain.Entities.LinkList", "LinkList")
+                        .WithMany("Items")
+                        .HasForeignKey("LinkListId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Article");
+
+                    b.Navigation("LinkList");
+                });
+
             modelBuilder.Entity("BlogCms.Domain.Entities.MediaAsset", b =>
                 {
                     b.HasOne("BlogCms.Domain.Entities.Article", "Article")
@@ -739,6 +930,31 @@ namespace BlogCms.Infrastructure.Data.Migrations
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BlogCms.Domain.Entities.Rating", b =>
+                {
+                    b.HasOne("BlogCms.Domain.Entities.Article", "Article")
+                        .WithMany("Ratings")
+                        .HasForeignKey("ArticleId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("BlogCms.Domain.Entities.Comment", "Comment")
+                        .WithMany("Ratings")
+                        .HasForeignKey("CommentId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("BlogCms.Domain.Entities.User", "User")
+                        .WithMany("Ratings")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Article");
+
+                    b.Navigation("Comment");
 
                     b.Navigation("User");
                 });
@@ -843,11 +1059,17 @@ namespace BlogCms.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("BlogCms.Domain.Entities.Article", b =>
                 {
+                    b.Navigation("ArticleHashtags");
+
                     b.Navigation("ArticleTags");
 
                     b.Navigation("Comments");
 
+                    b.Navigation("LinkListItems");
+
                     b.Navigation("MediaAssets");
+
+                    b.Navigation("Ratings");
 
                     b.Navigation("VideoEmbeds");
                 });
@@ -856,11 +1078,23 @@ namespace BlogCms.Infrastructure.Data.Migrations
                 {
                     b.Navigation("MediaAssets");
 
+                    b.Navigation("Ratings");
+
                     b.Navigation("Replies");
 
                     b.Navigation("Reports");
 
                     b.Navigation("VideoEmbeds");
+                });
+
+            modelBuilder.Entity("BlogCms.Domain.Entities.Hashtag", b =>
+                {
+                    b.Navigation("ArticleHashtags");
+                });
+
+            modelBuilder.Entity("BlogCms.Domain.Entities.LinkList", b =>
+                {
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("BlogCms.Domain.Entities.Tag", b =>
@@ -877,6 +1111,8 @@ namespace BlogCms.Infrastructure.Data.Migrations
                     b.Navigation("Donations");
 
                     b.Navigation("MediaAssets");
+
+                    b.Navigation("Ratings");
 
                     b.Navigation("Reports");
 

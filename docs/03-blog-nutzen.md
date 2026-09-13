@@ -8,10 +8,13 @@ Für das Schreiben/Verwalten von Artikeln siehe
 
 - Artikel werden in **Markdown** verfasst und beim Ausliefern serverseitig
   gerendert und bereinigt (Markdig + HtmlSanitizer).
-- Jeder Artikel hat eine **Kategorie** (Politik, Satire,
-  Verschwörungstheorien), optionale **Tags** und einen **Slug** für die URL.
-- Nur `Published`-Artikel sind öffentlich sichtbar.
-- Premium-Artikel sind erst mit aktivem Abo (oder als Admin) lesbar.
+- Jeder Artikel hat ein **Titelbild**, eine **Kurzbeschreibung**, eine
+  **Kategorie** (Politik, Satire, Verschwörungstheorien), optionale **Tags** und
+  **Hashtags** sowie einen **Slug** für die URL.
+- Nur `Published`-Artikel sind öffentlich sichtbar; geplante Beiträge werden
+  automatisch zum festgelegten Zeitpunkt veröffentlicht.
+- Artikel besitzen eine **Zugriffsstufe**: `Public` (alle), `Registered` (nur
+  angemeldet) oder `Premium` (aktive Berechtigung/Abo; Admin ausgenommen).
 
 ## Artikel lesen
 
@@ -25,18 +28,31 @@ Für das Schreiben/Verwalten von Artikeln siehe
 ### Artikelliste (`/Articles`)
 
 - Zeigt die veröffentlichten Artikel, **10 pro Seite**, sortiert nach
-  Veröffentlichungsdatum (neueste zuerst).
+  Veröffentlichungsdatum (neueste zuerst; umschaltbar).
+- **Freitextsuche:** `/Articles?query={suchbegriff}`
 - Filter nach **Kategorie**: `/Articles?category=Satire`
 - Filter nach **Tag**: `/Articles?tag={tag-slug}`
+- Filter nach **Hashtag**: `/Articles?hashtag={hashtag-slug}`
+- Filter nach **Autor**, **Zugriffsstufe** und **Veröffentlichungsdatum**.
+- **Sortierung** u. a. nach Datum und Bewertung.
 - Seitenwechsel über `?pageNumber=2` usw.
 
 ### Artikel-Detailseite (`/Articles/{slug}`)
 
-- Zeigt Titel, Autor, Kategorie-Badge, Inhalt und – falls vorhanden – Bilder
-  und Video-Einbettungen.
+- Zeigt **Titelbild**, Titel, Autor, Kategorie-Badge, Kurzbeschreibung, Inhalt
+  und – falls vorhanden – Bilder und Video-Einbettungen.
 - Für `Satire` und `Verschwörungstheorien` erscheint ein Hinweistext
   (Disclaimer).
+- **Bewertung:** Angemeldete Nutzer können den Beitrag mit 👍/👎 bewerten
+  (änderbar, max. eine Bewertung gleichzeitig); die Summe wird angezeigt.
+- Bei `Registered`/`Premium` sehen nicht berechtigte Besucher nur den Teaser
+  plus passenden CTA (Anmelden bzw. Mitglied werden).
 - Unter dem Artikel befindet sich der **Kommentarbereich** (siehe unten).
+
+### Linklisten (`/LinkLists/{slug}`)
+
+- Redaktionell zusammengestellte, **geordnete** Listen von Beiträgen mit
+  anklickbaren Verweisen. Eine Linkliste kann in andere Seiten eingebettet werden.
 
 ### RSS-Feed (`/feed`)
 
@@ -53,7 +69,11 @@ Kommentieren erfordert ein **angemeldetes Konto mit bestätigter E-Mail-Adresse*
   fensters (`EditWindowMinutes`).
 - **Löschen:** Eigene Kommentare; Moderatoren/Admins können jeden Kommentar
   löschen (Soft-Delete).
+- **Bewerten:** Kommentare und Antworten können mit 👍/👎 bewertet werden
+  (änderbar, max. eine Bewertung gleichzeitig).
 - **Melden:** Kommentare können mit Grund und optionaler Notiz gemeldet werden.
+- **Auszeichnen:** Admins (und Autoren für eigene Beiträge) können Kommentare
+  hervorheben.
 
 Moderation (Rollen `Moderator`/`Admin`) erfolgt unter `/Moderation`:
 offene Meldungen sowie ausstehende/geflaggte Kommentare können dort
@@ -72,7 +92,10 @@ offene Meldungen sowie ausstehende/geflaggte Kommentare können dort
 | E-Mail bestätigen | Link aus der Dev-E-Mail unter `bin/…/App_Data/emails/` |
 
 Neue Konten erhalten die Rolle `Reader` und müssen die E-Mail bestätigen,
-bevor sie kommentieren oder ein Abo abschließen können.
+bevor sie kommentieren, bewerten oder ein Abo abschließen können. Autor-Rechte
+(`Author`) sowie `Moderator`/`Admin` werden — wie in
+[`01-rollen-und-admin.md`](01-rollen-und-admin.md) beschrieben — per Rollenzuweisung
+vergeben.
 
 ## Mitgliedschaft & Premium
 
@@ -82,10 +105,11 @@ bevor sie kommentieren oder ein Abo abschließen können.
 | Checkout | `/Membership/Checkout` |
 | Spenden | `/Donate` |
 
-Premium-Artikel (`IsPremium = true`) sind nur mit aktivem Abo lesbar; im
-Dev-Modus simuliert `FakeStripeService` den Checkout (kein echter Stripe-Key
-nötig). Die Zugriffsprüfung basiert auf dem **Abo-Status**, nicht allein auf der
-Rolle. Admins haben immer Zugriff.
+Beiträge mit `AccessLevel = Registered` sind nur für angemeldete Benutzer lesbar;
+Beiträge mit `AccessLevel = Premium` nur mit aktivem Abo. Im Dev-Modus simuliert
+`FakeStripeService` den Checkout (kein echter Stripe-Key nötig). Die
+Zugriffsprüfung basiert auf dem **Abo-Status**, nicht allein auf der Rolle. Admins
+haben immer Zugriff.
 
 ## Newsletter
 

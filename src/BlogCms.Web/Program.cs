@@ -4,9 +4,11 @@ using BlogCms.Infrastructure.Comments;
 using BlogCms.Infrastructure.Content;
 using BlogCms.Infrastructure.Data;
 using BlogCms.Infrastructure.Email;
+using BlogCms.Infrastructure.LinkLists;
 using BlogCms.Infrastructure.Media;
 using BlogCms.Infrastructure.Newsletter;
 using BlogCms.Infrastructure.Payments;
+using BlogCms.Infrastructure.Ratings;
 using BlogCms.Web.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -63,6 +65,15 @@ builder.Services.AddScoped<IAppEmailSender, DevEmailSender>();
 builder.Services.AddSingleton<IMarkdownRenderer, MarkdownRenderer>();
 builder.Services.AddSingleton<ISlugGenerator, SlugGenerator>();
 builder.Services.AddScoped<IArticleService, ArticleService>();
+
+// Scheduled publication: background poller that flips due "Scheduled" articles (BR-032).
+builder.Services.AddHostedService<ArticleSchedulerService>();
+
+// Ratings: thumbs up/down for articles and comments (BR-070/BR-071/BR-072).
+builder.Services.AddScoped<IRatingService, RatingService>();
+
+// Link lists: admin-curated, ordered article lists (BR-090/BR-091/BR-092).
+builder.Services.AddScoped<ILinkListService, LinkListService>();
 
 // Comments: moderation mode, blocklist filter and rate limiting are configurable.
 builder.Services.Configure<CommentOptions>(
@@ -122,12 +133,18 @@ builder.Services.AddHostedService<NewsletterCleanupService>();
 // Authorization: role-based moderation/admin plus subscription-driven premium access.
 builder.Services.AddAuthorization(options =>
 {
+    // Authors manage their own articles; admins manage everything (FeatureFix1 BR-013/BR-014).
+    options.AddPolicy(Policies.RequireAuthor,
+        policy => policy.RequireRole(nameof(UserRole.Author), nameof(UserRole.Admin)));
     options.AddPolicy(Policies.RequireModerator,
         policy => policy.RequireRole(nameof(UserRole.Moderator), nameof(UserRole.Admin)));
     options.AddPolicy(Policies.RequireAdmin,
         policy => policy.RequireRole(nameof(UserRole.Admin)));
     options.AddPolicy(Policies.PremiumAccess,
         policy => policy.Requirements.Add(new PremiumRequirement()));
+    // Registered access: any authenticated user (FeatureFix1 BR-110).
+    options.AddPolicy(Policies.RegisteredAccess,
+        policy => policy.RequireAuthenticatedUser());
 });
 builder.Services.AddScoped<IAuthorizationHandler, PremiumAuthorizationHandler>();
 

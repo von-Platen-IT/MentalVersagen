@@ -1,0 +1,50 @@
+@page "{slug}"
+@model BlogCms.Web.Pages.LinkLists.DetailsModel
+@{
+    ViewData["Title"] = Model.LinkList?.Title ?? "Linkliste";
+
+    if (Model.LinkList is null)
+    {
+        <header class="page-header" style="--ph-img: url('/pics/header_slides_1.png');">
+            <div class="page-header__inner">
+                <a class="page-header__logo" href="/" aria-label="Mentalversagen">
+                    <img src="/pics/Mentalversagen_schriftzug.png" alt="Mentalversagen" />
+                </a>
+            </div>
+        </header>
+        <h1>Linkliste nicht gefunden</h1>
+        return;
+    }
+
+    var header = new BlogCms.Web.Models.PageHeaderModel
+    {
+        Slide = 1,
+        Title = Model.LinkList.Title,
+        Sub = Model.LinkList.Description,
+        Meta = $"KURATEN {Model.Articles.Count} AKTE(N)"
+    };
+}
+
+<partial name="_PageHeader" model="header" />
+
+<div class="mv-doc mt-4">
+    @if (Model.Articles.Count == 0)
+    {
+        <p class="text-muted">Diese Liste enthält derzeit keine veröffentlichten Akten.</p>
+    }
+    else
+    {
+        <ol class="mb-0 ps-3">
+            @foreach (var article in Model.Articles)
+            {
+                <li class="mb-2">
+                    <a asp-page="/Articles/Details" asp-route-slug="@article.Slug">@article.Title</a>
+                    @if (!string.IsNullOrWhiteSpace(article.Excerpt))
+                    {
+                        <div class="meta-mono">@article.Excerpt</div>
+                    }
+                </li>
+            }
+        </ol>
+    }
+</div>

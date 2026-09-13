@@ -8,16 +8,20 @@ den eigenen **Admin-Status in der Datenbank prüft**.
 Beim Start legt die Anwendung die Rollen idempotent an — es gibt jedoch **keinen
 vorkonfigurierten Admin-Benutzer**. Neue Konten starten immer als `Reader`.
 
+Mapping zu FeatureFix1: Viewer ≙ `Reader`, Autor ≙ `Author`, Administrator ≙ `Admin`.
+
 | Rolle | Rechte | Sichtbarer Bereich |
 |---|---|---|
-| `Reader` | Lesen, kommentieren (nach E-Mail-Bestätigung) | `/Articles`, `/Articles/{slug}` |
+| `Reader` | Lesen, kommentieren, bewerten (nach E-Mail-Bestätigung) | `/Articles`, `/Articles/{slug}` |
+| `Author` | wie `Reader`, zusätzlich **eigene** Beiträge erstellen/bearbeiten/veröffentlichen/planen; Kommentare eigener Beiträge moderieren | `/Admin/Articles` (nur eigene Beiträge) |
 | `Premium` | wie `Reader`, zusätzlich Premium-Artikel (gesteuert über aktives Abo, nicht allein über die Rolle) | `/Membership` |
 | `Moderator` | wie `Reader`, zusätzlich Kommentar-Moderation | `/Moderation` |
-| `Admin` | vollständiger Zugriff, inkl. Artikelverwaltung | `/Admin/Articles` |
+| `Admin` | vollständiger Zugriff, inkl. aller Artikel, Linklisten und Nutzerverwaltung | `/Admin/Articles`, `/Admin/LinkLists` |
 
 Die Rechte werden **serverseitig** über Autorisierungs-Policies erzwungen
-(`RequireModerator`, `RequireAdmin`, `PremiumAccess`) — nicht nur über
-ausgeblendete UI-Elemente.
+(`RequireAuthor`, `RequireModerator`, `RequireAdmin`, `PremiumAccess`) — nicht nur über
+ausgeblendete UI-Elemente. Ein `Author` kann ausschließlich **eigene** Beiträge
+bearbeiten; diese Besitzregel wird im Service erzwungen.
 
 ## Admin („Root") werden
 
@@ -64,7 +68,8 @@ Optional — das denormalisierte Domänenfeld `AspNetUsers."Role"` angleichen
 UPDATE "AspNetUsers" SET "Role" = 'Admin' WHERE "Email" = 'deine@adresse.example';
 ```
 
-`Moderator` wird analog mit `r."Name" = 'Moderator'` vergeben.
+`Moderator` bzw. `Author` werden analog mit `r."Name" = 'Moderator'` bzw.
+`r."Name" = 'Author'` vergeben.
 
 ### 3. Neu anmelden
 
@@ -138,6 +143,10 @@ Das Pflichtenheft nennt unter der Rolle `Admin` auch „Nutzerverwaltung"
 (siehe [`05-Benutzerverwaltung-Auth.md`](../05-Benutzerverwaltung-Auth.md)). Eine
 solche UI ist im aktuellen Stand **nicht implementiert**; Rollen werden derzeit
 ausschließlich per SQL verwaltet.
+
+Die FeatureFix1-Anforderungen an die Rolle **Autor** (`Author`) werden über die
+Artikelverwaltung abgebildet (siehe [`02-admin-artikelverwaltung.md`](02-admin-artikelverwaltung.md)).
+Ein `Author` sieht dort ausschließlich eigene Beiträge.
 
 ## Weiterführend
 

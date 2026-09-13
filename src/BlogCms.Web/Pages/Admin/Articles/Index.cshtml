@@ -2,54 +2,73 @@
 @using BlogCms.Web.Content
 @model BlogCms.Web.Pages.Admin.Articles.IndexModel
 @{
-    ViewData["Title"] = "Artikelverwaltung";
-}
-
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1>Artikelverwaltung</h1>
-    <a class="btn btn-primary" asp-page="/Admin/Articles/Create">Neuer Artikel</a>
-</div>
-
-@if (TempData["Message"] is string message)
-{
-    <div class="alert alert-success">@message</div>
-}
-
-<table class="table table-striped align-middle">
-    <thead>
-        <tr>
-            <th>Titel</th>
-            <th>Kategorie</th>
-            <th>Status</th>
-            <th>Premium</th>
-            <th>Veröffentlicht</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-    @foreach (var article in Model.Articles)
+    ViewData["Title"] = "Aktenverwaltung";
+    var header = new BlogCms.Web.Models.PageHeaderModel
     {
-        <tr>
-            <td>@article.Title</td>
-            <td>
-                <span class="badge @CategoryDisplay.BadgeClass(article.Category)">@CategoryDisplay.Label(article.Category)</span>
-            </td>
-            <td>@article.Status</td>
-            <td>@(article.IsPremium ? "Ja" : "Nein")</td>
-            <td>@(article.PublishedAt?.ToString("yyyy-MM-dd HH:mm") ?? "–")</td>
-            <td class="text-end">
-                <a class="btn btn-sm btn-outline-secondary" asp-page="/Admin/Articles/Edit" asp-route-id="@article.Id">Bearbeiten</a>
-                <form method="post" asp-page-handler="Delete" asp-route-id="@article.Id" class="d-inline"
-                      onsubmit="return confirm('Artikel wirklich löschen?');">
-                    <button type="submit" class="btn btn-sm btn-outline-danger">Löschen</button>
-                </form>
-            </td>
-        </tr>
-    }
-    </tbody>
-</table>
-
-@if (Model.Articles.Count == 0)
-{
-    <p class="text-muted">Noch keine Artikel vorhanden.</p>
+        Slide = 1,
+        Title = "Aktenverwaltung",
+        Sub = Model.IsAdmin ? "Alle Akten (Admin-Sicht)." : "Eigene Akten verwalten."
+    };
 }
+
+<partial name="_PageHeader" model="header" />
+
+<div class="mv-doc mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h4 mb-0">Aktenliste</h2>
+        <a class="btn btn-primary" asp-page="/Admin/Articles/Create">Neue Akte</a>
+    </div>
+
+    @if (TempData["Message"] is string message)
+    {
+        <div class="mv-teaser mb-3">@message</div>
+    }
+
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>Titel</th>
+                <th>Kategorie</th>
+                <th>Zugriff</th>
+                <th>Status</th>
+                <th>Veröffentlicht / Geplant</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var article in Model.Articles)
+        {
+            <tr>
+                <td>@article.Title</td>
+                <td>
+                    <span class="mv-pill">@CategoryDisplay.Label(article.Category)</span>
+                </td>
+                <td>@article.AccessLevel</td>
+                <td>@article.Status</td>
+                <td>
+                    @if (article.Status == BlogCms.Domain.Enums.ArticleStatus.Scheduled && article.ScheduledAt is not null)
+                    {
+                        <span class="meta-mono">geplant: @article.ScheduledAt.Value.ToString("dd.MM.yyyy HH:mm")</span>
+                    }
+                    else
+                    {
+                        @(article.PublishedAt?.ToString("dd.MM.yyyy HH:mm") ?? "–")
+                    }
+                </td>
+                <td class="text-end">
+                    <a class="btn btn-sm btn-outline-secondary" asp-page="/Admin/Articles/Edit" asp-route-id="@article.Id">Bearbeiten</a>
+                    <form method="post" asp-page-handler="Delete" asp-route-id="@article.Id" class="d-inline"
+                          onsubmit="return confirm('Akte wirklich löschen?');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Löschen</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+
+    @if (Model.Articles.Count == 0)
+    {
+        <p class="text-muted">Noch keine Akten vorhanden.</p>
+    }
+</div>

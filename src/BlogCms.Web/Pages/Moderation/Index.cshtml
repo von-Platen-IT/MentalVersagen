@@ -2,83 +2,91 @@
 @model BlogCms.Web.Pages.Moderation.IndexModel
 @{
     ViewData["Title"] = "Moderation";
+    var header = new BlogCms.Web.Models.PageHeaderModel
+    {
+        Slide = 3,
+        Title = "Moderation",
+        Sub = "Offene Meldungen, ausstehende oder markierte Zeugenspräche prüfen."
+    };
 }
 
-<h1>Moderation</h1>
+<partial name="_PageHeader" model="header" />
 
-<h2 class="h4 mt-4">Offene Meldungen (nach Anzahl priorisiert)</h2>
-@if (Model.ReportGroups.Count == 0)
-{
-    <p class="text-muted">Keine offenen Meldungen.</p>
-}
-else
-{
-    <table class="table align-middle">
-        <thead>
-            <tr>
-                <th>Meldungen</th>
-                <th>Kommentar</th>
-                <th>Autor</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-        @foreach (var group in Model.ReportGroups)
-        {
-            <tr>
-                <td><span class="badge bg-danger">@group.ReportCount</span></td>
-                <td style="white-space: pre-wrap;">@(group.Comment.DeletedAt is null ? group.Comment.ContentText : "(gelöscht)")</td>
-                <td>@(group.Comment.User?.DisplayName ?? "Gelöschter Nutzer")</td>
-                <td class="text-end">
-                    <form method="post" asp-page-handler="Approve" asp-route-commentId="@group.Comment.Id" class="d-inline">
-                        <button type="submit" class="btn btn-sm btn-outline-success">Freigeben</button>
-                    </form>
-                    <form method="post" asp-page-handler="Reject" asp-route-commentId="@group.Comment.Id" class="d-inline">
-                        <button type="submit" class="btn btn-sm btn-outline-danger">Ablehnen</button>
-                    </form>
-                    <form method="post" asp-page-handler="DismissReports" asp-route-commentId="@group.Comment.Id" class="d-inline">
-                        <button type="submit" class="btn btn-sm btn-outline-secondary">Meldungen verwerfen</button>
-                    </form>
-                </td>
-            </tr>
-        }
-        </tbody>
-    </table>
-}
+<div class="mv-doc mt-4">
+    <h2 class="h4">Offene Meldungen (nach Anzahl priorisiert)</h2>
+    @if (Model.ReportGroups.Count == 0)
+    {
+        <p class="text-muted">Keine offenen Meldungen.</p>
+    }
+    else
+    {
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Meldungen</th>
+                    <th>Zeugenspruch</th>
+                    <th>Autor</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var group in Model.ReportGroups)
+            {
+                <tr>
+                    <td><span class="mv-badge mv-badge--red">@group.ReportCount</span></td>
+                    <td style="white-space: pre-wrap;">@(group.Comment.DeletedAt is null ? group.Comment.ContentText : "(gelöscht)")</td>
+                    <td>@(group.Comment.User?.DisplayName ?? "Gelöschter Nutzer")</td>
+                    <td class="text-end">
+                        <form method="post" asp-page-handler="Approve" asp-route-commentId="@group.Comment.Id" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">Freigeben</button>
+                        </form>
+                        <form method="post" asp-page-handler="Reject" asp-route-commentId="@group.Comment.Id" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Ablehnen</button>
+                        </form>
+                        <form method="post" asp-page-handler="DismissReports" asp-route-commentId="@group.Comment.Id" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">Meldungen verwerfen</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
 
-<h2 class="h4 mt-4">Ausstehend / markiert</h2>
-@if (Model.PendingAndFlagged.Count == 0)
-{
-    <p class="text-muted">Keine ausstehenden oder markierten Kommentare.</p>
-}
-else
-{
-    <table class="table align-middle">
-        <thead>
-            <tr>
-                <th>Status</th>
-                <th>Kommentar</th>
-                <th>Autor</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-        @foreach (var comment in Model.PendingAndFlagged)
-        {
-            <tr>
-                <td><span class="badge bg-warning text-dark">@comment.Status</span></td>
-                <td style="white-space: pre-wrap;">@comment.ContentText</td>
-                <td>@(comment.User?.DisplayName ?? "Gelöschter Nutzer")</td>
-                <td class="text-end">
-                    <form method="post" asp-page-handler="Approve" asp-route-commentId="@comment.Id" class="d-inline">
-                        <button type="submit" class="btn btn-sm btn-outline-success">Freigeben</button>
-                    </form>
-                    <form method="post" asp-page-handler="Reject" asp-route-commentId="@comment.Id" class="d-inline">
-                        <button type="submit" class="btn btn-sm btn-outline-danger">Ablehnen</button>
-                    </form>
-                </td>
-            </tr>
-        }
-        </tbody>
-    </table>
-}
+    <h2 class="h4 mt-4">Ausstehend / markiert</h2>
+    @if (Model.PendingAndFlagged.Count == 0)
+    {
+        <p class="text-muted">Keine ausstehenden oder markierten Zeugenspräche.</p>
+    }
+    else
+    {
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Status</th>
+                    <th>Zeugenspruch</th>
+                    <th>Autor</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var comment in Model.PendingAndFlagged)
+            {
+                <tr>
+                    <td><span class="mv-badge">@comment.Status</span></td>
+                    <td style="white-space: pre-wrap;">@comment.ContentText</td>
+                    <td>@(comment.User?.DisplayName ?? "Gelöschter Nutzer")</td>
+                    <td class="text-end">
+                        <form method="post" asp-page-handler="Approve" asp-route-commentId="@comment.Id" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">Freigeben</button>
+                        </form>
+                        <form method="post" asp-page-handler="Reject" asp-route-commentId="@comment.Id" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Ablehnen</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</div>

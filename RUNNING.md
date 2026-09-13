@@ -68,10 +68,11 @@ tests/BlogCms.Tests         xUnit-Tests
 
 ## Rollen
 
-Beim Start werden die Rollen `Reader`, `Premium`, `Moderator`, `Admin` idempotent
-angelegt. Neue Konten erhalten `Reader`. Für den Zugriff auf die Verwaltung
-(`/Admin/Articles`) bzw. Moderation (`/Moderation`) müssen Nutzer manuell per SQL
-einer Rolle zugewiesen werden, z. B.:
+Beim Start werden die Rollen `Reader`, `Author`, `Premium`, `Moderator`, `Admin`
+idempotent angelegt. Neue Konten erhalten `Reader`. Für den Zugriff auf die
+Verwaltung (`/Admin/Articles`, Rolle `Author` oder `Admin`), die Linklisten
+(`/Admin/LinkLists`, `Admin`) bzw. Moderation (`/Moderation`, `Moderator`/`Admin`)
+müssen Nutzer manuell per SQL einer Rolle zugewiesen werden, z. B.:
 
 ```sql
 INSERT INTO "AspNetUserRoles" ("UserId", "RoleId")

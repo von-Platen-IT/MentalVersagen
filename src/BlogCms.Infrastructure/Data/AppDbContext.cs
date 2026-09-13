@@ -20,6 +20,8 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     public DbSet<Article> Articles => Set<Article>();
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<ArticleTag> ArticleTags => Set<ArticleTag>();
+    public DbSet<Hashtag> Hashtags => Set<Hashtag>();
+    public DbSet<ArticleHashtag> ArticleHashtags => Set<ArticleHashtag>();
     public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
     public DbSet<VideoEmbed> VideoEmbeds => Set<VideoEmbed>();
@@ -27,6 +29,9 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     public DbSet<Donation> Donations => Set<Donation>();
     public DbSet<NewsletterSubscriber> NewsletterSubscribers => Set<NewsletterSubscriber>();
     public DbSet<Report> Reports => Set<Report>();
+    public DbSet<Rating> Ratings => Set<Rating>();
+    public DbSet<LinkList> LinkLists => Set<LinkList>();
+    public DbSet<LinkListItem> LinkListItems => Set<LinkListItem>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

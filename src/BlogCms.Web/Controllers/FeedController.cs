@@ -1,6 +1,8 @@
 using System.Text;
 using System.Xml.Linq;
 using BlogCms.Infrastructure.Content;
+using BlogCms.Infrastructure.Media;
+using BlogCms.Web.Content;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BlogCms.Web.Controllers;
@@ -14,10 +16,12 @@ public class FeedController : Controller
     private const int MaxItems = 50;
 
     private readonly IArticleService _articles;
+    private readonly IMediaService _media;
 
-    public FeedController(IArticleService articles)
+    public FeedController(IArticleService articles, IMediaService media)
     {
         _articles = articles;
+        _media = media;
     }
 
     [HttpGet]
@@ -36,13 +40,28 @@ public class FeedController : Controller
                 new XAttribute("href", $"{baseUrl}/feed"),
                 new XAttribute("rel", "self"),
                 new XAttribute("type", "application/rss+xml")),
-            items.Select(a => new XElement("item",
-                new XElement("title", a.Title),
-                new XElement("link", $"{baseUrl}/Articles/{a.Slug}"),
-                new XElement("guid", $"{baseUrl}/Articles/{a.Slug}"),
-                new XElement("category", a.Category.ToString()),
-                new XElement("pubDate", (a.PublishedAt ?? a.CreatedAt).ToUniversalTime().ToString("R")),
-                new XElement("description", a.Excerpt ?? string.Empty))));
+            items.Select(a =>
+            {
+                var titleImage = ArticleDisplay.ResolveTitleImage(a, _media);
+                var item = new XElement("item",
+                    new XElement("title", a.Title),
+                    new XElement("link", $"{baseUrl}/Articles/{a.Slug}"),
+                    new XElement("guid", $"{baseUrl}/Articles/{a.Slug}"),
+                    new XElement("category", a.Category.ToString()),
+                    new XElement("pubDate", (a.PublishedAt ?? a.CreatedAt).ToUniversalTime().ToString("R")),
+                    new XElement("description", a.Excerpt ?? string.Empty));
+
+                // Title image as an enclosure so RSS readers can show it (BR-100/BR-022).
+                if (!string.IsNullOrWhiteSpace(titleImage))
+                {
+                    item.Add(new XElement("enclosure",
+                        new XAttribute("url", titleImage),
+                        new XAttribute("type", "image/jpeg"),
+                        new XAttribute("length", "0")));
+                }
+
+                return item;
+            }));
 
         var document = new XDocument(
             new XDeclaration("1.0", "utf-8", null),

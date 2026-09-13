@@ -3,21 +3,27 @@
 Diese Seite beschreibt, wie man den Admin-Bereich verwendet, um Artikel zu
 erstellen, zu bearbeiten, zu veröffentlichen und zu löschen.
 
-**Voraussetzung:** Das eigene Konto besitzt die Identity-Rolle `Admin`
-(siehe [`01-rollen-und-admin.md`](01-rollen-und-admin.md)). Ist man eingeloggt,
-erscheint in der Navigation der Eintrag **„Verwaltung"**, der direkt zur
-Artikelverwaltung führt.
+**Voraussetzung:** Das eigene Konto besitzt die Identity-Rolle `Admin` oder
+`Author` (siehe [`01-rollen-und-admin.md`](01-rollen-und-admin.md)). Ist man
+eingeloggt, erscheint in der Navigation der Eintrag **„Verwaltung"**, der direkt
+zur Artikelverwaltung führt.
+
+- **`Admin`** sieht und bearbeitet **alle** Artikel.
+- **`Author`** sieht und bearbeitet **ausschließlich eigene** Artikel; fremde
+  Beiträge werden serverseitig verweigert.
 
 ## Erreichbare Seiten
 
 | Seite | URL | Zweck |
 |---|---|---|
-| Übersicht | `/Admin/Articles` | Alle Artikel (inkl. Entwürfe) in einer Tabelle |
+| Übersicht | `/Admin/Articles` | Artikel (inkl. Entwürfe; für `Author` nur eigene) in einer Tabelle |
 | Neu | `/Admin/Articles/Create` | Neuen Artikel anlegen |
 | Bearbeiten | `/Admin/Articles/Edit?id={guid}` | Bestehenden Artikel bearbeiten |
+| Linklisten | `/Admin/LinkLists` | Redaktionelle Linklisten verwalten (nur `Admin`) |
 
-Alle Seiten sind mit der Policy `RequireAdmin` geschützt — ohne `Admin`-Rolle
-wird der Zugriff serverseitig verweigert.
+Alle Seiten sind mit der Policy `RequireAuthor` (bzw. `RequireAdmin` für
+Linklisten) geschützt — ohne passende Rolle wird der Zugriff serverseitig
+verweigert.
 
 ## Übersicht (`/Admin/Articles`)
 
@@ -43,15 +49,18 @@ Folgende Felder stehen zur Verfügung:
 | Feld | Pflicht | Hinweise |
 |---|---|---|
 | **Titel** | ja | max. 300 Zeichen |
-| **Slug** | nein | URL-Segment; wird sonst automatisch aus dem Titel erzeugt und bei Kollision mit `-2`, `-3` … eindeutig gemacht |
-| **Teaser / Excerpt** | nein | max. 500 Zeichen; dient als Vorschau (Artikelliste, Paywall-Teaser, RSS-Beschreibung) |
+| **Slug** | nein | URL-Segment; wird sonst automatisch aus dem Titel erzeugt und bei Kollision mit `-2`, `-3` … eindeutig gemacht. Bereits veröffentlichte URLs bleiben bei Titeländerung stabil. |
+| **Titelbild-URL** | ja* | externe Bild-URL; Alternative/Fallback ist der Bild-Upload (*genau eine der beiden Quellen ist Pflicht) |
+| **Kurzbeschreibung / Excerpt** | ja | max. 500 Zeichen; dient als Vorschau (Artikelliste, Paywall-Teaser, RSS-Beschreibung) |
 | **Kategorie** | ja | `Politik`, `Satire`, `Verschwoerungstheorien` |
-| **Status** | ja | `Draft` (Standard), `Published`, `Archived` |
+| **Zugriffsstufe** | ja | `Public`, `Registered` (nur angemeldet), `Premium` (aktive Berechtigung) |
+| **Status** | ja | `Draft` (Standard), `Scheduled`, `Published`, `Archived` |
+| **Geplante Veröffentlichung** | nein | Zeitpunkt (`ScheduledAt`); erforderlich bei `Status = Scheduled` — der Beitrag wird dann automatisch veröffentlicht |
 | **Tags** | nein | kommagetrennt (auch `;` oder Zeilenumbruch); neue Tags werden automatisch angelegt |
-| **Premium-Artikel (Paywall)** | nein | aktiviert die Zugriffsbeschränkung auf Abonnenten/Admin |
+| **Hashtags** | nein | kommagetrennt, mit oder ohne führendes `#`; eigene Struktur für Filter/Navigation |
 | **Inhalt (Markdown)** | ja | wird serverseitig gerendert und sanitized |
 | **Video-URL** | nein | YouTube, Vimeo, X, TikTok — wird per oEmbed aufgelöst |
-| **Bild hochladen** | nein | JPEG, PNG, WebP oder GIF |
+| **Bild hochladen** | nein | JPEG, PNG, WebP oder GIF; dient als Titelbild, wenn keine externe URL gesetzt ist |
 
 Nach dem Absenden wird der Artikel angelegt und man landet zurück in der
 Übersicht (Erfolgsmeldung via `TempData`).
@@ -88,10 +97,24 @@ Nach dem Absenden wird der Artikel angelegt und man landet zurück in der
   und danach nicht mehr überschrieben.
 - Ein Entwurf (`Draft`) ist also erst nach Umschalten auf `Published` im Blog
   sichtbar.
+- **`Scheduled`** (geplante Veröffentlichung): Der Beitrag erhält einen
+  `ScheduledAt`-Zeitpunkt und bleibt bis dahin unveröffentlicht. Ein
+  Hintergrunddienst veröffentlicht ihn automatisch zum Zeitpunkt
+  (`Status` → `Published`, `PublishedAt = ScheduledAt`).
 - `Archived` nimmt einen Artikel aus der öffentlichen Liste, ohne ihn zu löschen.
 
 Kurz: Anlegen/bearbeiten mit `Status = Published` → erscheint unter `/Articles`
 und im RSS-Feed `/feed`.
+
+## Linklisten (`/Admin/LinkLists`)
+
+Nur für `Admin`. Hier werden redaktionelle, **geordnete** Listen von Beiträgen
+angelegt und verwaltet:
+
+- Zuordnung von Beiträgen zu einer Liste, inklusive Reihenfolge (unabhängig vom
+  Veröffentlichungsdatum).
+- Öffentliche Darstellung unter `/LinkLists/{slug}`; die Liste ist anklickbar und
+  in andere Seiten einbettbar.
 
 ## Artikel bearbeiten (`/Admin/Articles/Edit?id=…`)
 

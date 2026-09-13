@@ -1,15 +1,27 @@
 @page
 @using BlogCms.Domain.Enums
+@using BlogCms.Infrastructure.Content
 @using BlogCms.Web.Content
 @model BlogCms.Web.Pages.Articles.IndexModel
 @{
-    ViewData["Title"] = "Artikel";
+    ViewData["Title"] = "Akten";
+    var headerModel = new BlogCms.Web.Models.PageHeaderModel
+    {
+        Slide = 2,
+        Title = "Akten",
+        Sub = "Recherchearchive durchsuchen und filtern.",
+        Meta = Model.Query is not null ? $"SUCHE: {Model.Query}" : null
+    };
 }
 
-<h1>Artikel</h1>
+<partial name="_PageHeader" model="headerModel" />
 
-<form method="get" class="row g-2 align-items-end mb-4">
-    <div class="col-auto">
+<form method="get" class="mt-4 row g-2 align-items-end" aria-label="Akten filtern">
+    <div class="col-md-3">
+        <label class="form-label" for="query">Suche</label>
+        <input class="form-control" id="query" name="query" value="@Model.Query" placeholder="Titel oder Kurzbeschreibung" />
+    </div>
+    <div class="col-md-2">
         <label class="form-label" for="category">Kategorie</label>
         <select class="form-select" id="category" name="category">
             <option value="">Alle</option>
@@ -19,13 +31,32 @@
             }
         </select>
     </div>
-    <div class="col-auto">
+    <div class="col-md-2">
         <label class="form-label" for="tag">Tag</label>
         <select class="form-select" id="tag" name="tag">
             <option value="">Alle</option>
             @foreach (var t in Model.AllTags)
             {
                 <option value="@t.Slug" selected="@(Model.TagSlug == t.Slug)">@t.Name</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="hashtag">Hashtag</label>
+        <select class="form-select" id="hashtag" name="hashtag">
+            <option value="">Alle</option>
+            @foreach (var h in Model.AllHashtags)
+            {
+                <option value="@h.Slug" selected="@(Model.HashtagSlug == h.Slug)">#@h.Name</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label" for="sort">Sortierung</label>
+        <select class="form-select" id="sort" name="sort">
+            @foreach (var value in Enum.GetValues<ArticleSortOrder>())
+            {
+                <option value="@value" selected="@(Model.Sort == value)">@value</option>
             }
         </select>
     </div>
@@ -37,52 +68,66 @@
 
 @if (Model.Articles.Count == 0)
 {
-    <p class="text-muted">Keine Artikel gefunden.</p>
+    <p class="text-muted mt-4">Keine Akten gefunden.</p>
 }
 
-@foreach (var article in Model.Articles)
-{
-    <article class="mb-4 pb-3 border-bottom">
-        <h2 class="h4">
-            <a asp-page="/Articles/Details" asp-route-slug="@article.Slug">@article.Title</a>
-        </h2>
-        <p class="text-muted small mb-2">
-            <span class="badge @CategoryDisplay.BadgeClass(article.Category)">@CategoryDisplay.Label(article.Category)</span>
-            @if (article.IsPremium)
+<div class="mv-cases mt-4">
+    @foreach (var article in Model.Articles)
+    {
+        var image = Model.TitleImageUrl(article);
+        <article class="mv-case">
+            <div class="mv-case__head">
+                <span>ARCHIV @article.Category.ToString().ToUpperInvariant()</span>
+                <span class="text-end">#@article.Id.ToString("N").Substring(0, 8).ToUpperInvariant()</span>
+            </div>
+            @if (image is not null)
             {
-                <span class="badge bg-dark">Premium</span>
+                <a class="mv-case__img" asp-page="/Articles/Details" asp-route-slug="@article.Slug">
+                    <img src="@image" alt="@article.Title" loading="lazy" decoding="async" />
+                </a>
             }
-            · @(article.Author?.DisplayName ?? "Unbekannt")
-            · @article.PublishedAt?.ToString("yyyy-MM-dd")
-        </p>
-        @if (!string.IsNullOrWhiteSpace(article.Excerpt))
-        {
-            <p>@article.Excerpt</p>
-        }
-        @if (article.ArticleTags.Count > 0)
-        {
-            <p class="mb-0">
-                @foreach (var at in article.ArticleTags)
+            <div class="mv-case__body">
+                <h3 class="mv-case__title">
+                    <a asp-page="/Articles/Details" asp-route-slug="@article.Slug">@article.Title</a>
+                </h3>
+                @if (!string.IsNullOrWhiteSpace(article.Excerpt))
                 {
-                    <a class="badge bg-light text-dark text-decoration-none"
-                       asp-page="/Articles/Index" asp-route-tag="@at.Tag?.Slug">#@at.Tag?.Name</a>
+                    <p class="mv-case__excerpt">@article.Excerpt</p>
                 }
-            </p>
-        }
-    </article>
-}
+                <div class="mv-case__meta">
+                    <span class="mv-badge mv-badge--open">? OFFEN</span>
+                    <span>@article.AccessLevel</span>
+                    <span>@article.PublishedAt?.ToString("dd.MM.yyyy")</span>
+                    @foreach (var at in article.ArticleTags.Take(2))
+                    {
+                        <a class="mv-pill" asp-page="/Articles/Index" asp-route-tag="@at.Tag?.Slug">#@at.Tag?.Name</a>
+                    }
+                </div>
+            </div>
+            <div class="mv-case__footer">
+                <span>@(article.Author?.DisplayName ?? "Archiv")</span>
+                <a class="mv-case__next" asp-page="/Articles/Details" asp-route-slug="@article.Slug">WEITER &rarr;</a>
+            </div>
+        </article>
+    }
+</div>
 
 @if (Model.TotalPages > 1)
 {
-    <nav aria-label="Seitennavigation">
+    <nav aria-label="Akten-Seitennavigation" class="mt-4">
         <ul class="pagination">
             @for (var i = 1; i <= Model.TotalPages; i++)
             {
                 <li class="page-item @(i == Model.PageNumber ? "active" : "")">
                     <a class="page-link" asp-page="/Articles/Index"
                        asp-route-pageNumber="@i"
+                       asp-route-query="@Model.Query"
                        asp-route-category="@Model.Category"
-                       asp-route-tag="@Model.TagSlug">@i</a>
+                       asp-route-tag="@Model.TagSlug"
+                       asp-route-hashtag="@Model.HashtagSlug"
+                       asp-route-authorId="@Model.AuthorId"
+                       asp-route-access="@Model.AccessLevel"
+                       asp-route-sort="@Model.Sort">@i</a>
                 </li>
             }
         </ul>

@@ -1,94 +1,140 @@
 @page
+@using BlogCms.Domain.Enums
 @using BlogCms.Web.Content
 @model BlogCms.Web.Pages.Articles.DetailsModel
 @{
-    ViewData["Title"] = Model.Article?.Title ?? "Artikel";
-}
+    ViewData["Title"] = Model.Article?.Title ?? "Aktenstück";
 
-@if (Model.Article is null)
-{
-    <h1>Artikel nicht gefunden</h1>
-    return;
-}
+    if (Model.Article is null)
+    {
+        <h1>Aktenstück nicht gefunden</h1>
+        return;
+    }
 
-@{
     var article = Model.Article;
     var disclaimer = CategoryDisplay.Disclaimer(article.Category);
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    var header = new BlogCms.Web.Models.PageHeaderModel
+    {
+        Slide = 3,
+        Title = article.Title,
+        Meta = $"ARCHIV {article.Category.ToString().ToUpperInvariant()} · {article.PublishedAt?.ToString("dd.MM.yyyy") ?? "–"}"
+    };
 }
 
-<article>
-    <header class="mb-4">
-        <h1>@article.Title</h1>
-        <p class="text-muted">
-            <span class="badge @CategoryDisplay.BadgeClass(article.Category)">@CategoryDisplay.Label(article.Category)</span>
-            @if (article.IsPremium)
-            {
-                <span class="badge bg-dark">Premium</span>
-            }
-            · @(article.Author?.DisplayName ?? "Gelöschter Nutzer")
-            · @article.PublishedAt?.ToString("yyyy-MM-dd")
-        </p>
-    </header>
+<partial name="_PageHeader" model="header" />
 
+<article class="mt-4">
     @if (disclaimer is not null)
     {
-        <div class="alert alert-warning" role="alert">
+        <div class="mv-teaser mb-3" role="note">
             <strong>Hinweis:</strong> @disclaimer
         </div>
     }
 
-    @if (Model.CanReadContent)
-    {
-        <div class="article-content">
-            @Html.Raw(Model.ContentHtml)
-        </div>
-    }
-    else
-    {
+    <div class="mv-doc">
         @if (!string.IsNullOrWhiteSpace(article.Excerpt))
         {
             <p class="lead">@article.Excerpt</p>
         }
-        <div class="alert alert-secondary">
-            <p class="mb-2">Dieser Artikel ist nur für Mitglieder zugänglich.</p>
-            <a class="btn btn-primary" asp-page="/Membership/Index">Mitglied werden</a>
-            @if (!User.Identity?.IsAuthenticated ?? true)
-            {
-                <a class="btn btn-outline-secondary" asp-page="/Account/Login">Anmelden</a>
-            }
-        </div>
-    }
+
+        @if (Model.CanReadContent)
+        {
+            <div class="article-content">
+                @Html.Raw(Model.ContentHtml)
+            </div>
+        }
+        else
+        {
+            <p class="lead mb-3">@article.Excerpt</p>
+            <div class="mv-teaser">
+                @if (Model.RequiresPremium)
+                {
+                    <span class="mv-stamped mb-2">CLASSIFIED</span>
+                    <p class="mb-2">Diese Akte ist Premium-Mitgliedern vorbehalten.</p>
+                    <a class="btn btn-primary" asp-page="/Membership/Index">Mitglied werden</a>
+                    @if (!isAuthenticated)
+                    {
+                        <a class="btn btn-outline-secondary" asp-page="/Account/Login">Anmelden</a>
+                    }
+                }
+                else
+                {
+                    <p class="mb-2">Diese Akte ist nur für angemeldete Leser zugänglich.</p>
+                    <a class="btn btn-primary" asp-page="/Account/Login">Anmelden</a>
+                    <a class="btn btn-outline-secondary" asp-page="/Account/Register">Registrieren</a>
+                }
+            </div>
+        }
+    </div>
 
     @if (Model.CanReadContent && article.VideoEmbeds.Count > 0)
     {
-        foreach (var video in article.VideoEmbeds)
-        {
-            @Html.Raw(BlogCms.Web.Content.VideoEmbedRenderer.Render(video))
-        }
+        <div class="mv-doc mt-3">
+            @foreach (var video in article.VideoEmbeds)
+            {
+                @Html.Raw(BlogCms.Web.Content.VideoEmbedRenderer.Render(video))
+            }
+        </div>
     }
 
     @if (Model.CanReadContent && Model.Images.Count > 0)
     {
-        <div class="row g-3 my-2">
-            @foreach (var img in Model.Images)
+        <div class="mv-doc mt-3">
+            <div class="row g-3">
+                @foreach (var img in Model.Images)
+                {
+                    <div class="col-md-6">
+                        <img src="@Model.GetImageUrl(img)" alt="@(img.AltText ?? article.Title)" class="img-fluid" loading="lazy" decoding="async" />
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    @if (article.ArticleTags.Count > 0 || article.ArticleHashtags.Count > 0)
+    {
+        <div class="mt-3 d-flex flex-wrap gap-1">
+            @foreach (var at in article.ArticleTags)
             {
-                <div class="col-md-6">
-                    <img src="@Model.GetImageUrl(img)" alt="@(img.AltText ?? article.Title)" class="img-fluid rounded" />
-                </div>
+                <a class="mv-pill" asp-page="/Articles/Index" asp-route-tag="@at.Tag?.Slug">#@at.Tag?.Name</a>
+            }
+            @foreach (var ah in article.ArticleHashtags)
+            {
+                <a class="mv-pill" asp-page="/Articles/Index" asp-route-hashtag="@ah.Hashtag?.Slug">#@ah.Hashtag?.Name</a>
             }
         </div>
     }
 
-    @if (article.ArticleTags.Count > 0)
-    {
-        <p class="mt-4">
-            @foreach (var at in article.ArticleTags)
-            {
-                <a class="badge bg-light text-dark text-decoration-none"
-                   asp-page="/Articles/Index" asp-route-tag="@at.Tag?.Slug">#@at.Tag?.Name</a>
-            }
-        </p>
-    }
+    <section class="mt-3">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="meta-mono">Bewertung dieser Akte</span>
+            <span class="mv-badge">👍 @Model.ArticleRating.ThumbUp</span>
+            <span class="mv-badge">👎 @Model.ArticleRating.ThumbDown</span>
+            <span class="meta-mono">Score: @Model.ArticleRating.Score</span>
+        </div>
+
+        @if (isAuthenticated)
+        {
+            <div class="d-flex align-items-center gap-2 mt-2">
+                <form method="post" asp-page-handler="RateArticle" asp-route-slug="@article.Slug">
+                    <input type="hidden" name="value" value="ThumbUp" />
+                    <button type="submit" class="btn btn-sm @(Model.UserArticleRating == RatingValue.ThumbUp ? "btn-primary" : "btn-outline-secondary")">👍 Belegt</button>
+                </form>
+                <form method="post" asp-page-handler="RateArticle" asp-route-slug="@article.Slug">
+                    <input type="hidden" name="value" value="ThumbDown" />
+                    <button type="submit" class="btn btn-sm @(Model.UserArticleRating == RatingValue.ThumbDown ? "btn-primary" : "btn-outline-secondary")">👎 Widerlegt</button>
+                </form>
+            </div>
+        }
+        else
+        {
+            <p class="meta-mono mt-2 mb-0">
+                <a asp-page="/Account/Login" asp-route-returnUrl="@Url.Page("/Articles/Details", new { slug = article.Slug })">Melde dich an</a>, um die Akte zu bewerten.
+            </p>
+        }
+    </section>
 </article>
 
 @{
@@ -105,12 +151,15 @@
         return current.Id;
     }
 
-    var roots = Model.Comments.Where(c => c.ParentCommentId is null).ToList();
+    var roots = Model.Comments
+        .Where(c => c.ParentCommentId is null)
+        .OrderByDescending(c => c.IsHighlighted)
+        .ThenBy(c => c.CreatedAt)
+        .ToList();
     var repliesOf = (Guid rootId) => Model.Comments
         .Where(c => c.ParentCommentId is not null && RootOf(c) == rootId)
         .OrderBy(c => c.CreatedAt)
         .ToList();
-    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 }
 
 <section id="comments" class="mt-5">
@@ -118,16 +167,16 @@
 
     @if (TempData["CommentMessage"] is string okMessage)
     {
-        <div class="alert alert-success">@okMessage</div>
+        <div class="mv-teaser mt-2">@okMessage</div>
     }
     @if (TempData["CommentError"] is string errorMessage)
     {
-        <div class="alert alert-danger">@errorMessage</div>
+        <div class="mv-teaser mt-2">@errorMessage</div>
     }
 
-    @if (!User.Identity?.IsAuthenticated ?? true)
+    @if (!isAuthenticated)
     {
-        <p>
+        <p class="meta-mono">
             <a asp-page="/Account/Login" asp-route-returnUrl="@Url.Page("/Articles/Details", new { slug = article.Slug })">Anmelden</a>,
             um zu kommentieren.
         </p>
@@ -136,7 +185,7 @@
     {
         <form method="post" asp-page-handler="AddComment" asp-route-slug="@article.Slug" enctype="multipart/form-data" class="mb-4">
             <div class="mb-2">
-                <textarea name="content" class="form-control" rows="3" maxlength="5000" placeholder="Dein Kommentar ..." required></textarea>
+                <textarea name="content" class="form-control" rows="3" maxlength="5000" placeholder="Deine Zeugnis ..." required></textarea>
             </div>
             <div class="mb-2">
                 <input type="file" name="image" accept="image/*" class="form-control form-control-sm" />
@@ -149,11 +198,18 @@
     @foreach (var root in roots)
     {
         var rootDeleted = root.DeletedAt is not null;
-        <div class="border rounded p-3 mb-3" id="comment-@root.Id">
-            <div class="d-flex justify-content-between">
-                <strong>@(root.User?.DisplayName ?? "Gelöschter Nutzer")</strong>
-                <small class="text-muted">
-                    @root.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+        var rootSummary = Model.CommentRatings.TryGetValue(root.Id, out var rs) ? rs : BlogCms.Infrastructure.Ratings.RatingSummary.Empty;
+        <div class="mv-comment @(root.IsHighlighted ? "mv-comment--highlight" : "") mb-3" id="comment-@root.Id">
+            <div class="d-flex justify-content-between align-items-start">
+                <strong>
+                    @if (root.IsHighlighted)
+                    {
+                        <span class="mv-badge mv-badge--red me-1">Ausgezeichnet</span>
+                    }
+                    @(root.User?.DisplayName ?? "Gelöschter Nutzer")
+                </strong>
+                <small class="meta-mono">
+                    @root.CreatedAt.ToString("dd.MM.yyyy HH:mm")
                     @if (root.EditedAt is not null)
                     {
                         <text> · bearbeitet</text>
@@ -170,24 +226,54 @@
                 <p class="mb-1" style="white-space: pre-wrap;">@root.ContentText</p>
                 @foreach (var img in root.MediaAssets)
                 {
-                    <img src="@Model.GetImageUrl(img)" alt="@(img.AltText ?? "Kommentarbild")" class="img-fluid rounded mb-2" style="max-height:320px;" />
+                    <img src="@Model.GetImageUrl(img)" alt="@(img.AltText ?? "Kommentarbild")" class="img-fluid mb-2" style="max-height:320px;" loading="lazy" decoding="async" />
                 }
             }
 
-            @if (!rootDeleted && User.Identity?.IsAuthenticated == true)
+            <div class="d-flex align-items-center gap-2 small mt-1 flex-wrap">
+                <span class="mv-badge">👍 @rootSummary.ThumbUp</span>
+                <span class="mv-badge">👎 @rootSummary.ThumbDown</span>
+
+                @if (!rootDeleted && isAuthenticated)
+                {
+                    <form method="post" asp-page-handler="RateComment" asp-route-slug="@article.Slug">
+                        <input type="hidden" name="commentId" value="@root.Id" />
+                        <input type="hidden" name="value" value="ThumbUp" />
+                        <button type="submit" class="btn btn-link btn-sm p-0">👍</button>
+                    </form>
+                    <form method="post" asp-page-handler="RateComment" asp-route-slug="@article.Slug">
+                        <input type="hidden" name="commentId" value="@root.Id" />
+                        <input type="hidden" name="value" value="ThumbDown" />
+                        <button type="submit" class="btn btn-link btn-sm p-0">👎</button>
+                    </form>
+                }
+            </div>
+
+            @if (!rootDeleted && isAuthenticated)
             {
                 var isOwner = root.UserId.ToString() == currentUserId;
-                <div class="small">
+                <div class="small mt-2">
                     <details>
-                        <summary class="text-primary" style="cursor:pointer;">Antworten</summary>
+                        <summary class="text-secondary" style="cursor:pointer;">Antworten</summary>
                         <form method="post" asp-page-handler="AddComment" asp-route-slug="@article.Slug" class="mt-2">
                             <input type="hidden" name="parentId" value="@root.Id" />
                             <textarea name="content" class="form-control form-control-sm" rows="2" required></textarea>
-                            <button type="submit" class="btn btn-outline-primary btn-sm mt-1">Antwort senden</button>
+                            <button type="submit" class="btn btn-outline-secondary btn-sm mt-1">Antwort senden</button>
                         </form>
                     </details>
 
-                    @if (isOwner || Model.IsModerator)
+                    @if (Model.CanModerateComments)
+                    {
+                        <form method="post" asp-page-handler="HighlightComment" asp-route-slug="@article.Slug" class="d-inline">
+                            <input type="hidden" name="commentId" value="@root.Id" />
+                            <input type="hidden" name="highlighted" value="@((!root.IsHighlighted).ToString().ToLower())" />
+                            <button type="submit" class="btn btn-link btn-sm p-0">
+                                @(root.IsHighlighted ? "Auszeichnung entfernen" : "Auszeichnen")
+                            </button>
+                        </form>
+                    }
+
+                    @if (isOwner || Model.CanModerateComments)
                     {
                         <form method="post" asp-page-handler="DeleteComment" asp-route-slug="@article.Slug" class="d-inline"
                               onsubmit="return confirm('Kommentar löschen?');">
@@ -226,11 +312,18 @@
             @foreach (var reply in repliesOf(root.Id))
             {
                 var replyDeleted = reply.DeletedAt is not null;
-                <div class="border-start ps-3 mt-3 ms-3" id="comment-@reply.Id">
-                    <div class="d-flex justify-content-between">
-                        <strong>@(reply.User?.DisplayName ?? "Gelöschter Nutzer")</strong>
-                        <small class="text-muted">
-                            @reply.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+                var replySummary = Model.CommentRatings.TryGetValue(reply.Id, out var rr) ? rr : BlogCms.Infrastructure.Ratings.RatingSummary.Empty;
+                <div class="border-start ps-3 mt-3 ms-3 @(reply.IsHighlighted ? "border-danger" : "")" id="comment-@reply.Id">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <strong>
+                            @if (reply.IsHighlighted)
+                            {
+                                <span class="mv-badge mv-badge--red me-1">Ausgezeichnet</span>
+                            }
+                            @(reply.User?.DisplayName ?? "Gelöschter Nutzer")
+                        </strong>
+                        <small class="meta-mono">
+                            @reply.CreatedAt.ToString("dd.MM.yyyy HH:mm")
                             @if (reply.EditedAt is not null)
                             {
                                 <text> · bearbeitet</text>
@@ -247,15 +340,43 @@
                         <p class="mb-1" style="white-space: pre-wrap;">@reply.ContentText</p>
                         @foreach (var img in reply.MediaAssets)
                         {
-                            <img src="@Model.GetImageUrl(img)" alt="@(img.AltText ?? "Kommentarbild")" class="img-fluid rounded mb-2" style="max-height:320px;" />
+                            <img src="@Model.GetImageUrl(img)" alt="@(img.AltText ?? "Kommentarbild")" class="img-fluid mb-2" style="max-height:320px;" loading="lazy" decoding="async" />
                         }
                     }
 
-                    @if (!replyDeleted && User.Identity?.IsAuthenticated == true)
+                    <div class="d-flex align-items-center gap-2 small mt-1 flex-wrap">
+                        <span class="mv-badge">👍 @replySummary.ThumbUp</span>
+                        <span class="mv-badge">👎 @replySummary.ThumbDown</span>
+                        @if (!replyDeleted && isAuthenticated)
+                        {
+                            <form method="post" asp-page-handler="RateComment" asp-route-slug="@article.Slug">
+                                <input type="hidden" name="commentId" value="@reply.Id" />
+                                <input type="hidden" name="value" value="ThumbUp" />
+                                <button type="submit" class="btn btn-link btn-sm p-0">👍</button>
+                            </form>
+                            <form method="post" asp-page-handler="RateComment" asp-route-slug="@article.Slug">
+                                <input type="hidden" name="commentId" value="@reply.Id" />
+                                <input type="hidden" name="value" value="ThumbDown" />
+                                <button type="submit" class="btn btn-link btn-sm p-0">👎</button>
+                            </form>
+                        }
+                    </div>
+
+                    @if (!replyDeleted && isAuthenticated)
                     {
                         var replyIsOwner = reply.UserId.ToString() == currentUserId;
-                        <div class="small">
-                            @if (replyIsOwner || Model.IsModerator)
+                        <div class="small mt-2">
+                            @if (Model.CanModerateComments)
+                            {
+                                <form method="post" asp-page-handler="HighlightComment" asp-route-slug="@article.Slug" class="d-inline">
+                                    <input type="hidden" name="commentId" value="@reply.Id" />
+                                    <input type="hidden" name="highlighted" value="@((!reply.IsHighlighted).ToString().ToLower())" />
+                                    <button type="submit" class="btn btn-link btn-sm p-0">
+                                        @(reply.IsHighlighted ? "Auszeichnung entfernen" : "Auszeichnen")
+                                    </button>
+                                </form>
+                            }
+                            @if (replyIsOwner || Model.CanModerateComments)
                             {
                                 <form method="post" asp-page-handler="DeleteComment" asp-route-slug="@article.Slug" class="d-inline"
                                       onsubmit="return confirm('Kommentar löschen?');">
@@ -284,6 +405,6 @@
 
     @if (roots.Count == 0)
     {
-        <p class="text-muted">Noch keine Kommentare.</p>
+        <p class="text-muted">Noch keine Zeugnisse.</p>
     }
 </section>

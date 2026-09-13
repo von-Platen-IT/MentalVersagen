@@ -3,101 +3,98 @@
 @inject SignInManager<User> SignInManager
 @inject UserManager<User> UserManager
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - BlogCms.Web</title>
-    <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <title>@ViewData["Title"] — Mentalversagen</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/BlogCms.Web.styles.css" asp-append-version="true" />
+    <script type="importmap"></script>
+    @await RenderSectionAsync("Head", required: false)
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">BlogCms.Web</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-page="/Articles/Index">Artikel</a>
-                        </li>
-                        @if (User.IsInRole("Admin"))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-page="/Admin/Articles/Index">Verwaltung</a>
-                            </li>
-                        }
-                        @if (User.IsInRole("Moderator") || User.IsInRole("Admin"))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-page="/Moderation/Index">Moderation</a>
-                            </li>
-                        }
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-page="/Membership/Index">Mitglied werden</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-page="/Donate/Index">Spenden</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-page="/Newsletter/Subscribe">Newsletter</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                    <ul class="navbar-nav">
-                        @if (SignInManager.IsSignedIn(User))
-                        {
-                            var currentUser = await UserManager.GetUserAsync(User);
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-page="/Account/Manage/Index">@(currentUser?.DisplayName ?? User.Identity?.Name)</a>
-                            </li>
-                            <li class="nav-item">
-                                <form method="post" asp-page="/Account/Logout">
-                                    <button type="submit" class="btn btn-link nav-link text-dark">Abmelden</button>
-                                </form>
-                            </li>
-                        }
-                        else
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-page="/Account/Register">Registrieren</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-page="/Account/Login">Anmelden</a>
-                            </li>
-                        }
-                    </ul>
-                </div>
-            </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
+    <a class="skip-link" href="#main-content">Zum Inhalt</a>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - BlogCms.Web - <a asp-area="" asp-page="/Privacy">Privacy</a>
+    <nav class="mv-navbar" aria-label="Hauptnavigation">
+        <div class="container d-flex align-items-center gap-2">
+            <a class="navbar-brand p-0" href="/" aria-label="Mentalversagen">
+                <img src="/pics/Mentalversagen_schriftzug.png" alt="Mentalversagen" />
+            </a>
+
+            <button class="navbar-toggler border-0 ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#mv-nav"
+                    aria-controls="mv-nav" aria-expanded="false" aria-label="Menü öffnen/schließen">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse flex-grow-1" id="mv-nav">
+                <ul class="navbar-nav flex-grow-1">
+                    <li class="nav-item"><a class="nav-link" asp-page="/Index">Start</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-page="/Articles/Index">Akten</a></li>
+                    @if (User.IsInRole(nameof(BlogCms.Domain.Enums.UserRole.Author)) || User.IsInRole(nameof(BlogCms.Domain.Enums.UserRole.Admin)))
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-page="/Admin/Articles/Index">Verwaltung</a></li>
+                    }
+                    @if (User.IsInRole(nameof(BlogCms.Domain.Enums.UserRole.Admin)))
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-page="/Admin/LinkLists/Index">Kurieren</a></li>
+                    }
+                    @if (User.IsInRole("Moderator") || User.IsInRole("Admin"))
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-page="/Moderation/Index">Moderation</a></li>
+                    }
+                    <li class="nav-item"><a class="nav-link" asp-page="/Membership/Index">Mitgliedschaft</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-page="/Donate/Index">Spenden</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-page="/Newsletter/Subscribe">Archivpost</a></li>
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    @if (SignInManager.IsSignedIn(User))
+                    {
+                        var currentUser = await UserManager.GetUserAsync(User);
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Account/Manage/Index">@(currentUser?.DisplayName ?? User.Identity?.Name)</a>
+                        </li>
+                        <li class="nav-item">
+                            <form method="post" asp-page="/Account/Logout" class="m-0">
+                                <button type="submit" class="nav-link btn btn-link p-0 w-100 text-start">Abmelden</button>
+                            </form>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-page="/Account/Login">Anmelden</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-page="/Account/Register">Registrieren</a></li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main id="main-content">
+        <div class="container py-4">
+            @RenderBody()
+        </div>
+    </main>
+
+    <footer class="mv-footer mt-5">
+        <div class="container py-4">
+            <div class="d-flex flex-wrap gap-3 justify-content-between align-items-center">
+                <span class="meta-mono">Mentalversagen · Fakten. Hinweise. Fragen.</span>
+                <span>
+                    <a asp-area="" asp-page="/Privacy">Privatsphäre</a>
+                    <span class="mx-2">·</span>
+                    <a href="/feed">RSS</a>
+                    <span class="mx-2">·</span>
+                    <span>&copy; @DateTime.UtcNow.Year</span>
+                </span>
+            </div>
         </div>
     </footer>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -1,17 +1,31 @@
 @page
 @model BlogCms.Web.Pages.Membership.IndexModel
 @{
-    ViewData["Title"] = "Mitglied werden";
+    ViewData["Title"] = "Mitgliedschaft";
+    var header = new BlogCms.Web.Models.PageHeaderModel
+    {
+        Slide = 1,
+        Title = "Mitgliedschaft",
+        Sub = "Premium-Akten lesen und unabhängige Recherche stützen."
+    };
 }
 
-<h1>Mitglied werden</h1>
-<p>
-    Mit einer Mitgliedschaft unterstützt du unabhängigen Journalismus und erhältst
-    Zugriff auf alle Premium-Artikel.
-</p>
+<partial name="_PageHeader" model="header" />
 
-@* Subscription checkout is wired up in module 04 (Monetarisierung). *@
-<p>
-    <a class="btn btn-primary" asp-page="/Membership/Checkout">Mitgliedschaft abschließen</a>
-    <a class="btn btn-outline-secondary" asp-page="/Donate/Index">Einmalig spenden</a>
-</p>
+<div class="mv-doc mt-4">
+    <h2 class="h4">Was bildet die Mitgliedschaft?</h2>
+    <p>
+        Mit einer Mitgliedschaft unterstützt du unabhängigen Journalismus und öffnest den
+        vollständigen Zugang zu allen Premium-Akten. Ohne Mitgliedschaft bleiben öffentliche
+        Akten – auf die zugehörige Mappe lässt sich aber immer lesbar zurückgreifen.
+    </p>
+
+    <div class="d-flex gap-2 flex-wrap mt-3">
+        <a class="btn btn-primary" asp-page="/Membership/Checkout">Mitgliedschaft abschließen</a>
+        <a class="btn btn-outline-secondary" asp-page="/Donate/Index">Einmalig spenden</a>
+    </div>
+
+    <p class="meta-mono mt-3 mb-0">
+        Fakten. Hinweise. Fragen. Die Premium-Akte wird dir sofort nach Abschluss gezeigt.
+    </p>
+</div>
