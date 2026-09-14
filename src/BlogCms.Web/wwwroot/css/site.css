@@ -108,25 +108,39 @@ code { font-family: var(--mv-font-mono); }
   filter: drop-shadow(var(--mv-shadow-drop));
 }
 
-.mv-navbar .nav-link {
+.mv-navbar {
+  /* Horizontales Innenabstand der Nav-Links an einer Stelle steuerbar. */
+  --mv-navlink-pad-x: 1.1rem;
+}
+
+/* Sichtbarer Abstand zwischen den Menüpunkten (auch auf Desktop). */
+.mv-navbar .navbar-nav {
+  gap: 0.15rem;
+}
+
+/*
+ * Spezifität bewusst höher als Bootstrap (.navbar-expand-lg .navbar-nav .nav-link),
+ * damit unser Padding nicht überschrieben wird.
+ */
+.mv-navbar .navbar-nav .nav-link {
   color: var(--mv-text-dim);
   position: relative;
   font-family: var(--mv-font-mono);
   font-size: 0.74rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  padding: 0.9rem 0.8rem;
+  padding: 0.9rem var(--mv-navlink-pad-x);
 }
 
-.mv-navbar .nav-link:hover,
-.mv-navbar .nav-link.active {
+.mv-navbar .navbar-nav .nav-link:hover,
+.mv-navbar .navbar-nav .nav-link.active {
   color: var(--mv-text);
 }
 
-.mv-navbar .nav-link::after {
+.mv-navbar .navbar-nav .nav-link::after {
   content: "";
   position: absolute;
-  left: 0.8rem;
+  left: var(--mv-navlink-pad-x);
   right: 100%;
   bottom: 0.55rem;
   height: 2px;
@@ -134,9 +148,9 @@ code { font-family: var(--mv-font-mono); }
   transition: right 0.22s ease;
 }
 
-.mv-navbar .nav-link:hover::after,
-.mv-navbar .nav-link.active::after {
-  right: 0.8rem;
+.mv-navbar .navbar-nav .nav-link:hover::after,
+.mv-navbar .navbar-nav .nav-link.active::after {
+  right: var(--mv-navlink-pad-x);
 }
 
 /* ---------- Buttons ---------- */
@@ -533,20 +547,13 @@ code { font-family: var(--mv-font-mono); }
   }
 }
 
-/* Kompaktere Desktop-Navigation, damit alle Punkte in einer Zeile bleiben */
-@media (min-width: 992px) {
-  .mv-navbar .nav-link {
-    padding-left: 0.6rem;
-    padding-right: 0.6rem;
-  }
-
-  .mv-navbar .nav-link::after {
-    left: 0.6rem;
-  }
-
-  .mv-navbar .nav-link:hover::after,
-  .mv-navbar .nav-link.active::after {
-    right: 0.6rem;
+/*
+ * Im schmalen Desktop-Bereich (992–1199px) den Innenabstand leicht verringern,
+ * damit alle Menüpunkte in einer Zeile bleiben – ohne die Lesbarkeit zu opfern.
+ */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .mv-navbar {
+    --mv-navlink-pad-x: 0.7rem;
   }
 }
 

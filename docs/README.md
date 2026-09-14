@@ -8,7 +8,7 @@ Sie ergänzt die bestehenden Dokumente im Projekt-Root:
 
 | Dokument | Inhalt |
 |---|---|
-| [`RUNNING.md`](../RUNNING.md) | Voraussetzungen, Schnellstart, Konfiguration, Tests |
+| [`RUNNING.md`](../RUNNING.md) | Voraussetzungen, Schnellstart, Client-Bibliotheken (LibMan/Bootstrap), Docker, Konfiguration, Tests |
 | [`README.md`](../README.md) | Pflichtenheft-Übersicht, Struktur |
 | [`DataSchema.md`](../DataSchema.md) | Single Point of Truth — Datenmodell |
 | [`00-Uebersicht.md`](../00-Uebersicht.md) … [`05-Benutzerverwaltung-Auth.md`](../05-Benutzerverwaltung-Auth.md) | Feature-Spezifikationen (Module 01–05) |

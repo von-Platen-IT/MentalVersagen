@@ -7,7 +7,29 @@ Projekt-Root (`*.md`), der Code unter `src/`.
 ## Voraussetzungen
 
 - .NET SDK 10
-- Docker + Docker Compose
+- Docker + Docker Compose (für die lokale PostgreSQL; optional auch für die App)
+
+## Client-Bibliotheken (LibMan / Bootstrap)
+
+Bootstrap wird nicht eingecheckt, sondern über **LibMan** verwaltet
+([`src/BlogCms.Web/libman.json`](src/BlogCms.Web/libman.json)); die Dateien landen
+unter `src/BlogCms.Web/wwwroot/lib/bootstrap/dist/`.
+
+Das NuGet-Paket `Microsoft.Web.LibraryManager.Build` (referenziert in
+[`BlogCms.Web.csproj`](src/BlogCms.Web/BlogCms.Web.csproj)) führt den Restore
+**automatisch** bei jedem `dotnet build`/`dotnet publish` aus. Es ist daher
+**kein manueller Schritt und kein global installiertes Tool** nötig – weder auf
+dem Host noch in Docker-Images oder CI (Voraussetzung: Netzwerkzugriff auf
+`cdn.jsdelivr.net` beim Build). Beim `publish` werden die Bootstrap-Dateien in
+die Ausgabe übernommen (inkl. vor-komprimierter `.br`/`.gz`-Varianten).
+
+**Manueller Fallback** (z. B. IDE ohne MSBuild-Integration):
+
+```bash
+dotnet tool install -g Microsoft.Web.LibraryManager.Cli
+cd src/BlogCms.Web
+libman restore
+```
 
 ## Schnellstart
 
@@ -16,6 +38,7 @@ Projekt-Root (`*.md`), der Code unter `src/`.
 docker compose up -d
 
 # 2. Abhängigkeiten wiederherstellen und bauen
+#    (holt Bootstrap automatisch via LibMan mit – siehe oben)
 dotnet build src/BlogCms.slnx
 
 # 3. Migrationen anwenden
@@ -46,6 +69,57 @@ lokalen PostgreSQL auf 5432). Über die Umgebungsvariable `POSTGRES_PORT` änder
 | E-Mail | `DevEmailSender` schreibt HTML-Dateien nach `bin/.../App_Data/emails` |
 | Zahlungen | Ohne `Stripe:SecretKey` simuliert `FakeStripeService` Checkout/Portal; Webhook-Signaturprüfung bleibt real |
 | Medien-Storage | `LocalDiskStorageService` speichert unter `wwwroot/uploads` (Provider `Local`) |
+
+## Docker
+
+Es gibt zwei Varianten; beide nutzen dieselbe [`docker-compose.yml`](docker-compose.yml).
+
+### Variante A — nur PostgreSQL im Container (Standard)
+
+Wie im Schnellstart: `docker compose up -d` startet ausschließlich die
+Datenbank, die App läuft auf dem Host per `dotnet run`. Der LibMan-/Bootstrap-
+Restore passiert dabei automatisch beim `dotnet build` auf dem Host.
+
+### Variante B — Datenbank **und** App im Container
+
+Das [`Dockerfile`](Dockerfile) baut die Web-App als Multi-Stage-Image
+(SDK-Build → schlankes ASP.NET-Runtime-Image, Ausführung als Nicht-Root-User).
+Der Bootstrap-Restore läuft automatisch im Image-Build über `dotnet publish` –
+es muss **nichts** zusätzlich installiert werden.
+
+```bash
+# 1. Image bauen und DB + App starten (Compose-Profil "app")
+docker compose --profile app up -d --build
+
+# 2. Migrationen anwenden (vom Host gegen die veröffentlichte DB auf Port 5433)
+dotnet ef database update \
+  -p src/BlogCms.Infrastructure/BlogCms.Infrastructure.csproj \
+  -s src/BlogCms.Web/BlogCms.Web.csproj
+
+# 3. Aufrufen: http://localhost:5080
+```
+
+Wichtige Punkte:
+
+- Der App-Container erreicht die DB über den Compose-DNS-Namen `postgres`
+  (nicht `localhost`). Der Connection-String wird per
+  `ConnectionStrings__DefaultConnection` aus der Compose-Datei gesetzt und
+  überschreibt damit `appsettings.Development.json`.
+- Das Profil `app` lässt den Standard-Workflow unverändert: ein einfaches
+  `docker compose up -d` startet weiterhin nur PostgreSQL.
+- Hochgeladene Medien liegen im Volume `blogcms-uploads`
+  (`/app/wwwroot/uploads`) und überleben einen Container-Neustart.
+- Anpassbar über Umgebungsvariablen: `APP_PORT` (Host-Port, Standard `5080`),
+  `ASPNETCORE_ENVIRONMENT` (Standard `Development`), `POSTGRES_USER`,
+  `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT`.
+- Die App wendet **keine** Migrationen automatisch an; Schritt 2 ist erforderlich.
+
+Aufräumen:
+
+```bash
+docker compose --profile app down        # Container stoppen/entfernen
+docker compose --profile app down -v     # zusätzlich Volumes löschen
+```
 
 ## Tests
 

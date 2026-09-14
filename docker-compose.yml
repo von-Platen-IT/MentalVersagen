@@ -19,5 +19,34 @@ services:
       timeout: 5s
       retries: 5
 
+  # Optionaler App-Container. Standardmäßig inaktiv (Compose-Profil "app"),
+  # damit `docker compose up -d` weiterhin nur PostgreSQL startet.
+  #
+  # Starten inkl. Neu-Build:
+  #   docker compose --profile app up -d --build
+  #
+  # Hinweis: Der LibMan-Restore für Bootstrap läuft beim Image-Build
+  # automatisch über `dotnet publish` (NuGet-Paket Microsoft.Web.LibraryManager.Build).
+  app:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: blogcms-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Im Container heißt der DB-Host "postgres" (Compose-DNS), nicht "localhost".
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-blogcms};Username=${POSTGRES_USER:-blogcms};Password=${POSTGRES_PASSWORD:-blogcms_dev_password}"
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+    ports:
+      - "${APP_PORT:-5080}:8080"
+    volumes:
+      # Persistiert hochgeladene Medien (Provider "Local").
+      - blogcms-uploads:/app/wwwroot/uploads
+
 volumes:
   blogcms-postgres-data:
+  blogcms-uploads:

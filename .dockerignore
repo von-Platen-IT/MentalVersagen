@@ -1,0 +1,23 @@
+# Build-Artefakte
+**/bin/
+**/obj/
+
+# VCS / IDE / lokale User-Dateien
+.git/
+.gitignore
+.vs/
+.idea/
+*.user
+
+# Dokumentation und lokale Assets (nicht für das Runtime-Image nötig)
+pics/
+docs/
+plans/
+**/*.md
+
+# Lokal abgelegte Uploads (zur Laufzeit über Volume gemountet)
+src/BlogCms.Web/wwwroot/uploads/
+
+# Docker-Dateien selbst
+Dockerfile
+.dockerignore
