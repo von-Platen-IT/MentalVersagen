@@ -16,53 +16,66 @@
 
 <partial name="_PageHeader" model="headerModel" />
 
-<form method="get" class="mt-4 row g-2 align-items-end" aria-label="Akten filtern">
-    <div class="col-md-3">
-        <label class="form-label" for="query">Suche</label>
-        <input class="form-control" id="query" name="query" value="@Model.Query" placeholder="Titel oder Kurzbeschreibung" />
+<form method="get" class="mv-filter mt-4" aria-label="Akten filtern">
+    <div class="mv-filter__head">
+        <span class="meta-mono">Recherche-Filter</span>
     </div>
-    <div class="col-md-2">
-        <label class="form-label" for="category">Kategorie</label>
-        <select class="form-select" id="category" name="category">
-            <option value="">Alle</option>
-            @foreach (var value in Enum.GetValues<ArticleCategory>())
-            {
-                <option value="@value" selected="@(Model.Category == value)">@CategoryDisplay.Label(value)</option>
-            }
-        </select>
+
+    <div class="row g-3 align-items-end">
+        <div class="col-12 col-lg-6">
+            <label class="form-label" for="query">Suche</label>
+            <input class="form-control" id="query" name="query" value="@Model.Query" placeholder="Titel oder Kurzbeschreibung" />
+        </div>
+        <div class="col-6 col-lg-3">
+            <label class="form-label" for="category">Kategorie</label>
+            <select class="form-select" id="category" name="category">
+                <option value="">Alle</option>
+                @foreach (var value in Enum.GetValues<ArticleCategory>())
+                {
+                    <option value="@value" selected="@(Model.Category == value)">@CategoryDisplay.Label(value)</option>
+                }
+            </select>
+        </div>
+        <div class="col-6 col-lg-3">
+            <label class="form-label" for="sort">Sortierung</label>
+            <select class="form-select" id="sort" name="sort">
+                @foreach (var value in Enum.GetValues<ArticleSortOrder>())
+                {
+                    <option value="@value" selected="@(Model.Sort == value)">@value</option>
+                }
+            </select>
+        </div>
     </div>
-    <div class="col-md-2">
-        <label class="form-label" for="tag">Tag</label>
-        <select class="form-select" id="tag" name="tag">
-            <option value="">Alle</option>
-            @foreach (var t in Model.AllTags)
-            {
-                <option value="@t.Slug" selected="@(Model.TagSlug == t.Slug)">@t.Name</option>
-            }
-        </select>
-    </div>
-    <div class="col-md-2">
-        <label class="form-label" for="hashtag">Hashtag</label>
-        <select class="form-select" id="hashtag" name="hashtag">
-            <option value="">Alle</option>
-            @foreach (var h in Model.AllHashtags)
-            {
-                <option value="@h.Slug" selected="@(Model.HashtagSlug == h.Slug)">#@h.Name</option>
-            }
-        </select>
-    </div>
-    <div class="col-md-3">
-        <label class="form-label" for="sort">Sortierung</label>
-        <select class="form-select" id="sort" name="sort">
-            @foreach (var value in Enum.GetValues<ArticleSortOrder>())
-            {
-                <option value="@value" selected="@(Model.Sort == value)">@value</option>
-            }
-        </select>
-    </div>
-    <div class="col-auto">
-        <button type="submit" class="btn btn-primary">Filtern</button>
+
+    <details class="mv-filter__more" @(Model.TagSlug is not null || Model.HashtagSlug is not null ? "open" : null)>
+        <summary>Erweiterte Filter (Tag, Hashtag)</summary>
+        <div class="row g-3 mt-1">
+            <div class="col-12 col-md-6">
+                <label class="form-label" for="tag">Tag</label>
+                <select class="form-select" id="tag" name="tag">
+                    <option value="">Alle</option>
+                    @foreach (var t in Model.AllTags)
+                    {
+                        <option value="@t.Slug" selected="@(Model.TagSlug == t.Slug)">@t.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-12 col-md-6">
+                <label class="form-label" for="hashtag">Hashtag</label>
+                <select class="form-select" id="hashtag" name="hashtag">
+                    <option value="">Alle</option>
+                    @foreach (var h in Model.AllHashtags)
+                    {
+                        <option value="@h.Slug" selected="@(Model.HashtagSlug == h.Slug)">#@h.Name</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </details>
+
+    <div class="mv-filter__actions">
         <a class="btn btn-outline-secondary" asp-page="/Articles/Index">Zurücksetzen</a>
+        <button type="submit" class="btn btn-primary">Filtern</button>
     </div>
 </form>
 

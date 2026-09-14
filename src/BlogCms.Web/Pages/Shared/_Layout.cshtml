@@ -11,6 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <script type="importmap"></script>
     @await RenderSectionAsync("Head", required: false)
@@ -18,8 +19,8 @@
 <body>
     <a class="skip-link" href="#main-content">Zum Inhalt</a>
 
-    <nav class="mv-navbar" aria-label="Hauptnavigation">
-        <div class="container d-flex align-items-center gap-2">
+    <nav class="mv-navbar navbar-expand-lg" aria-label="Hauptnavigation">
+        <div class="container d-flex flex-nowrap align-items-center gap-2">
             <a class="navbar-brand p-0" href="/" aria-label="Mentalversagen">
                 <img src="/pics/Mentalversagen_schriftzug.png" alt="Mentalversagen" />
             </a>

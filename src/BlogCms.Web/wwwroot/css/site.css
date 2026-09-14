@@ -456,6 +456,100 @@ code { font-family: var(--mv-font-mono); }
   border-color: var(--mv-red);
 }
 
+/* ---------- Filter-Panel (Akten) ---------- */
+.mv-filter {
+  background: var(--mv-bg-card);
+  border: 1px solid var(--mv-border);
+  padding: clamp(1rem, 2vw, 1.35rem);
+}
+
+.mv-filter__head {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--mv-border);
+}
+
+.mv-filter__head::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  background: var(--mv-red);
+  transform: rotate(45deg);
+  flex: 0 0 auto;
+}
+
+.mv-filter__more {
+  margin-top: 1rem;
+}
+
+.mv-filter__more > summary {
+  cursor: pointer;
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  font-family: var(--mv-font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mv-text-dim);
+}
+
+.mv-filter__more > summary::-webkit-details-marker {
+  display: none;
+}
+
+.mv-filter__more > summary::before {
+  content: "+";
+  color: var(--mv-red);
+  font-weight: 600;
+}
+
+.mv-filter__more[open] > summary::before {
+  content: "\2212"; /* Minuszeichen */
+}
+
+.mv-filter__more > summary:hover {
+  color: var(--mv-text);
+}
+
+.mv-filter__actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--mv-border);
+}
+
+@media (max-width: 575.98px) {
+  .mv-filter__actions .btn {
+    flex: 1 1 100%;
+  }
+}
+
+/* Kompaktere Desktop-Navigation, damit alle Punkte in einer Zeile bleiben */
+@media (min-width: 992px) {
+  .mv-navbar .nav-link {
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+  }
+
+  .mv-navbar .nav-link::after {
+    left: 0.6rem;
+  }
+
+  .mv-navbar .nav-link:hover::after,
+  .mv-navbar .nav-link.active::after {
+    right: 0.6rem;
+  }
+}
+
 /* ---------- Tabellen / Admin ---------- */
 .table {
   color: var(--mv-text);
