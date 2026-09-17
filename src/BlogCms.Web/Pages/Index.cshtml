@@ -11,7 +11,10 @@
         <p class="hero-tagline">Aufzeichnungen eines Verschwörungstheoretikers</p>
         <div class="hero-cta">
             <a class="btn btn-primary" asp-page="/Articles/Index">Aktuelle Akten</a>
-            <a class="btn btn-outline-secondary" asp-page="/Membership/Index">Mitglied werden</a>
+            @if (FeatureConfig.Value.MonetizationEnabled)
+            {
+                <a class="btn btn-outline-secondary" asp-page="/Membership/Index">Mitglied werden</a>
+            }
         </div>
         <div class="d-flex gap-2 flex-wrap justify-content-center mt-2" aria-label="Kategorien">
             @foreach (var cat in Enum.GetValues<BlogCms.Domain.Enums.ArticleCategory>())

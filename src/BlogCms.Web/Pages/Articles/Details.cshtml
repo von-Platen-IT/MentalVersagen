@@ -53,8 +53,11 @@
                 {
                     <span class="mv-stamped mb-2">CLASSIFIED</span>
                     <p class="mb-2">Diese Akte ist Premium-Mitgliedern vorbehalten.</p>
-                    <a class="btn btn-primary" asp-page="/Membership/Index">Mitglied werden</a>
-                    @if (!isAuthenticated)
+                    @if (FeatureConfig.Value.MonetizationEnabled)
+                    {
+                        <a class="btn btn-primary" asp-page="/Membership/Index">Mitglied werden</a>
+                    }
+                    @if (!isAuthenticated && FeatureConfig.Value.LoginEnabled)
                     {
                         <a class="btn btn-outline-secondary" asp-page="/Account/Login">Anmelden</a>
                     }
@@ -62,8 +65,11 @@
                 else
                 {
                     <p class="mb-2">Diese Akte ist nur für angemeldete Leser zugänglich.</p>
-                    <a class="btn btn-primary" asp-page="/Account/Login">Anmelden</a>
-                    <a class="btn btn-outline-secondary" asp-page="/Account/Register">Registrieren</a>
+                    @if (FeatureConfig.Value.LoginEnabled)
+                    {
+                        <a class="btn btn-primary" asp-page="/Account/Login">Anmelden</a>
+                        <a class="btn btn-outline-secondary" asp-page="/Account/Register">Registrieren</a>
+                    }
                 }
             </div>
         }
@@ -128,7 +134,7 @@
                 </form>
             </div>
         }
-        else
+        else if (FeatureConfig.Value.LoginEnabled)
         {
             <p class="meta-mono mt-2 mb-0">
                 <a asp-page="/Account/Login" asp-route-returnUrl="@Url.Page("/Articles/Details", new { slug = article.Slug })">Melde dich an</a>, um die Akte zu bewerten.
@@ -174,14 +180,14 @@
         <div class="mv-teaser mt-2">@errorMessage</div>
     }
 
-    @if (!isAuthenticated)
+    @if (!isAuthenticated && FeatureConfig.Value.LoginEnabled)
     {
         <p class="meta-mono">
             <a asp-page="/Account/Login" asp-route-returnUrl="@Url.Page("/Articles/Details", new { slug = article.Slug })">Anmelden</a>,
             um zu kommentieren.
         </p>
     }
-    else
+    else if (isAuthenticated)
     {
         <form method="post" asp-page-handler="AddComment" asp-route-slug="@article.Slug" enctype="multipart/form-data" class="mb-4">
             <div class="mb-2">

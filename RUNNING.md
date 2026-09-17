@@ -61,6 +61,30 @@ lokalen PostgreSQL auf 5432). Über die Umgebungsvariable `POSTGRES_PORT` änder
 - Medien: `Media`-Sektion (`Provider`, Limits, `ConvertToWebP`, S3-Zugangsdaten).
 - Zahlungen: `Stripe`-Sektion (`SecretKey`, `WebhookSecret`, Plan-IDs).
 - Newsletter: `Newsletter`-Sektion (`UnconfirmedRetentionDays`).
+- Feature-Flags: `Features`-Sektion (`MonetizationEnabled`, `LoginEnabled`).
+
+#### Feature-Flags (`.env`)
+
+Zwei Schalter steuern die **UI-Sichtbarkeit** von Monetarisierung und Login:
+
+| Parameter (`.env`) | Standard | Wirkung bei `false` |
+|---|---|---|
+| `Features__MonetizationEnabled` | `true` | Mitgliedschaft-/Spenden-/Premium-CTA werden nicht gerendert |
+| `Features__LoginEnabled` | `true` | Anmelden-/Registrieren-Links und Anmelde-Hinweise werden nicht gerendert |
+
+Die Werte sind reine UI-Steuerung: Alle Seiten, Routen und Policies bleiben aktiv.
+`/Account/Login` und die Monetarisierungsseiten sind per Direkt-URL weiterhin
+erreichbar; „Abmelden" bleibt für angemeldete Nutzer sichtbar.
+
+**Laden der `.env`:** Beim Start liest die App eine `.env` im Arbeitsverzeichnis
+oder in einem übergeordneten Ordner und setzt deren Einträge (`KEY=VALUE`) als
+Umgebungsvariablen. Über die .NET-Konvention `__` werden sie auf die
+`Features`-Sektion abgebildet. Reale Umgebungsvariablen (z. B. aus Docker) haben
+Vorrang. Vorlage: [`.env.example`](.env.example) — einfach nach `.env` kopieren:
+
+```bash
+cp .env.example .env
+```
 
 ### Entwicklungs-Fakes (keine Credentials nötig)
 
@@ -111,7 +135,9 @@ Wichtige Punkte:
   (`/app/wwwroot/uploads`) und überleben einen Container-Neustart.
 - Anpassbar über Umgebungsvariablen: `APP_PORT` (Host-Port, Standard `5080`),
   `ASPNETCORE_ENVIRONMENT` (Standard `Development`), `POSTGRES_USER`,
-  `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT`.
+  `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT` sowie die Feature-Flags
+  `Features__MonetizationEnabled` und `Features__LoginEnabled` — letztere werden
+  aus der `.env` an den App-Container durchgereicht (Standard jeweils `true`).
 - Die App wendet **keine** Migrationen automatisch an; Schritt 2 ist erforderlich.
 
 Aufräumen:

@@ -41,6 +41,9 @@ services:
       # Im Container heißt der DB-Host "postgres" (Compose-DNS), nicht "localhost".
       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-blogcms};Username=${POSTGRES_USER:-blogcms};Password=${POSTGRES_PASSWORD:-blogcms_dev_password}"
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      # Feature-Flags aus der .env (UI-Sichtbarkeit von Monetarisierung/Login).
+      Features__MonetizationEnabled: ${Features__MonetizationEnabled:-true}
+      Features__LoginEnabled: ${Features__LoginEnabled:-true}
     ports:
       - "${APP_PORT:-5080}:8080"
     volumes:

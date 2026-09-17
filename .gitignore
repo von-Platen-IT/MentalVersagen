@@ -5,6 +5,7 @@ obj/
 ## User-specific / secrets
 *.user
 appsettings.*.local.json
+.env
 
 ## Rider / VS
 .idea/

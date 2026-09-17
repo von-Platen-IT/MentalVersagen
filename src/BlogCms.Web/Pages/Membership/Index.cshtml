@@ -22,7 +22,10 @@
 
     <div class="d-flex gap-2 flex-wrap mt-3">
         <a class="btn btn-primary" asp-page="/Membership/Checkout">Mitgliedschaft abschließen</a>
-        <a class="btn btn-outline-secondary" asp-page="/Donate/Index">Einmalig spenden</a>
+        @if (FeatureConfig.Value.MonetizationEnabled)
+        {
+            <a class="btn btn-outline-secondary" asp-page="/Donate/Index">Einmalig spenden</a>
+        }
     </div>
 
     <p class="meta-mono mt-3 mb-0">

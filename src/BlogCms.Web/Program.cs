@@ -10,10 +10,16 @@ using BlogCms.Infrastructure.Newsletter;
 using BlogCms.Infrastructure.Payments;
 using BlogCms.Infrastructure.Ratings;
 using BlogCms.Web.Authorization;
+using BlogCms.Web.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+
+// Load local .env (KEY=VALUE) into process environment variables BEFORE the
+// configuration is built, so flags like Features__MonetizationEnabled are picked
+// up. Real environment variables (e.g. from Docker) keep precedence.
+EnvFileLoader.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +27,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddControllers();
 builder.Services.AddMemoryCache();
+
+// Feature flags: steuern die UI-Sichtbarkeit von Monetarisierung und Login
+// (Sektion "Features" bzw. z. B. Features__MonetizationEnabled / Features__LoginEnabled).
+builder.Services.Configure<FeatureOptions>(
+    builder.Configuration.GetSection(FeatureOptions.SectionName));
 
 // Database: PostgreSQL via EF Core. The connection string is supplied through
 // configuration (appsettings.Development.json, environment variables such as

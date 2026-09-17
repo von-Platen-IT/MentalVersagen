@@ -18,8 +18,11 @@
         <dt class="col-sm-3">Rolle</dt>
         <dd class="col-sm-9">@Model.CurrentUser.Role</dd>
 
-        <dt class="col-sm-3">Abo-Status</dt>
-        <dd class="col-sm-9">@Model.CurrentUser.SubscriptionStatus</dd>
+        @if (FeatureConfig.Value.MonetizationEnabled)
+        {
+            <dt class="col-sm-3">Abo-Status</dt>
+            <dd class="col-sm-9">@Model.CurrentUser.SubscriptionStatus</dd>
+        }
     </dl>
 }
 
