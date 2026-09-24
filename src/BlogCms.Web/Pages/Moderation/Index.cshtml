@@ -34,7 +34,7 @@
             {
                 <tr>
                     <td><span class="mv-badge mv-badge--red">@group.ReportCount</span></td>
-                    <td style="white-space: pre-wrap;">@(group.Comment.DeletedAt is null ? group.Comment.ContentText : "(gelöscht)")</td>
+                    <td class="mv-preline">@(group.Comment.DeletedAt is null ? group.Comment.ContentText : "(gelöscht)")</td>
                     <td>@(group.Comment.User?.DisplayName ?? "Gelöschter Nutzer")</td>
                     <td class="text-end">
                         <form method="post" asp-page-handler="Approve" asp-route-commentId="@group.Comment.Id" class="d-inline">
@@ -74,7 +74,7 @@
             {
                 <tr>
                     <td><span class="mv-badge">@comment.Status</span></td>
-                    <td style="white-space: pre-wrap;">@comment.ContentText</td>
+                    <td class="mv-preline">@comment.ContentText</td>
                     <td>@(comment.User?.DisplayName ?? "Gelöschter Nutzer")</td>
                     <td class="text-end">
                         <form method="post" asp-page-handler="Approve" asp-route-commentId="@comment.Id" class="d-inline">

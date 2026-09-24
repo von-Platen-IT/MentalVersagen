@@ -1,20 +1,19 @@
 @page "{slug}"
 @model BlogCms.Web.Pages.LinkLists.DetailsModel
 @{
-    ViewData["Title"] = Model.LinkList?.Title ?? "Linkliste";
-
     if (Model.LinkList is null)
     {
-        <header class="page-header" style="--ph-img: url('/pics/header_slides_1.png');">
-            <div class="page-header__inner">
-                <a class="page-header__logo" href="/" aria-label="Mentalversagen">
-                    <img src="/pics/Mentalversagen_schriftzug.png" alt="Mentalversagen" />
-                </a>
-            </div>
-        </header>
-        <h1>Linkliste nicht gefunden</h1>
+        ViewData["Title"] = "Linkliste nicht gefunden";
+        var notFoundHeader = new BlogCms.Web.Models.PageHeaderModel
+        {
+            Slide = 1,
+            Title = "Linkliste nicht gefunden"
+        };
+        <partial name="_PageHeader" model="notFoundHeader" />
         return;
     }
+
+    ViewData["Title"] = Model.LinkList.Title;
 
     var header = new BlogCms.Web.Models.PageHeaderModel
     {

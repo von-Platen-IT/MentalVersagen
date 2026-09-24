@@ -240,7 +240,7 @@
             }
             else
             {
-                <p class="mb-1" style="white-space: pre-wrap;">@root.ContentText</p>
+                <p class="mb-1 mv-preline">@root.ContentText</p>
                 @foreach (var img in root.MediaAssets)
                 {
                     var commentImageUrl = Model.GetImageUrl(img);
@@ -274,7 +274,7 @@
                 var isOwner = root.UserId.ToString() == currentUserId;
                 <div class="small mt-2">
                     <details>
-                        <summary class="text-secondary" style="cursor:pointer;">Antworten</summary>
+                        <summary class="text-secondary mv-summary">Antworten</summary>
                         <form method="post" asp-page-handler="AddComment" asp-route-slug="@article.Slug" class="mt-2">
                             <input type="hidden" name="parentId" value="@root.Id" />
                             <textarea name="content" class="form-control form-control-sm" rows="2" required></textarea>
@@ -298,14 +298,14 @@
                         <form method="post" asp-page-handler="DeleteComment" asp-route-slug="@article.Slug" class="d-inline"
                               onsubmit="return confirm('Kommentar löschen?');">
                             <input type="hidden" name="commentId" value="@root.Id" />
-                            <button type="submit" class="btn btn-link btn-sm text-danger p-0">Löschen</button>
+                            <button type="submit" class="btn btn-link btn-sm mv-text-danger p-0">Löschen</button>
                         </form>
                     }
 
                     @if (isOwner)
                     {
                         <details class="mt-1">
-                            <summary class="text-secondary" style="cursor:pointer;">Bearbeiten</summary>
+                            <summary class="text-secondary mv-summary">Bearbeiten</summary>
                             <form method="post" asp-page-handler="EditComment" asp-route-slug="@article.Slug" class="mt-2">
                                 <input type="hidden" name="commentId" value="@root.Id" />
                                 <textarea name="content" class="form-control form-control-sm" rows="2" required>@root.ContentText</textarea>
@@ -317,7 +317,7 @@
                     @if (!isOwner)
                     {
                         <details class="mt-1">
-                            <summary class="text-secondary" style="cursor:pointer;">Melden</summary>
+                            <summary class="text-secondary mv-summary">Melden</summary>
                             <form method="post" asp-page-handler="ReportComment" asp-route-slug="@article.Slug" class="mt-2">
                                 <input type="hidden" name="commentId" value="@root.Id" />
                                 <select name="reason" class="form-select form-select-sm mb-1" asp-items="Html.GetEnumSelectList<BlogCms.Domain.Enums.ReportReason>()"></select>
@@ -357,7 +357,7 @@
                     }
                     else
                     {
-                        <p class="mb-1" style="white-space: pre-wrap;">@reply.ContentText</p>
+                        <p class="mb-1 mv-preline">@reply.ContentText</p>
                         @foreach (var img in reply.MediaAssets)
                         {
                             var replyImageUrl = Model.GetImageUrl(img);
@@ -404,13 +404,13 @@
                                 <form method="post" asp-page-handler="DeleteComment" asp-route-slug="@article.Slug" class="d-inline"
                                       onsubmit="return confirm('Kommentar löschen?');">
                                     <input type="hidden" name="commentId" value="@reply.Id" />
-                                    <button type="submit" class="btn btn-link btn-sm text-danger p-0">Löschen</button>
+                                    <button type="submit" class="btn btn-link btn-sm mv-text-danger p-0">Löschen</button>
                                 </form>
                             }
                             @if (!replyIsOwner)
                             {
                                 <details class="mt-1">
-                                    <summary class="text-secondary" style="cursor:pointer;">Melden</summary>
+                                    <summary class="text-secondary mv-summary">Melden</summary>
                                     <form method="post" asp-page-handler="ReportComment" asp-route-slug="@article.Slug" class="mt-2">
                                         <input type="hidden" name="commentId" value="@reply.Id" />
                                         <select name="reason" class="form-select form-select-sm mb-1" asp-items="Html.GetEnumSelectList<BlogCms.Domain.Enums.ReportReason>()"></select>

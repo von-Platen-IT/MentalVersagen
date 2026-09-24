@@ -13,19 +13,19 @@
 <partial name="_PageHeader" model="header" />
 
 <div class="mv-doc mt-4">
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div asp-validation-summary="ModelOnly" class="mv-text-danger"></div>
 
     <form method="post">
         <div class="mb-3">
             <label asp-for="Input.Email" class="form-label"></label>
             <input asp-for="Input.Email" class="form-control" autocomplete="username" />
-            <span asp-validation-for="Input.Email" class="text-danger"></span>
+            <span asp-validation-for="Input.Email" class="mv-text-danger"></span>
         </div>
 
         <div class="mb-3">
             <label asp-for="Input.Password" class="form-label"></label>
             <input asp-for="Input.Password" class="form-control" autocomplete="current-password" />
-            <span asp-validation-for="Input.Password" class="text-danger"></span>
+            <span asp-validation-for="Input.Password" class="mv-text-danger"></span>
         </div>
 
         <div class="form-check mb-3">

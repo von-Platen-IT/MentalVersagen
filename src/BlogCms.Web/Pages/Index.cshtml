@@ -75,37 +75,8 @@
     <div class="mv-cases" data-article-grid>
         @foreach (var article in Model.LatestArticles)
         {
-            var image = Model.TitleImageUrl(article);
-            <article class="mv-case">
-                <div class="mv-case__head">
-                    <span>ARCHIV @article.Category.ToString().ToUpperInvariant()</span>
-                    <span class="text-end">#@article.Id.ToString("N").Substring(0, 8).ToUpperInvariant()</span>
-                </div>
-                @if (image is not null)
-                {
-                    <a class="mv-case__img" asp-page="/Articles/Details" asp-route-slug="@article.Slug">
-                        <img src="@image" alt="@article.Title" loading="lazy" decoding="async" />
-                    </a>
-                }
-                <div class="mv-case__body">
-                    <h3 class="mv-case__title">
-                        <a asp-page="/Articles/Details" asp-route-slug="@article.Slug">@article.Title</a>
-                    </h3>
-                    @if (!string.IsNullOrWhiteSpace(article.Excerpt))
-                    {
-                        <p class="mv-case__excerpt">@article.Excerpt</p>
-                    }
-                    <div class="mv-case__meta">
-                        <span class="mv-badge mv-badge--open">? OFFEN</span>
-                        <span>@ArticleDisplay.AccessLabel(article.AccessLevel)</span>
-                        <span>@article.PublishedAt?.ToString("dd.MM.yyyy")</span>
-                    </div>
-                </div>
-                <div class="mv-case__footer">
-                    <span>@(article.Author?.DisplayName ?? "Archiv")</span>
-                    <a class="mv-case__next" asp-page="/Articles/Details" asp-route-slug="@article.Slug">WEITER &rarr;</a>
-                </div>
-            </article>
+            <partial name="_ArticleCard"
+                     model="@(new BlogCms.Web.Models.ArticleCardModel { Article = article, ImageUrl = Model.TitleImageUrl(article) })" />
         }
     </div>
 </div>

@@ -39,6 +39,10 @@ html {
   font-size: 16px;
   position: relative;
   overflow-x: clip;
+  /* Native Bedienelemente (Scrollbar, Datums-/Auswahlfelder) im dunklen Schema. */
+  color-scheme: dark;
+  /* Anker-Sprünge (#main-content, #comments) nicht unter der Sticky-Navbar verstecken. */
+  scroll-padding-top: 5rem;
 }
 
 body {
@@ -197,6 +201,134 @@ code { font-family: var(--mv-font-mono); }
   box-shadow: 0 0 10px rgba(210, 31, 60, 0.55);
 }
 
+/* ---------- Mobiler Menü-Button (auffällig, mit waberndem Glow) ---------- */
+/*
+ * Nur unterhalb von lg sichtbar (Bootstrap blendet .navbar-toggler darüber
+ * aus). Bewusst als roter Button mit der Aufschrift „Menü", damit der Einstieg
+ * in die Navigation sofort ins Auge fällt. Das Glühen läuft dauerhaft, aber
+ * dezent; die globale Reduced-Motion-Regel schaltet es vollständig ab.
+ */
+.mv-navtoggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.5rem 1.05rem;
+  background: linear-gradient(180deg, #ef3b52 0%, var(--mv-red) 100%);
+  color: var(--mv-ink);
+  border: 1px solid var(--mv-red);
+  border-radius: 2px;
+  font-family: var(--mv-font-mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  animation: mv-menu-pulse 3.6s ease-in-out infinite;
+}
+
+.mv-navtoggle__label { line-height: 1; }
+
+@keyframes mv-menu-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(210, 31, 60, 0.5); }
+  45% { box-shadow: 0 0 22px rgba(210, 31, 60, 0.95), 0 0 36px rgba(210, 31, 60, 0.4); }
+}
+
+@media (hover: hover) {
+  .mv-navtoggle:hover {
+    background: linear-gradient(180deg, #f74d63 0%, #e02341 100%);
+    box-shadow: 0 0 24px rgba(210, 31, 60, 1), 0 0 42px rgba(210, 31, 60, 0.5);
+  }
+}
+
+.mv-navtoggle:focus-visible {
+  outline: 2px double var(--mv-ink);
+  outline-offset: 2px;
+  box-shadow: var(--mv-glow-red-strong);
+}
+
+/* ---------- Mobiler Drawer (Kasten-Links & Untermenü) ---------- */
+/*
+ * Unterhalb von lg wird das aufgeklappte Menü zu einer eigenen Fläche; jeder
+ * Link ist ein dunkelgrauer Kasten mit schwarzem Rand — klar sichtbar und mit
+ * großer Touch-Fläche. Rein CSS, ohne zusätzliches JavaScript.
+ */
+@media (max-width: 991.98px) {
+  .mv-navbar .navbar-collapse {
+    margin-top: 0.6rem;
+    padding: 0.75rem;
+    background: var(--mv-bg-deep);
+    border: 1px solid var(--mv-border);
+  }
+
+  .mv-navbar .navbar-nav {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  /* Zweite Liste (Konto / Anmelden) mit etwas Abstand absetzen. */
+  .mv-navbar .navbar-nav.ms-auto { margin-top: 0.5rem; }
+
+  .mv-navbar .navbar-nav .nav-link {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 44px;
+    padding: 0.7rem 0.85rem;
+    background: #1c1f27;              /* dunkelgrauer Kasten */
+    border: 1px solid #000;           /* schwarzer Rand */
+    border-radius: 2px;
+    color: var(--mv-text);
+  }
+
+  /* Unterstreichungs-Effekt der Desktop-Navigation hier abschalten. */
+  .mv-navbar .navbar-nav .nav-link::after { content: none; }
+
+  .mv-navbar .navbar-nav .nav-link:hover,
+  .mv-navbar .navbar-nav .nav-link:focus-visible {
+    background: #242833;
+    color: #fff;
+  }
+
+  .mv-navbar .navbar-nav .nav-link.active,
+  .mv-navbar .navbar-nav .nav-link[aria-current="page"] {
+    border-color: var(--mv-red);
+    box-shadow: inset 3px 0 0 var(--mv-red);
+  }
+
+  /* Benutzername-Zeile: Name links, Caret rechts. */
+  .mv-navbar .navbar-nav .mv-usermenu__toggle { justify-content: space-between; }
+
+  /* Eingeschobenes Untermenü statt des schwebenden Panels. */
+  .mv-usermenu .dropdown-menu {
+    position: static;
+    width: 100%;
+    min-width: 0;
+    margin: 0.4rem 0 0 0.9rem;
+    padding: 0.25rem;
+    background: #1c1f27;
+    border: 0;
+    border-left: 3px solid var(--mv-red);
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .mv-usermenu__menu .dropdown-item {
+    margin-bottom: 0.35rem;
+    background: #23272f;
+    border: 1px solid #000;
+    border-radius: 2px;
+  }
+  .mv-usermenu__menu .dropdown-item:last-child { margin-bottom: 0; }
+
+  .mv-usermenu__menu .dropdown-divider {
+    border-color: var(--mv-border);
+    margin: 0.35rem 0.2rem;
+  }
+}
+
 /* ---------- Benutzermenü (Dropdown am Namen) ---------- */
 /*
  * Der Anzeigename ist der Auslöser des Dropdowns. Bewusst OHNE die
@@ -326,8 +458,9 @@ code { font-family: var(--mv-font-mono); }
 }
 
 .btn-outline-danger {
-  color: var(--mv-red);
-  border-color: var(--mv-red);
+  /* Aufgehelltes Rot: auf dunklem Grund ~5,9:1 (AA) statt ~3,8:1. */
+  color: #f2657a;
+  border-color: #e0556a;
 }
 
 /* Tastatur-Fokus: gleiche Glow-Verstärkung wie beim Hover — immer
@@ -871,7 +1004,16 @@ code { font-family: var(--mv-font-mono); }
 .mv-badge--theory { color: #d8a24a; }
 .mv-badge--premium { color: var(--mv-sepia); }
 .mv-badge--registered { color: #7aa2d1; }
-.mv-badge--red { color: var(--mv-red); }
+/* Aufgehelltes Rot: auf dunklem Grund ~5,9:1 (AA) statt ~3,4:1. */
+.mv-badge--red { color: #f2657a; }
+
+/*
+ * Auf der hellen Papierfläche (mv-doc) wären die hellen Grundfarben der
+ * Badges unsichtbar bzw. kontrastarm. Dort erhalten sie Tinte- bzw.
+ * dunkelrote Töne (≥ 4,5:1 auf Papier).
+ */
+.mv-doc .mv-badge { color: var(--mv-ink); }
+.mv-doc .mv-badge--red { color: #8e1728; }
 
 .mv-badge,
 .mv-pill {
@@ -1131,6 +1273,17 @@ code { font-family: var(--mv-font-mono); }
 .mv-teaser button.btn-outline-secondary {
   color: var(--mv-ink);
   border-color: rgba(11, 12, 14, 0.5);
+}
+/*
+ * Danger-Outline auf Papier: dunkelroter Ton (≥ 4,5:1), damit die Buttons
+ * auf der hellen Aktenfläche klar lesbar bleiben.
+ */
+.mv-doc a.btn-outline-danger,
+.mv-doc button.btn-outline-danger,
+.mv-teaser a.btn-outline-danger,
+.mv-teaser button.btn-outline-danger {
+  color: #8e1728;
+  border-color: #8e1728;
 }
 .mv-teaser a:not(.btn) { color: #8e1728; }
 
@@ -1435,6 +1588,114 @@ code { font-family: var(--mv-font-mono); }
   .mv-sort { flex: 1 1 100%; }
   .mv-search-link { flex: 1 1 100%; justify-content: center; }
   .mv-cases { grid-template-columns: 1fr; }
+}
+
+/* ---------- Utilities (aus Inline-Styles extrahiert) ---------- */
+/* Mehrzeilige Freitext-Inhalte (Kommentare, Moderation) mit erhaltenen Umbrüchen. */
+.mv-preline {
+  white-space: pre-wrap;
+}
+
+/* Ausklappbare <summary>-Elemente als bedienbare Schaltfläche kennzeichnen. */
+.mv-summary {
+  cursor: pointer;
+}
+
+/* Bewusst schmale Formulare (Archivpost, Spenden) für angenehme Lesbarkeit. */
+.mv-form--narrow { max-width: 460px; }
+.mv-form--medium { max-width: 520px; }
+
+/* ---------- Fehlermeldungen (barrierefrei) ---------- */
+/*
+ * Ersetzt Bootstraps .text-danger, dessen Rot (#dc3545) auf der hellen
+ * Papierfläche (mv-doc) nur ~3,2:1 erreicht. Hier zwei kontextabhängige,
+ * AA-konforme Töne (≥ 4,5:1) statt eines ungeprüften Einzelwerts.
+ */
+.mv-text-danger { color: #f2657a; }               /* auf dunklem Grund ~5,9:1 */
+.mv-doc .mv-text-danger { color: #8e1728; }        /* auf Papier ~7,1:1 */
+
+/* ---------- Print: Akten-Dokument-Look ---------- */
+/*
+ * Beim Drucken (oder PDF-Export) wird aus der dunklen Rechercheakte ein
+ * sauberes Dokument: heller Grund, schwarze Schrift, keine Glows, Rotation,
+ * Navigation oder dekorativen Ebenen. Interne Landmarken bleiben erhalten.
+ */
+@media print {
+  :root {
+    --mv-bg-deep: #ffffff;
+    --mv-bg-card: #ffffff;
+    --mv-bg-elev: #ffffff;
+    --mv-text: #000000;
+    --mv-text-dim: #444444;
+    --mv-ink: #000000;
+    --mv-paper: #ffffff;
+    --mv-border: #999999;
+    --mv-sepia: #777777;
+  }
+
+  html { color-scheme: light; }
+
+  body {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  /* Dekorative Ebenen, Navigation und Interaktionselemente ausblenden. */
+  body::before,
+  .mv-navbar,
+  .mv-footer,
+  .skip-link,
+  .page-header::after,
+  .mv-lightbox,
+  .pagination {
+    display: none !important;
+  }
+
+  /* Header als schlichte Überschriftsleiste. */
+  .page-header {
+    min-height: 0;
+    border-bottom: 2px solid #000000;
+  }
+  .page-header::before {
+    background: none;
+    position: static;
+    height: auto;
+  }
+  .page-header__inner { padding: 0 0 0.5rem; }
+  .page-header__logo img { filter: none !important; }
+  .page-header__title { text-shadow: none !important; }
+
+  /* Karten ohne Rotation, Schatten und Glow – nur klare Rahmen. */
+  .mv-case,
+  .mv-doc,
+  .mv-teaser,
+  .mv-title-image img {
+    box-shadow: none !important;
+    transform: none !important;
+    border: 1px solid #000000;
+  }
+
+  .mv-case::before,
+  .mv-doc::before { display: none; }
+
+  .mv-stamped {
+    transform: none;
+    color: #000000;
+    border-color: #000000;
+    background: none;
+    text-shadow: none;
+  }
+
+  /* Keine Seitenumbrüche mitten in Karten/Dokumenten. */
+  .mv-case,
+  .mv-doc { break-inside: avoid; }
+
+  /* Externe Ziele beim Ausdruck sichtbar machen. */
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    word-break: break-all;
+  }
 }
 
 /* ---------- Reduced Motion ---------- */

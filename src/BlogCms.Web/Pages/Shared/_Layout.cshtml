@@ -7,6 +7,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark light" />
     <title>@ViewData["Title"] — Mentalversagen</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -17,17 +18,28 @@
     @await RenderSectionAsync("Head", required: false)
 </head>
 <body>
+    @{
+        // Markiert den aktiven Hauptnavigationspunkt für Hilfstechnologien
+        // (wird als aria-current="page" ausgegeben; bei Nichtübereinstimmung
+        // entfällt das Attribut vollständig).
+        string? NavCurrent(string page) =>
+            string.Equals(ViewContext.RouteData.Values["page"]?.ToString(), page,
+                StringComparison.OrdinalIgnoreCase)
+                ? "page"
+                : null;
+    }
+
     <a class="skip-link" href="#main-content">Zum Inhalt</a>
 
     <nav class="mv-navbar navbar-expand-lg" aria-label="Hauptnavigation">
-        <div class="container d-flex flex-nowrap align-items-center gap-2">
+        <div class="container d-flex flex-wrap flex-lg-nowrap align-items-center gap-2">
             <a class="navbar-brand p-0" href="/" aria-label="Mentalversagen">
                 <img src="/pics/Mentalversagen_schriftzug.png" alt="Mentalversagen" />
             </a>
 
-            <button class="navbar-toggler border-0 ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#mv-nav"
-                    aria-controls="mv-nav" aria-expanded="false" aria-label="Menü öffnen/schließen">
-                <span class="navbar-toggler-icon"></span>
+            <button class="navbar-toggler mv-navtoggle ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#mv-nav"
+                    aria-controls="mv-nav" aria-expanded="false" aria-label="Navigation öffnen/schließen">
+                <span class="mv-navtoggle__label">Menü</span>
             </button>
 
             <div class="collapse navbar-collapse flex-grow-1" id="mv-nav">
@@ -37,14 +49,14 @@
                     Benutzer-Dropdown rechts (siehe unten).
                 *@
                 <ul class="navbar-nav flex-grow-1">
-                    <li class="nav-item"><a class="nav-link" asp-page="/Index">Start</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-page="/Suche">Suche</a></li>
+                    <li class="nav-item"><a class="nav-link" aria-current="@NavCurrent("/Index")" asp-page="/Index">Start</a></li>
+                    <li class="nav-item"><a class="nav-link" aria-current="@NavCurrent("/Suche")" asp-page="/Suche">Suche</a></li>
                     @if (FeatureConfig.Value.MonetizationEnabled)
                     {
-                        <li class="nav-item"><a class="nav-link" asp-page="/Membership/Index">Mitgliedschaft</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-page="/Donate/Index">Spenden</a></li>
+                        <li class="nav-item"><a class="nav-link" aria-current="@NavCurrent("/Membership/Index")" asp-page="/Membership/Index">Mitgliedschaft</a></li>
+                        <li class="nav-item"><a class="nav-link" aria-current="@NavCurrent("/Donate/Index")" asp-page="/Donate/Index">Spenden</a></li>
                     }
-                    <li class="nav-item"><a class="nav-link" asp-page="/Newsletter/Subscribe">Archivpost</a></li>
+                    <li class="nav-item"><a class="nav-link" aria-current="@NavCurrent("/Newsletter/Subscribe")" asp-page="/Newsletter/Subscribe">Archivpost</a></li>
                 </ul>
                 <ul class="navbar-nav ms-auto">
                     @if (SignInManager.IsSignedIn(User))
@@ -56,6 +68,7 @@
                                     class="nav-link mv-usermenu__toggle"
                                     id="mv-usermenu-toggle"
                                     data-bs-toggle="dropdown"
+                                    data-bs-display="static"
                                     aria-expanded="false"
                                     aria-haspopup="true">
                                 <span class="mv-usermenu__name">@displayName</span>

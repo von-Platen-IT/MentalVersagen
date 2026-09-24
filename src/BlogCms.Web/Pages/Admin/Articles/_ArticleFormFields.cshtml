@@ -5,48 +5,48 @@
 <div class="mb-3">
     <label asp-for="Title" class="form-label"></label>
     <input asp-for="Title" class="form-control" />
-    <span asp-validation-for="Title" class="text-danger"></span>
+    <span asp-validation-for="Title" class="mv-text-danger"></span>
 </div>
 
 <div class="mb-3">
     <label asp-for="Slug" class="form-label"></label>
     <input asp-for="Slug" class="form-control" placeholder="wird sonst automatisch erzeugt" />
     <div class="form-text">Bereits veröffentlichte URLs bleiben bei Titeländerung stabil.</div>
-    <span asp-validation-for="Slug" class="text-danger"></span>
+    <span asp-validation-for="Slug" class="mv-text-danger"></span>
 </div>
 
 <div class="mb-3">
     <label asp-for="TitleImageUrl" class="form-label"></label>
     <input asp-for="TitleImageUrl" class="form-control" placeholder="https://… (oder unten ein Bild hochladen)" />
-    <span asp-validation-for="TitleImageUrl" class="text-danger"></span>
+    <span asp-validation-for="TitleImageUrl" class="mv-text-danger"></span>
 </div>
 
 <div class="mb-3">
     <label asp-for="Excerpt" class="form-label"></label>
     <textarea asp-for="Excerpt" class="form-control" rows="2"></textarea>
-    <span asp-validation-for="Excerpt" class="text-danger"></span>
+    <span asp-validation-for="Excerpt" class="mv-text-danger"></span>
 </div>
 
 <div class="row">
     <div class="col-md-3 mb-3">
         <label asp-for="Category" class="form-label"></label>
         <select asp-for="Category" class="form-select" asp-items="Html.GetEnumSelectList<ArticleCategory>()"></select>
-        <span asp-validation-for="Category" class="text-danger"></span>
+        <span asp-validation-for="Category" class="mv-text-danger"></span>
     </div>
     <div class="col-md-3 mb-3">
         <label asp-for="AccessLevel" class="form-label"></label>
         <select asp-for="AccessLevel" class="form-select" asp-items="Html.GetEnumSelectList<ArticleAccessLevel>()"></select>
-        <span asp-validation-for="AccessLevel" class="text-danger"></span>
+        <span asp-validation-for="AccessLevel" class="mv-text-danger"></span>
     </div>
     <div class="col-md-3 mb-3">
         <label asp-for="Status" class="form-label"></label>
         <select asp-for="Status" class="form-select" asp-items="Html.GetEnumSelectList<ArticleStatus>()"></select>
-        <span asp-validation-for="Status" class="text-danger"></span>
+        <span asp-validation-for="Status" class="mv-text-danger"></span>
     </div>
     <div class="col-md-3 mb-3">
         <label asp-for="ScheduledAt" class="form-label"></label>
         <input asp-for="ScheduledAt" type="datetime-local" class="form-control" />
-        <span asp-validation-for="ScheduledAt" class="text-danger"></span>
+        <span asp-validation-for="ScheduledAt" class="mv-text-danger"></span>
     </div>
 </div>
 
@@ -54,12 +54,12 @@
     <div class="col-md-6 mb-3">
         <label asp-for="Tags" class="form-label"></label>
         <input asp-for="Tags" class="form-control" placeholder="z. B. parteien, wahlen" />
-        <span asp-validation-for="Tags" class="text-danger"></span>
+        <span asp-validation-for="Tags" class="mv-text-danger"></span>
     </div>
     <div class="col-md-6 mb-3">
         <label asp-for="Hashtags" class="form-label"></label>
         <input asp-for="Hashtags" class="form-control" placeholder="z. B. #wahlen, #satire" />
-        <span asp-validation-for="Hashtags" class="text-danger"></span>
+        <span asp-validation-for="Hashtags" class="mv-text-danger"></span>
     </div>
 </div>
 
@@ -67,21 +67,21 @@
     <label asp-for="ContentMarkdown" class="form-label"></label>
     <textarea asp-for="ContentMarkdown" class="form-control font-monospace" rows="16"></textarea>
     <div class="form-text">Markdown wird beim Ausliefern serverseitig gerendert und sanitized.</div>
-    <span asp-validation-for="ContentMarkdown" class="text-danger"></span>
+    <span asp-validation-for="ContentMarkdown" class="mv-text-danger"></span>
 </div>
 
 <div class="mb-3">
     <label asp-for="VideoUrl" class="form-label"></label>
     <input asp-for="VideoUrl" class="form-control" placeholder="https://www.youtube.com/watch?v=..." />
     <div class="form-text">Wird per oEmbed aufgelöst. Nicht unterstützte Plattformen werden nur verlinkt.</div>
-    <span asp-validation-for="VideoUrl" class="text-danger"></span>
+    <span asp-validation-for="VideoUrl" class="mv-text-danger"></span>
 </div>
 
 <div class="mb-3">
     <label asp-for="ImageUpload" class="form-label"></label>
     <input asp-for="ImageUpload" type="file" accept="image/*" class="form-control" />
     <div class="form-text">JPEG, PNG, WebP oder GIF. Wird geprüft, skaliert und ohne EXIF gespeichert. Dient als Titelbild, wenn keine externe URL gesetzt ist.</div>
-    <span asp-validation-for="ImageUpload" class="text-danger"></span>
+    <span asp-validation-for="ImageUpload" class="mv-text-danger"></span>
 </div>
 
 <div class="mb-3">
@@ -91,5 +91,5 @@
         Mehrere Dateien möglich. Nach dem Speichern erscheinen sie in der Bilderverwaltung
         mit einem Markdown-Snippet, das du in den Text einbauen kannst.
     </div>
-    <span asp-validation-for="ContentImageUploads" class="text-danger"></span>
+    <span asp-validation-for="ContentImageUploads" class="mv-text-danger"></span>
 </div>

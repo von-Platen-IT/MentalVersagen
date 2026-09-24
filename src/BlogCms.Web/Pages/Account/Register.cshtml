@@ -13,31 +13,31 @@
 <partial name="_PageHeader" model="header" />
 
 <div class="mv-doc mt-4">
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div asp-validation-summary="ModelOnly" class="mv-text-danger"></div>
 
     <form method="post">
         <div class="mb-3">
             <label asp-for="Input.DisplayName" class="form-label"></label>
             <input asp-for="Input.DisplayName" class="form-control" autocomplete="nickname" />
-            <span asp-validation-for="Input.DisplayName" class="text-danger"></span>
+            <span asp-validation-for="Input.DisplayName" class="mv-text-danger"></span>
         </div>
 
         <div class="mb-3">
             <label asp-for="Input.Email" class="form-label"></label>
             <input asp-for="Input.Email" class="form-control" autocomplete="username" />
-            <span asp-validation-for="Input.Email" class="text-danger"></span>
+            <span asp-validation-for="Input.Email" class="mv-text-danger"></span>
         </div>
 
         <div class="mb-3">
             <label asp-for="Input.Password" class="form-label"></label>
             <input asp-for="Input.Password" class="form-control" autocomplete="new-password" />
-            <span asp-validation-for="Input.Password" class="text-danger"></span>
+            <span asp-validation-for="Input.Password" class="mv-text-danger"></span>
         </div>
 
         <div class="mb-3">
             <label asp-for="Input.ConfirmPassword" class="form-label"></label>
             <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" />
-            <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+            <span asp-validation-for="Input.ConfirmPassword" class="mv-text-danger"></span>
         </div>
 
         @*
@@ -63,7 +63,7 @@
             <p class="form-text" id="captcha-hint" data-captcha-hint>
                 Bitte das Ergebnis eintragen — das schützt vor automatischen Registrierungen.
             </p>
-            <span asp-validation-for="CaptchaAnswer" class="text-danger"></span>
+            <span asp-validation-for="CaptchaAnswer" class="mv-text-danger"></span>
         </div>
 
         @* Honeypot: für Menschen unsichtbar, Bots füllen es aus. *@
