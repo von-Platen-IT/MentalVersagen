@@ -40,7 +40,39 @@
             <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
         </div>
 
-        <button type="submit" class="btn btn-primary">Registrieren</button>
+        @*
+            Sicherheitsabfrage: Die Aufgabe kommt vom Server, die erwartete Antwort
+            steckt ausschließlich im signierten Token und wird immer serverseitig
+            geprüft. Das JavaScript verbessert nur die Bedienung.
+        *@
+        <div class="mv-captcha mb-3"
+             data-captcha
+             data-captcha-endpoint="@Url.Page("/Account/Register", "Captcha")">
+            <label class="form-label" for="CaptchaAnswer">Sicherheitsabfrage</label>
+            <p class="mv-captcha__question" id="captcha-question" aria-live="polite">
+                Wie viel ist <strong data-captcha-question>@Model.CaptchaQuestion</strong>?
+            </p>
+            <div class="mv-captcha__row">
+                <input asp-for="CaptchaAnswer" class="form-control" inputmode="numeric"
+                       autocomplete="off" aria-describedby="captcha-hint" />
+                <button type="button" class="btn btn-outline-secondary" data-captcha-refresh>
+                    Neue Aufgabe
+                </button>
+            </div>
+            <input asp-for="CaptchaToken" type="hidden" />
+            <p class="form-text" id="captcha-hint" data-captcha-hint>
+                Bitte das Ergebnis eintragen — das schützt vor automatischen Registrierungen.
+            </p>
+            <span asp-validation-for="CaptchaAnswer" class="text-danger"></span>
+        </div>
+
+        @* Honeypot: für Menschen unsichtbar, Bots füllen es aus. *@
+        <div class="mv-honeypot" aria-hidden="true">
+            <label for="ExtraField">Bitte nicht ausfüllen</label>
+            <input asp-for="ExtraField" id="ExtraField" type="text" tabindex="-1" autocomplete="off" />
+        </div>
+
+        <button type="submit" class="btn btn-primary" data-captcha-submit>Registrieren</button>
     </form>
 
     <p class="meta-mono mt-3 mb-0">

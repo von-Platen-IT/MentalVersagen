@@ -25,7 +25,14 @@
 
 <partial name="_PageHeader" model="header" />
 
-<article class="mt-4">
+@if (!string.IsNullOrWhiteSpace(Model.TitleImageUrl))
+{
+    <figure class="mv-title-image mt-4 mb-0">
+        <img src="@Model.TitleImageUrl" alt="@(Model.TitleImageAlt ?? article.Title)" decoding="async" />
+    </figure>
+}
+
+<article class="mt-3">
     @if (disclaimer is not null)
     {
         <div class="mv-teaser mb-3" role="note">
@@ -85,18 +92,19 @@
         </div>
     }
 
-    @if (Model.CanReadContent && Model.Images.Count > 0)
+    @if (Model.CanReadContent && Model.GalleryImages.Count > 0)
     {
-        <div class="mv-doc mt-3">
-            <div class="row g-3">
-                @foreach (var img in Model.Images)
+        <section class="mt-3" aria-label="Bilder dieser Akte">
+            <p class="meta-mono mb-2">Bilder dieser Akte</p>
+            <div class="mv-gallery">
+                @foreach (var img in Model.GalleryImages)
                 {
-                    <div class="col-md-6">
-                        <img src="@Model.GetImageUrl(img)" alt="@(img.AltText ?? article.Title)" class="img-fluid" loading="lazy" decoding="async" />
-                    </div>
+                    <a class="mv-gallery__item" href="@Model.GetImageUrl(img)" data-lightbox>
+                        <img src="@Model.GetImageUrl(img)" alt="@(img.AltText ?? article.Title)" loading="lazy" decoding="async" />
+                    </a>
                 }
             </div>
-        </div>
+        </section>
     }
 
     @if (article.ArticleTags.Count > 0 || article.ArticleHashtags.Count > 0)
@@ -104,11 +112,11 @@
         <div class="mt-3 d-flex flex-wrap gap-1">
             @foreach (var at in article.ArticleTags)
             {
-                <a class="mv-pill" asp-page="/Articles/Index" asp-route-tag="@at.Tag?.Slug">#@at.Tag?.Name</a>
+                <a class="mv-pill" asp-page="/Suche" asp-route-tag="@at.Tag?.Slug">#@at.Tag?.Name</a>
             }
             @foreach (var ah in article.ArticleHashtags)
             {
-                <a class="mv-pill" asp-page="/Articles/Index" asp-route-hashtag="@ah.Hashtag?.Slug">#@ah.Hashtag?.Name</a>
+                <a class="mv-pill" asp-page="/Suche" asp-route-hashtag="@ah.Hashtag?.Slug">#@ah.Hashtag?.Name</a>
             }
         </div>
     }
@@ -126,11 +134,11 @@
             <div class="d-flex align-items-center gap-2 mt-2">
                 <form method="post" asp-page-handler="RateArticle" asp-route-slug="@article.Slug">
                     <input type="hidden" name="value" value="ThumbUp" />
-                    <button type="submit" class="btn btn-sm @(Model.UserArticleRating == RatingValue.ThumbUp ? "btn-primary" : "btn-outline-secondary")">👍 Belegt</button>
+                    <button type="submit" class="btn btn-sm @(Model.UserArticleRating == RatingValue.ThumbUp ? "btn-primary" : "btn-outline-secondary")">👍 Lob</button>
                 </form>
                 <form method="post" asp-page-handler="RateArticle" asp-route-slug="@article.Slug">
                     <input type="hidden" name="value" value="ThumbDown" />
-                    <button type="submit" class="btn btn-sm @(Model.UserArticleRating == RatingValue.ThumbDown ? "btn-primary" : "btn-outline-secondary")">👎 Widerlegt</button>
+                    <button type="submit" class="btn btn-sm @(Model.UserArticleRating == RatingValue.ThumbDown ? "btn-primary" : "btn-outline-secondary")">👎 Kritik</button>
                 </form>
             </div>
         }
@@ -194,8 +202,11 @@
                 <textarea name="content" class="form-control" rows="3" maxlength="5000" placeholder="Deine Zeugnis ..." required></textarea>
             </div>
             <div class="mb-2">
-                <input type="file" name="image" accept="image/*" class="form-control form-control-sm" />
-                <div class="form-text">Optional: Bild anhängen (max. 5 MB, JPEG/PNG/WebP/GIF).</div>
+                <input type="file" name="image" accept="image/*" class="form-control form-control-sm"
+                       data-max-bytes="4194304" data-max-label="4 MB" />
+                <div class="form-text" data-file-hint>
+                    Optional: Bild anhängen (max. 4 MB, JPEG/PNG/WebP/GIF).
+                </div>
             </div>
             <button type="submit" class="btn btn-primary btn-sm">Kommentar absenden</button>
         </form>
@@ -232,7 +243,10 @@
                 <p class="mb-1" style="white-space: pre-wrap;">@root.ContentText</p>
                 @foreach (var img in root.MediaAssets)
                 {
-                    <img src="@Model.GetImageUrl(img)" alt="@(img.AltText ?? "Kommentarbild")" class="img-fluid mb-2" style="max-height:320px;" loading="lazy" decoding="async" />
+                    var commentImageUrl = Model.GetImageUrl(img);
+                    <a class="mv-thumb" href="@commentImageUrl" data-lightbox>
+                        <img src="@commentImageUrl" alt="@(img.AltText ?? "Kommentarbild")" loading="lazy" decoding="async" />
+                    </a>
                 }
             }
 
@@ -346,7 +360,10 @@
                         <p class="mb-1" style="white-space: pre-wrap;">@reply.ContentText</p>
                         @foreach (var img in reply.MediaAssets)
                         {
-                            <img src="@Model.GetImageUrl(img)" alt="@(img.AltText ?? "Kommentarbild")" class="img-fluid mb-2" style="max-height:320px;" loading="lazy" decoding="async" />
+                            var replyImageUrl = Model.GetImageUrl(img);
+                            <a class="mv-thumb" href="@replyImageUrl" data-lightbox>
+                                <img src="@replyImageUrl" alt="@(img.AltText ?? "Kommentarbild")" loading="lazy" decoding="async" />
+                            </a>
                         }
                     }
 

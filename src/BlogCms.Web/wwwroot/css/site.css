@@ -1,6 +1,6 @@
 /*
  * Mentalversagen — Investigativ-Retro-Dokumentar Design System
- * Tokens, Typografie, Komponenten, Mobile (Rail-Header), A11y & Performance
+ * Tokens, Typografie, Komponenten, Mobile (Grafikband-Header), A11y & Performance
  */
 
 :root {
@@ -15,12 +15,23 @@
   --mv-ink: #0b0c0e;
   --mv-paper: #e8e3d6;
   --mv-border: #262c38;
-  --mv-rail: 64px;
   --mv-font-head: "Oswald", "Arial Narrow", sans-serif;
   --mv-font-body: "Inter", system-ui, sans-serif;
   --mv-font-mono: "JetBrains Mono", ui-monospace, monospace;
   --mv-shadow-drop: 0.2rem 0.2rem 0 rgba(0, 0, 0, 0.65);
   --mv-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.12'/%3E%3C/svg%3E");
+
+  /* Aktenlicht: Glow-, Licht- & Bewegungs-Tokens */
+  --mv-glow-red: 0 0 22px rgba(210, 31, 60, 0.30);
+  --mv-glow-red-soft: 0 0 14px rgba(210, 31, 60, 0.18);
+  --mv-glow-sepia: 0 0 18px rgba(199, 180, 139, 0.22);
+  --mv-glow-red-strong: 0 0 30px rgba(210, 31, 60, 0.55), 0 0 12px rgba(210, 31, 60, 0.7);
+  --mv-glow-sepia-strong: 0 0 26px rgba(199, 180, 139, 0.4), 0 0 10px rgba(199, 180, 139, 0.5);
+  --mv-shadow-lift: 0 14px 34px rgba(0, 0, 0, 0.55), 0 4px 12px rgba(0, 0, 0, 0.4);
+  --mv-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --mv-spot: radial-gradient(ellipse 60% 45% at 50% 0%, rgba(199, 180, 139, 0.14), transparent 70%);
+  --mv-scanlines: repeating-linear-gradient(180deg, rgba(7, 9, 13, 0.20) 0 1px, transparent 1px 3px);
+  --mv-font-stamp: "Special Elite", "Courier New", monospace;
 }
 
 /* ---------- Basis ---------- */
@@ -39,6 +50,37 @@ body {
   overflow-x: clip;
   padding-bottom: 0;
 }
+
+/* Ambientes Licht: sehr dezente Farb-Schimmer hinter dem Inhalt */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(42% 34% at 12% -6%, rgba(210, 31, 60, 0.10), transparent 70%),
+    radial-gradient(48% 40% at 92% 108%, rgba(24, 41, 62, 0.55), transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Textauswahl in Signalrot */
+::selection {
+  background: rgba(210, 31, 60, 0.55);
+  color: #fff;
+}
+
+/* Scrollbar (Standard + WebKit) */
+html {
+  scrollbar-color: #2a3344 var(--mv-bg-deep);
+}
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: var(--mv-bg-deep); }
+::-webkit-scrollbar-thumb {
+  background: #2a3344;
+  border: 2px solid var(--mv-bg-deep);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--mv-red-dim); }
 
 img {
   max-width: 100%;
@@ -101,6 +143,7 @@ code { font-family: var(--mv-font-mono); }
   position: sticky;
   top: 0;
   z-index: 1030;
+  box-shadow: 0 1px 0 rgba(210, 31, 60, 0.25), 0 10px 26px rgba(0, 0, 0, 0.38);
 }
 
 .mv-navbar .navbar-brand img {
@@ -151,9 +194,102 @@ code { font-family: var(--mv-font-mono); }
 .mv-navbar .navbar-nav .nav-link:hover::after,
 .mv-navbar .navbar-nav .nav-link.active::after {
   right: var(--mv-navlink-pad-x);
+  box-shadow: 0 0 10px rgba(210, 31, 60, 0.55);
+}
+
+/* ---------- Benutzermenü (Dropdown am Namen) ---------- */
+/*
+ * Der Anzeigename ist der Auslöser des Dropdowns. Bewusst OHNE die
+ * Bootstrap-Klasse .dropdown-toggle: deren Caret nutzt ebenfalls ::after und
+ * würde den Unterstreichungs-Effekt der Navigation überschreiben. Stattdessen
+ * ein eigenes, kleines SVG-Symbol (aria-hidden).
+ */
+.mv-usermenu__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.mv-usermenu__name {
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Kleines, unauffälliges Symbol neben dem Namen. */
+.mv-usermenu__caret {
+  flex: 0 0 auto;
+  opacity: 0.55;
+  transition: transform 0.22s var(--mv-ease), opacity 0.22s var(--mv-ease);
+}
+.mv-usermenu__toggle:hover .mv-usermenu__caret,
+.mv-usermenu__toggle:focus-visible .mv-usermenu__caret {
+  opacity: 1;
+}
+.mv-usermenu__toggle[aria-expanded="true"] .mv-usermenu__caret {
+  opacity: 1;
+  transform: rotate(180deg);
+}
+
+/* Panel im Akten-Look */
+.mv-usermenu__menu {
+  background: var(--mv-bg-card);
+  border: 1px solid var(--mv-border);
+  border-radius: 2px;
+  box-shadow: var(--mv-shadow-lift);
+  padding: 0.3rem;
+  min-width: 12rem;
+  margin-top: 0.35rem;
+}
+
+.mv-usermenu__menu .dropdown-item {
+  font-family: var(--mv-font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mv-text);
+  padding: 0.55rem 0.7rem;
+  border-radius: 2px;
+  transition: background-color 0.2s var(--mv-ease), color 0.2s var(--mv-ease);
+}
+
+.mv-usermenu__menu .dropdown-item:hover,
+.mv-usermenu__menu .dropdown-item:focus {
+  background: rgba(210, 31, 60, 0.16);
+  color: #fff;
+}
+
+.mv-usermenu__menu .dropdown-item:active {
+  background: rgba(210, 31, 60, 0.28);
+  color: #fff;
+}
+
+.mv-usermenu__menu .dropdown-divider {
+  border-color: var(--mv-border);
+  margin: 0.3rem 0.2rem;
 }
 
 /* ---------- Buttons ---------- */
+/*
+ * Glow-Buttons: Auf dem dunklen Grund wäre ein Schlagschatten kaum
+ * sichtbar — stattdessen glüht der primäre Button schon im Ruhezustand
+ * dezent signalrot und verstärkt den Glow beim Hover/Fokus deutlich.
+ * Outline-Buttons glühen erst bei Interaktion (Sepia bzw. Rot).
+ *
+ * Barrierefreiheit:
+ * - Hover-Effekte nur innerhalb @media (hover: hover): Touch-Geräte
+ *   behalten saubere Zustände ohne klebendes Pseudo-Hover.
+ * - Der Tastatur-Fokus-Glow gilt immer, auch ohne Zeiger-Gerät.
+ * - Bewegungen sind reine Transitions und werden über die globale
+ *   prefers-reduced-motion-Regel vollständig abgeschaltet.
+ * - Farbwerte bleiben kontraststark (Weiß auf Signalrot bzw.
+ *   Tinte auf Papier beim invertierten Hover-Zustand).
+ */
 .btn {
   font-family: var(--mv-font-mono);
   font-size: 0.78rem;
@@ -162,17 +298,25 @@ code { font-family: var(--mv-font-mono); }
   border-radius: 2px;
   padding: 0.55rem 1rem;
   min-height: 44px;
+  transition:
+    box-shadow 0.25s var(--mv-ease),
+    transform 0.25s var(--mv-ease),
+    background-color 0.25s var(--mv-ease),
+    border-color 0.25s var(--mv-ease),
+    color 0.25s var(--mv-ease);
 }
 
 .btn-primary {
-  background: var(--mv-red);
+  /*
+   * Signalrot mit SCHWARZER Schrift (auch im Ruhezustand, ohne Hover).
+   * Das Rot ist dafür leicht aufgehellt, damit der Kontrast ausreicht
+   * (ca. 4,6:1 — AA-konform für normalen Text).
+   */
+  background: linear-gradient(180deg, #ef3b52 0%, var(--mv-red) 100%);
   border-color: var(--mv-red);
-  color: #fff;
-}
-.btn-primary:hover {
-  background: var(--mv-red-dim);
-  border-color: var(--mv-red-dim);
-  color: #fff;
+  color: var(--mv-ink);
+  /* Ruhendes Grundglühen */
+  box-shadow: var(--mv-glow-red-soft);
 }
 
 .btn-outline-secondary {
@@ -180,27 +324,60 @@ code { font-family: var(--mv-font-mono); }
   border-color: var(--mv-text-dim);
   background: transparent;
 }
-.btn-outline-secondary:hover {
-  background: var(--mv-text);
-  color: var(--mv-ink);
-  border-color: var(--mv-text);
-}
 
 .btn-outline-danger {
   color: var(--mv-red);
   border-color: var(--mv-red);
 }
-.btn-outline-danger:hover {
-  background: var(--mv-red);
-  color: #fff;
-  border-color: var(--mv-red);
+
+/* Tastatur-Fokus: gleiche Glow-Verstärkung wie beim Hover — immer
+   sichtbar, unabhängig vom Eingabegerät. (Spezifität 0-2-0 schlägt
+   die globale :focus-visible-Regel mit box-shadow: none.) */
+.btn-primary:focus-visible {
+  border-color: #e02341;
+  box-shadow: var(--mv-glow-red-strong);
+}
+.btn-outline-secondary:focus-visible {
+  border-color: var(--mv-text);
+  box-shadow: var(--mv-glow-sepia-strong);
 }
 
+/* Hover nur auf Geräten mit echtem Zeiger (Maus, Stylus). */
+@media (hover: hover) {
+  .btn-primary:hover {
+    background: linear-gradient(180deg, #f74d63 0%, #e02341 100%);
+    border-color: #e02341;
+    color: var(--mv-ink);
+    box-shadow: var(--mv-glow-red-strong);
+  }
+
+  .btn-outline-secondary:hover {
+    background: var(--mv-text);
+    color: var(--mv-ink);
+    border-color: var(--mv-text);
+    box-shadow: var(--mv-glow-sepia-strong);
+  }
+
+  .btn-outline-danger:hover {
+    /* Konsistent zu .btn-primary: roter Grund mit schwarzer Schrift. */
+    background: #ef3b52;
+    color: var(--mv-ink);
+    border-color: var(--mv-red);
+    box-shadow: var(--mv-glow-red-soft);
+  }
+
+  .btn-link:hover { color: var(--mv-red-dim); }
+}
+
+/* Gedrückt: kurzes Einziehen als taktiles Feedback. */
+.btn:active { transform: translateY(1px); }
+
+/* Text-Buttons (z. B. Abmelden in der Navigation) ohne Glow. */
 .btn-link {
   color: var(--mv-red);
   text-decoration: none;
+  transition: color 0.25s var(--mv-ease);
 }
-.btn-link:hover { color: var(--mv-red-dim); }
 
 /* ---------- Page Header (Slide + Logo) ---------- */
 .page-header {
@@ -225,6 +402,19 @@ code { font-family: var(--mv-font-mono); }
   z-index: 0;
 }
 
+/* Spotlight, Vignette & dezente CRT-Scanlines über dem Header */
+.page-header::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    var(--mv-spot),
+    radial-gradient(ellipse 80% 70% at 50% 45%, transparent 55%, rgba(7, 9, 13, 0.55) 100%),
+    var(--mv-scanlines);
+  z-index: 0;
+  pointer-events: none;
+}
+
 .page-header__inner {
   position: relative;
   z-index: 1;
@@ -243,7 +433,7 @@ code { font-family: var(--mv-font-mono); }
   margin: 0;
   font-size: clamp(1.6rem, 4vw, 2.6rem);
   color: var(--mv-text);
-  text-shadow: var(--mv-shadow-drop);
+  text-shadow: var(--mv-shadow-drop), 0 0 16px rgba(199, 180, 139, 0.18);
 }
 
 .page-header__sub {
@@ -261,35 +451,278 @@ code { font-family: var(--mv-font-mono); }
 
 /* Landing Hero (groesser, eigener Hintergrund) */
 .page-header--landing { min-height: clamp(380px, 78vh, 620px); }
-.page-header--landing .page-header__inner {
+
+
+/*
+ * Marken-Block unten rechts: schwebendes Logo mit Motto darunter.
+ * Der Block ist 25 % des Headers breit, das Logo füllt ihn aus
+ * (entspricht 25 % der Grafik). Das Motto darf breiter auslaufen.
+ */
+.hero-brand {
+  position: absolute;
+  right: clamp(0.75rem, 2.5vw, 2rem);
+  bottom: clamp(0.75rem, 2.5vw, 2rem);
+  width: 25%;
+  z-index: 2;
+  display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 0.8rem;
-  padding: 2.5rem 1.25rem 2rem;
+  align-items: flex-end;
+  gap: 0.6rem;
+  pointer-events: none;
 }
 
-.hero-logo {
-  height: clamp(72px, 12vw, 140px);
-  filter: drop-shadow(var(--mv-shadow-drop));
-}
-
-.hero-tagline {
-  font-family: var(--mv-font-mono);
-  font-size: 0.85rem;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--mv-paper);
+/*
+ * Motto unter dem Logo. Dunkelroter, schwach leuchtender Schatten unter der
+ * Schrift: Offset nach unten (unter der Schrift) plus weicher Schein.
+ */
+.hero-motto {
   margin: 0;
+  max-width: 220%;
+  text-align: right;
+  font-family: var(--mv-font-stamp);
+  font-size: clamp(0.72rem, 1.05vw, 0.95rem);
+  line-height: 1.35;
+  letter-spacing: 0.05em;
+  color: var(--mv-paper);
+  text-shadow:
+    0 2px 5px rgba(122, 15, 36, 0.9),
+    0 0 14px rgba(160, 21, 48, 0.5);
+}
+
+/*
+ * Schwebendes Logo. Das rote Glühen entsteht über gestapelte drop-shadow()-
+ * Filter: Diese folgen der Alpha-Kontur des PNGs (nicht dem Rechteck) und
+ * leuchten daher exakt entlang des Schriftzugs. Ohne Filter-Unterstützung
+ * bleibt das Bild normal sichtbar (sauberer Fallback).
+ */
+.hero-logo-float {
+  width: 100%;
+  height: auto;
+  filter:
+    drop-shadow(0 0 14px rgba(210, 31, 60, 0.65))
+    drop-shadow(0 0 36px rgba(210, 31, 60, 0.45))
+    drop-shadow(var(--mv-shadow-drop));
+}
+
+/* ---------- Hero-Aktionen (Landing): Buttons & Kategorien ---------- */
+/*
+ * Bewusst UNTERHALB des Headers: Auf Mobile wird der Header zur schmalen,
+ * um 90 Grad gedrehten Rail — Buttons und Pills hätten dort keinen Platz
+ * und würden aus dem Sichtbereich laufen. Sie fließen stattdessen hier
+ * horizontal ausgerichtet und lesbar im Inhaltsbereich.
+ */
+.hero-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.9rem;
+  text-align: left;
+  /*
+   * Links oben ausgerichtet; optische Anbindung an den Hero über
+   * ein leichtes Nach-oben-Ziehen.
+   */
+  margin: -1rem 0 0;
+  padding: 1rem 0.75rem 0.5rem;
 }
 
 .hero-cta {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
-  justify-content: center;
-  margin-top: 0.5rem;
+  justify-content: flex-start;
+  width: 100%;
 }
+
+.hero-cta .btn {
+  /* Angenehme Lesbarkeit: Buttons nicht zu schmal, Text darf umbrechen. */
+  min-width: min(11rem, 100%);
+}
+
+/* ---------- Hero-Werkzeuge: Hashtag-Suche & Sortierung ---------- */
+/*
+ * Suchbox, Sortier-Auswahl und der Link zur erweiterten Suche übernehmen
+ * exakt den Rahmen der Buttons (eckig, 1px Rand, 44px Höhe, Mono-Typografie),
+ * damit sie sich nahtlos in die hero-actions einfügen.
+ */
+.hero-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.mv-search {
+  position: relative;
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.mv-search__input,
+.mv-sort__select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--mv-text-dim);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--mv-text);
+  font-family: var(--mv-font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: border-color 0.25s var(--mv-ease), box-shadow 0.25s var(--mv-ease);
+}
+
+.mv-search__input::placeholder {
+  color: var(--mv-text-dim);
+  text-transform: none;
+  letter-spacing: 0.06em;
+}
+
+.mv-search__input:focus,
+.mv-sort__select:focus {
+  outline: none;
+  border-color: var(--mv-red);
+  box-shadow: 0 0 0 3px rgba(210, 31, 60, 0.22), var(--mv-glow-red-soft);
+}
+
+.mv-sort {
+  flex: 0 1 auto;
+}
+
+.mv-sort__select {
+  cursor: pointer;
+  /* Eigenes Pfeil-Symbol: plattformunabhängige Optik. */
+  appearance: none;
+  padding-right: 2.4rem;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--mv-text-dim) 50%),
+    linear-gradient(135deg, var(--mv-text-dim) 50%, transparent 50%);
+  background-position: calc(100% - 1.15rem) 50%, calc(100% - 0.8rem) 50%;
+  background-size: 0.35rem 0.35rem, 0.35rem 0.35rem;
+  background-repeat: no-repeat;
+}
+
+.mv-sort__select option {
+  background: var(--mv-bg-card);
+  color: var(--mv-text);
+}
+
+/* Autocomplete-Dropdown */
+.mv-search__list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  max-height: 16rem;
+  overflow-y: auto;
+  background: var(--mv-bg-card);
+  border: 1px solid var(--mv-border);
+  box-shadow: var(--mv-shadow-lift);
+}
+
+.mv-search__option {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.65rem;
+  cursor: pointer;
+  font-family: var(--mv-font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--mv-text);
+}
+
+.mv-search__option[aria-selected="true"],
+.mv-search__option:hover {
+  background: rgba(210, 31, 60, 0.16);
+  color: #fff;
+}
+
+.mv-search__option-count {
+  color: var(--mv-text-dim);
+}
+
+.mv-search__empty {
+  padding: 0.5rem 0.65rem;
+  color: var(--mv-text-dim);
+  font-family: var(--mv-font-mono);
+  font-size: 0.72rem;
+}
+
+/* Link zur erweiterten Suche */
+.mv-search-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--mv-text-dim);
+  border-radius: 2px;
+  color: var(--mv-text);
+  font-family: var(--mv-font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition:
+    background-color 0.25s var(--mv-ease),
+    color 0.25s var(--mv-ease),
+    border-color 0.25s var(--mv-ease);
+}
+.mv-search-link:hover,
+.mv-search-link:focus-visible {
+  background: var(--mv-text);
+  color: var(--mv-ink);
+  border-color: var(--mv-text);
+}
+
+/* Statuszeile bei aktivem Filter */
+.mv-filter-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-family: var(--mv-font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mv-text-dim);
+}
+.mv-filter-status[hidden] { display: none; }
+
+.mv-filter-status__reset {
+  color: var(--mv-red);
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+}
+.mv-filter-status__reset:hover { color: var(--mv-red-dim); }
+
+/* Ladeindikator während der REST-Aktualisierung */
+.mv-cases[aria-busy="true"] {
+  opacity: 0.45;
+  transition: opacity 0.2s var(--mv-ease);
+}
+
+/* Hero-Entrance: sanftes Aufsteigen der Inhalte */
+@keyframes mv-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page-header--landing .hero-brand {
+  animation: mv-rise 0.6s var(--mv-ease) both;
+}
+
+.hero-actions > * {
+  animation: mv-rise 0.6s var(--mv-ease) both;
+}
+.hero-actions > *:nth-child(2) { animation-delay: 0.12s; }
 
 /* ---------- Karten: Rechercheakte ---------- */
 .mv-cases {
@@ -307,6 +740,25 @@ code { font-family: var(--mv-font-mono); }
   display: flex;
   flex-direction: column;
   transform: rotate(var(--case-rot, 0deg));
+  transition:
+    transform 0.35s var(--mv-ease),
+    box-shadow 0.35s var(--mv-ease),
+    border-color 0.35s,
+    opacity 0.55s var(--mv-ease);
+}
+
+/* Hover-Lift mit Kanten-Glow (nur Geräte mit echtem Hover) */
+@media (hover: hover) {
+  .mv-case:hover,
+  .mv-case:focus-within {
+    transform: rotate(var(--case-rot, 0deg)) translateY(-5px);
+    border-color: rgba(210, 31, 60, 0.45);
+    box-shadow: var(--mv-shadow-lift), var(--mv-glow-red-soft);
+  }
+  .mv-case:hover .mv-case__img img,
+  .mv-case:focus-within .mv-case__img img {
+    transform: scale(1.04);
+  }
 }
 
 .mv-case:nth-child(3n+1) { --case-rot: 0.4deg; }
@@ -336,12 +788,14 @@ code { font-family: var(--mv-font-mono); }
 .mv-case__img {
   display: block;
   padding: 0 0.8rem;
+  overflow: hidden;
 }
 .mv-case__img img {
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: cover;
   display: block;
+  transition: transform 0.45s var(--mv-ease);
 }
 
 .mv-case__body {
@@ -419,6 +873,23 @@ code { font-family: var(--mv-font-mono); }
 .mv-badge--registered { color: #7aa2d1; }
 .mv-badge--red { color: var(--mv-red); }
 
+.mv-badge,
+.mv-pill {
+  transition: border-color 0.3s, box-shadow 0.3s, color 0.3s;
+}
+
+@media (hover: hover) {
+  .mv-badge:hover {
+    border-color: currentColor;
+    box-shadow: 0 0 10px rgba(231, 228, 219, 0.15);
+  }
+  .mv-pill:hover {
+    color: #fff;
+    border-color: rgba(199, 180, 139, 0.55);
+    box-shadow: var(--mv-glow-sepia);
+  }
+}
+
 /* Category-Pill */
 .mv-pill {
   display: inline-block;
@@ -447,7 +918,7 @@ code { font-family: var(--mv-font-mono); }
   background: var(--mv-bg-card);
   color: var(--mv-text);
   border-color: var(--mv-red);
-  box-shadow: 0 0 0 3px rgba(210, 31, 60, 0.25);
+  box-shadow: 0 0 0 3px rgba(210, 31, 60, 0.22), var(--mv-glow-red-soft);
 }
 
 .form-control::placeholder { color: var(--mv-text-dim); }
@@ -468,6 +939,53 @@ code { font-family: var(--mv-font-mono); }
 .form-check-input:checked {
   background-color: var(--mv-red);
   border-color: var(--mv-red);
+}
+
+/* ---------- Sicherheitsabfrage (Registrierung) ---------- */
+/*
+ * Die Aufgabe kommt vom Server; das JavaScript verbessert nur die Bedienung.
+ * Der Block ist bewusst schlicht und textbasiert (kein Bild) — damit bleibt er
+ * für Screenreader und alle Eingabegeräte nutzbar.
+ */
+.mv-captcha {
+  border: 1px solid var(--mv-border);
+  border-left: 3px solid var(--mv-red);
+  background: var(--mv-bg-card);
+  padding: 0.9rem 1rem;
+}
+
+.mv-captcha__question {
+  margin: 0 0 0.6rem;
+  font-family: var(--mv-font-mono);
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  color: var(--mv-text);
+}
+
+.mv-captcha__question strong {
+  color: var(--mv-paper);
+  font-size: 1.05rem;
+}
+
+.mv-captcha__row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: stretch;
+}
+
+.mv-captcha__row .form-control {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 10rem;
+}
+
+/* Honeypot: für Menschen unsichtbar, im DOM aber vorhanden. */
+.mv-honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
 }
 
 /* ---------- Filter-Panel (Akten) ---------- */
@@ -581,6 +1099,7 @@ code { font-family: var(--mv-font-mono); }
   border: 1px solid var(--mv-sepia);
   padding: clamp(1rem, 3vw, 2rem);
   position: relative;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.35);
 }
 .mv-doc::before {
   content: "";
@@ -593,17 +1112,40 @@ code { font-family: var(--mv-font-mono); }
 .mv-doc h1, .mv-doc h2, .mv-doc h3 { color: var(--mv-ink); }
 .mv-doc a { color: #8e1728; }
 
+/*
+ * Buttons auf Papierflächen (Akten, Teaser) behalten ihre eigenen Farben:
+ * Die Papier-Linkfarbe (.mv-doc a) darf sie nicht überschreiben — sonst
+ * würde z. B. der rote CTA dunkelrote Schrift auf rotem Grund bekommen
+ * (unleserlich). Outline-Buttons erhalten dunkle Schrift und Ränder,
+ * damit sie auf hellem Papier lesbar bleiben.
+ */
+.mv-doc a.btn-primary,
+.mv-doc button.btn-primary,
+.mv-teaser a.btn-primary,
+.mv-teaser button.btn-primary {
+  color: var(--mv-ink);
+}
+.mv-doc a.btn-outline-secondary,
+.mv-doc button.btn-outline-secondary,
+.mv-teaser a.btn-outline-secondary,
+.mv-teaser button.btn-outline-secondary {
+  color: var(--mv-ink);
+  border-color: rgba(11, 12, 14, 0.5);
+}
+.mv-teaser a:not(.btn) { color: #8e1728; }
+
 .mv-stamped {
   display: inline-block;
   border: 2px solid var(--mv-red);
   color: var(--mv-red);
-  font-family: var(--mv-font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.3em;
+  font-family: var(--mv-font-stamp);
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   padding: 0.35rem 0.9rem;
   transform: rotate(-1.5deg);
   background: rgba(210, 31, 60, 0.08);
+  text-shadow: 0 0 10px rgba(210, 31, 60, 0.35);
 }
 
 /* ---------- Kommentare ---------- */
@@ -615,6 +1157,7 @@ code { font-family: var(--mv-font-mono); }
 .mv-comment--highlight {
   border-color: var(--mv-red);
   background: rgba(210, 31, 60, 0.07);
+  box-shadow: var(--mv-glow-red-soft);
 }
 
 /* ---------- Footer ---------- */
@@ -630,8 +1173,12 @@ code { font-family: var(--mv-font-mono); }
 .mv-footer a {
   color: var(--mv-text-dim);
   text-decoration: none;
+  transition: color 0.3s, text-shadow 0.3s;
 }
-.mv-footer a:hover { color: var(--mv-text); }
+.mv-footer a:hover {
+  color: var(--mv-text);
+  text-shadow: 0 0 8px rgba(231, 228, 219, 0.35);
+}
 
 /* ---------- Paywall/Teaser ---------- */
 .mv-teaser {
@@ -655,52 +1202,238 @@ code { font-family: var(--mv-font-mono); }
   color: #fff;
 }
 
-/* ---------- Mobile (Rail-Header) ---------- */
-@media (max-width: 576px) {
-  body { padding-left: var(--mv-rail); }
-  .mv-navbar { margin-left: calc(var(--mv-rail) * -1); }
-  .mv-navbar .container { padding-left: var(--mv-rail); }
+/* ---------- Scroll-Reveal (Klassen werden per JS ergänzt) ---------- */
+.mv-reveal { opacity: 0; }
+.mv-reveal.mv-lift {
+  transform: translateY(14px);
+  transition:
+    opacity 0.55s var(--mv-ease),
+    transform 0.55s var(--mv-ease);
+}
+.mv-reveal.is-visible { opacity: 1; }
+.mv-reveal.mv-lift.is-visible { transform: translateY(0); }
 
+/* ---------- Titelbild (Artikeldetail) ---------- */
+.mv-title-image {
+  margin: 0;
+}
+.mv-title-image img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border: 1px solid var(--mv-border);
+  box-shadow: var(--mv-shadow-lift);
+}
+
+/* ---------- Thumbnail-Galerie (Artikeldetail) ---------- */
+/*
+ * Thumbnails per CSS-Skalierung der bereits optimierten WebP-Originale
+ * (max. 64px Höhe, Breite proportional). Ohne JavaScript öffnet der
+ * Link die Bilddatei direkt; site.js baut daraus die Lightbox.
+ */
+.mv-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+.mv-gallery__item {
+  display: block;
+  border: 1px solid var(--mv-border);
+  padding: 2px;
+  background: var(--mv-bg-card);
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+.mv-gallery__item img {
+  display: block;
+  height: auto;
+  max-height: 64px;
+  width: auto;
+  max-width: 100%;
+}
+@media (hover: hover) {
+  .mv-gallery__item:hover,
+  .mv-gallery__item:focus-visible {
+    border-color: rgba(210, 31, 60, 0.55);
+    box-shadow: var(--mv-glow-red-soft);
+  }
+}
+
+/* ---------- Kommentar-Thumbnails (48px, Klick öffnet die Lightbox) ---------- */
+/*
+ * Kommentarbilder erscheinen nur als kleines Vorschaubild (48px Höhe, Breite
+ * proportional). Der Klick öffnet die Lightbox in voller Größe; ohne
+ * JavaScript öffnet der Link die Bilddatei direkt.
+ */
+.mv-thumb {
+  display: inline-block;
+  margin: 0.15rem 0.35rem 0.35rem 0;
+  border: 1px solid var(--mv-border);
+  padding: 2px;
+  background: var(--mv-bg-card);
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+.mv-thumb img {
+  display: block;
+  height: 48px;
+  width: auto;
+  max-width: 100%;
+}
+@media (hover: hover) {
+  .mv-thumb:hover,
+  .mv-thumb:focus-visible {
+    border-color: rgba(210, 31, 60, 0.55);
+    box-shadow: var(--mv-glow-red-soft);
+  }
+}
+
+/* ---------- Lightbox (Overlay, wird per JS in site.js ergänzt) ---------- */
+.mv-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  background: rgba(7, 9, 13, 0.94);
+  animation: mv-fade 0.25s var(--mv-ease);
+}
+.mv-lightbox__img {
+  max-width: min(94vw, 1500px);
+  max-height: 78vh;
+  width: auto;
+  height: auto;
+  border: 1px solid var(--mv-border);
+  box-shadow: var(--mv-shadow-lift);
+}
+.mv-lightbox__caption {
+  margin: 0;
+  color: var(--mv-text-dim);
+  font-family: var(--mv-font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-align: center;
+}
+.mv-lightbox__close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+@keyframes mv-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ---------- Admin: Bilderverwaltung (Artikel-Edit) ---------- */
+.mv-admin-media {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 768px) { .mv-admin-media { grid-template-columns: repeat(2, 1fr); } }
+
+.mv-admin-media__item {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  border: 1px solid var(--mv-border);
+  padding: 0.75rem;
+  background: var(--mv-bg-card);
+}
+.mv-admin-media__item > img {
+  height: 64px;
+  width: auto;
+  flex: 0 0 auto;
+}
+.mv-admin-media__controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.mv-admin-media__snippet {
+  display: flex;
+  gap: 0.5rem;
+}
+.mv-admin-media__snippet input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--mv-font-mono);
+  font-size: 0.72rem;
+}
+.mv-admin-media__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* ---------- Mobile (Header als horizontales Grafikband) ---------- */
+@media (max-width: 576px) {
+  /*
+   * Keine Rail mehr: Der Header ist ein horizontales Grafikband am
+   * oberen Rand; Titel/Logo stehen darunter — horizontal und lesbar
+   * (statt früher um 90 Grad gedreht in einer 64px-Spalte).
+   */
   .page-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: var(--mv-rail);
-    height: 100vh;
-    min-height: 100vh;
-    z-index: 1040;
-    padding: 0;
+    min-height: 0;
+    padding-top: clamp(110px, 26vw, 170px);
+  }
+  .page-header--landing { min-height: 0; }
+
+  /* Grafikband: ::before/::after füllen nur den oberen Bereich. */
+  .page-header::before,
+  .page-header::after {
+    inset: 0 0 auto 0;
+    height: clamp(110px, 26vw, 170px);
   }
 
-  .page-header::before { display: none; }
-
   .page-header__inner {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 100vh;
-    height: var(--mv-rail);
-    transform: translate(-50%, -50%) rotate(-90deg);
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    background:
-      linear-gradient(180deg, rgba(7, 9, 13, 0.28), rgba(7, 9, 13, 0.9)),
-      var(--mv-noise),
-      var(--ph-img);
-    background-size: cover;
-    background-position: center;
-    padding: 0.35rem 0.8rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+    padding: 1rem 1rem 0.75rem;
   }
 
   .page-header__logo img { height: 26px; }
-  .page-header__title { font-size: 0.95rem; letter-spacing: 0.08em; }
-  .page-header__sub { font-size: 0.75rem; }
-  .page-header--landing .page-header__inner {
-    justify-content: center;
-  }
-  .hero-cta { gap: 0.4rem; }
+  .page-header__title { font-size: 1.05rem; letter-spacing: 0.06em; }
+  .page-header__sub { font-size: 0.8rem; }
 
+  /* Landing: Marke (Schriftzug + Motto) horizontal unter dem Band. */
+  .hero-brand {
+    position: static;
+    width: 100%;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 1rem 1rem 0.75rem;
+  }
+  .hero-motto { text-align: left; max-width: 100%; }
+
+  /*
+   * Landing-Aktionen: linksbündig wie auf dem Desktop.
+   * Buttons nebeneinander mit je ca. 50 % Breite — das Touch-Ziel von
+   * min-height: 44px bleibt über die .btn-Grundregel erhalten.
+   */
+  .hero-actions {
+    margin-top: 0;
+    padding: 0.25rem 0 0;
+  }
+  .hero-cta { gap: 0.6rem; }
+  .hero-cta .btn {
+    flex: 1 1 calc(50% - 0.3rem);
+    min-width: 0;
+  }
+
+  /* Werkzeuge untereinander, damit die Suchbox volle Breite bekommt. */
+  .hero-tools { gap: 0.6rem; }
+  .mv-search { flex: 1 1 100%; }
+  .mv-sort { flex: 1 1 100%; }
+  .mv-search-link { flex: 1 1 100%; justify-content: center; }
   .mv-cases { grid-template-columns: 1fr; }
 }
 
@@ -711,11 +1444,5 @@ code { font-family: var(--mv-font-mono); }
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  .page-header__inner { transform: translate(-50%, -50%) rotate(-90deg); } /* mobile rail stays */
   .mv-navbar .nav-link::after { transition: none; }
-}
-
-/* Body paddling offset auf Desktop deaktiviert */
-@media (min-width: 577px) {
-  body { padding-left: 0; }
 }

@@ -12,8 +12,23 @@ public enum ArticleSortOrder
     Newest,
     Oldest,
     MostLiked,
-    Title
+    Title,
+
+    /// <summary>Most interactions overall (ratings + comments).</summary>
+    Popular,
+
+    /// <summary>Most comments first.</summary>
+    MostCommented,
+
+    /// <summary>Most thumbs-up first.</summary>
+    MostUpvoted,
+
+    /// <summary>Most thumbs-down first.</summary>
+    MostDownvoted
 }
+
+/// <summary>A hashtag together with the number of published articles using it.</summary>
+public sealed record HashtagUsage(string Name, string Slug, int Count);
 
 /// <summary>
 /// Filter/query description for the public article list (FeatureFix1 BR-082).
@@ -27,7 +42,9 @@ public sealed record ArticleQuery(
     Guid? AuthorId = null,
     string? Search = null,
     ArticleAccessLevel? AccessLevel = null,
-    ArticleSortOrder Sort = ArticleSortOrder.Newest);
+    ArticleSortOrder Sort = ArticleSortOrder.Newest,
+    DateTime? DateFrom = null,
+    DateTime? DateTo = null);
 
 /// <summary>
 /// Application service for article read/write operations, slug uniqueness,
@@ -54,6 +71,12 @@ public interface IArticleService
     Task<IReadOnlyList<Tag>> GetAllTagsAsync(CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Hashtag>> GetAllHashtagsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Hashtags used by at least one published article, with usage counts
+    /// (for the autocomplete REST endpoint).
+    /// </summary>
+    Task<IReadOnlyList<HashtagUsage>> GetPublishedHashtagsAsync(CancellationToken cancellationToken = default);
 
     /// <summary>Distinct authors that currently have published articles (for the author filter).</summary>
     Task<IReadOnlyList<User>> GetPublishedAuthorsAsync(CancellationToken cancellationToken = default);
@@ -130,12 +153,26 @@ public sealed class ArticleService : IArticleService
             articles = articles.Where(a => a.AccessLevel == query.AccessLevel);
         }
 
+        if (query.DateFrom is not null)
+        {
+            articles = articles.Where(a => a.PublishedAt >= query.DateFrom);
+        }
+
+        if (query.DateTo is not null)
+        {
+            // Inklusives Tagesende: "bis 24.09." umfasst den gesamten Tag.
+            var toExclusive = query.DateTo.Value.Date.AddDays(1);
+            articles = articles.Where(a => a.PublishedAt < toExclusive);
+        }
+
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
+            // Volltextsuche über Titel, Kurzbeschreibung und Inhalt.
             var term = query.Search.Trim().ToLowerInvariant();
             articles = articles.Where(a =>
                 a.Title.ToLower().Contains(term) ||
-                (a.Excerpt != null && a.Excerpt.ToLower().Contains(term)));
+                (a.Excerpt != null && a.Excerpt.ToLower().Contains(term)) ||
+                a.ContentMarkdown.ToLower().Contains(term));
         }
 
         var total = await articles.CountAsync(cancellationToken);
@@ -147,6 +184,18 @@ public sealed class ArticleService : IArticleService
             ArticleSortOrder.MostLiked => articles
                 .OrderByDescending(a => a.Ratings.Count(r => r.Value == RatingValue.ThumbUp))
                 .ThenByDescending(a => a.Ratings.Count(r => r.Value == RatingValue.ThumbDown))
+                .ThenByDescending(a => a.PublishedAt),
+            ArticleSortOrder.MostUpvoted => articles
+                .OrderByDescending(a => a.Ratings.Count(r => r.Value == RatingValue.ThumbUp))
+                .ThenByDescending(a => a.PublishedAt),
+            ArticleSortOrder.MostDownvoted => articles
+                .OrderByDescending(a => a.Ratings.Count(r => r.Value == RatingValue.ThumbDown))
+                .ThenByDescending(a => a.PublishedAt),
+            ArticleSortOrder.MostCommented => articles
+                .OrderByDescending(a => a.Comments.Count)
+                .ThenByDescending(a => a.PublishedAt),
+            ArticleSortOrder.Popular => articles
+                .OrderByDescending(a => a.Ratings.Count + a.Comments.Count)
                 .ThenByDescending(a => a.PublishedAt),
             _ => articles.OrderByDescending(a => a.PublishedAt)
         };
@@ -231,6 +280,21 @@ public sealed class ArticleService : IArticleService
             .AsNoTracking()
             .OrderBy(h => h.Name)
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<HashtagUsage>> GetPublishedHashtagsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var rows = await _db.ArticleHashtags
+            .AsNoTracking()
+            .Where(ah => ah.Article!.Status == ArticleStatus.Published && ah.Article.PublishedAt != null)
+            .GroupBy(ah => new { ah.Hashtag!.Name, ah.Hashtag.Slug })
+            .Select(g => new { g.Key.Name, g.Key.Slug, Count = g.Count() })
+            .OrderByDescending(x => x.Count)
+            .ThenBy(x => x.Name)
+            .ToListAsync(cancellationToken);
+
+        return rows.Select(r => new HashtagUsage(r.Name, r.Slug, r.Count)).ToList();
     }
 
     public async Task<IReadOnlyList<User>> GetPublishedAuthorsAsync(

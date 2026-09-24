@@ -1,3 +1,4 @@
+using BlogCms.Domain.Entities;
 using BlogCms.Domain.Enums;
 using BlogCms.Infrastructure.Content;
 using BlogCms.Infrastructure.Media;
@@ -16,13 +17,13 @@ public class EditModel : PageModel
     private readonly IArticleService _articles;
     private readonly IMediaService _media;
     private readonly IOEmbedService _oEmbed;
-    private readonly UserManager<Domain.Entities.User> _userManager;
+    private readonly UserManager<User> _userManager;
 
     public EditModel(
         IArticleService articles,
         IMediaService media,
         IOEmbedService oEmbed,
-        UserManager<Domain.Entities.User> userManager)
+        UserManager<User> userManager)
     {
         _articles = articles;
         _media = media;
@@ -36,6 +37,11 @@ public class EditModel : PageModel
     public Guid ArticleId { get; private set; }
 
     public bool HasExistingImage { get; private set; }
+
+    /// <summary>All images of this article (media management section below the form).</summary>
+    public IReadOnlyList<MediaAsset> Images { get; private set; } = [];
+
+    public string GetImageUrl(MediaAsset asset) => _media.GetUrl(asset);
 
     private bool IsAdmin => User.IsInRole(nameof(UserRole.Admin));
 
@@ -58,6 +64,7 @@ public class EditModel : PageModel
 
         ArticleId = article.Id;
         HasExistingImage = article.MediaAssets.Count > 0;
+        await LoadImagesAsync(article.Id);
 
         Input = new ArticleInputModel
         {
@@ -98,6 +105,7 @@ public class EditModel : PageModel
 
         if (!ModelState.IsValid)
         {
+            await LoadImagesAsync(id);
             return Page();
         }
 
@@ -123,15 +131,79 @@ public class EditModel : PageModel
         if (Input.ImageUpload is { Length: > 0 })
         {
             await using var stream = Input.ImageUpload.OpenReadStream();
-            var uploadedBy = article.AuthorId;
             await _media.UploadAsync(
-                stream, Input.ImageUpload.FileName, MediaOwnerType.Article, article.Id, uploadedBy, null);
+                stream, Input.ImageUpload.FileName, MediaOwnerType.Article, article.Id, article.AuthorId, null);
         }
+
+        await UploadContentImagesAsync(article);
 
         TempData["Message"] = $"Artikel „{article.Title}“ wurde aktualisiert.";
         return RedirectToPage("Index");
     }
 
+    /// <summary>Sets an uploaded article image as the title image.</summary>
+    public async Task<IActionResult> OnPostUseAsTitleAsync(Guid id, Guid imageId)
+    {
+        var (article, failure) = await LoadArticleOrFailureAsync(id);
+        if (article is null)
+        {
+            return failure ?? NotFound();
+        }
+
+        var asset = await FindArticleImageAsync(id, imageId);
+        if (asset is null)
+        {
+            return NotFound();
+        }
+
+        article.TitleImageUrl = _media.GetUrl(asset);
+        await _articles.UpdateAsync(article, TagNames(article), HashtagNames(article));
+
+        TempData["Message"] = "Das Bild wurde als Titelbild übernommen.";
+        return RedirectToPage(new { id });
+    }
+
+    /// <summary>Updates the alt text of an article image.</summary>
+    public async Task<IActionResult> OnPostSaveImageAltAsync(Guid id, Guid imageId, string? altText)
+    {
+        var (article, failure) = await LoadArticleOrFailureAsync(id);
+        if (article is null)
+        {
+            return failure ?? NotFound();
+        }
+
+        if (await FindArticleImageAsync(id, imageId) is null)
+        {
+            return NotFound();
+        }
+
+        await _media.SetAltTextAsync(imageId, altText);
+
+        TempData["Message"] = "Der Alt-Text wurde gespeichert.";
+        return RedirectToPage(new { id });
+    }
+
+    /// <summary>Deletes an article image from storage and database.</summary>
+    public async Task<IActionResult> OnPostDeleteImageAsync(Guid id, Guid imageId)
+    {
+        var (article, failure) = await LoadArticleOrFailureAsync(id);
+        if (article is null)
+        {
+            return failure ?? NotFound();
+        }
+
+        if (await FindArticleImageAsync(id, imageId) is null)
+        {
+            return NotFound();
+        }
+
+        await _media.DeleteAsync(imageId);
+
+        TempData["Message"] = "Das Bild wurde gelöscht.";
+        return RedirectToPage(new { id });
+    }
+
+    /// <summary>Applies FeatureFix1 requirements: teaser always, title image and schedule time.</summary>
     private void ValidateInput(bool hasExistingImage)
     {
         if (!Input.HasTitleImageSource(hasExistingImage))
@@ -149,4 +221,56 @@ public class EditModel : PageModel
                 "Für eine geplante Veröffentlichung ist ein zukünftiger Zeitpunkt erforderlich.");
         }
     }
+
+    private async Task UploadContentImagesAsync(Article article)
+    {
+        foreach (var file in Input.ContentImageUploads)
+        {
+            if (file is null || file.Length == 0)
+            {
+                continue;
+            }
+
+            await using var stream = file.OpenReadStream();
+            await _media.UploadAsync(
+                stream, file.FileName, MediaOwnerType.Article, article.Id, article.AuthorId, null);
+        }
+    }
+
+    private async Task LoadImagesAsync(Guid articleId)
+    {
+        Images = await _media.GetForOwnerAsync(MediaOwnerType.Article, articleId);
+    }
+
+    /// <summary>
+    /// Loads the article and enforces ownership (FeatureFix1 BR-013).
+    /// Returns the failure action (NotFound/Forbid) instead of the article when access is denied.
+    /// </summary>
+    private async Task<(Article? Article, IActionResult? Failure)> LoadArticleOrFailureAsync(Guid id)
+    {
+        var article = await _articles.GetByIdAsync(id);
+        if (article is null)
+        {
+            return (null, NotFound());
+        }
+
+        if (!IsAdmin && article.AuthorId != CurrentUserId)
+        {
+            return (null, Forbid());
+        }
+
+        return (article, null);
+    }
+
+    private async Task<MediaAsset?> FindArticleImageAsync(Guid articleId, Guid imageId)
+    {
+        var assets = await _media.GetForOwnerAsync(MediaOwnerType.Article, articleId);
+        return assets.FirstOrDefault(m => m.Id == imageId);
+    }
+
+    private static IEnumerable<string> TagNames(Article article) =>
+        article.ArticleTags.Select(at => at.Tag!.Name);
+
+    private static IEnumerable<string> HashtagNames(Article article) =>
+        article.ArticleHashtags.Select(ah => ah.Hashtag!.Name);
 }

@@ -11,8 +11,8 @@ public sealed class MediaOptions
     /// <summary>Max upload size for article images (default 10 MB).</summary>
     public long ArticleMaxBytes { get; set; } = 10 * 1024 * 1024;
 
-    /// <summary>Max upload size for comment images (tighter, default 5 MB).</summary>
-    public long CommentMaxBytes { get; set; } = 5 * 1024 * 1024;
+    /// <summary>Max upload size for comment images (tighter, default 4 MB).</summary>
+    public long CommentMaxBytes { get; set; } = 4 * 1024 * 1024;
 
     /// <summary>Images are resized so that neither edge exceeds this value.</summary>
     public int MaxEdgePixels { get; set; } = 1600;

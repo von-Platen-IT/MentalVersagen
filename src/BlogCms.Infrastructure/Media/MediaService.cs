@@ -22,6 +22,12 @@ public interface IMediaService
     Task<IReadOnlyList<MediaAsset>> GetForOwnerAsync(
         MediaOwnerType ownerType, Guid ownerId, CancellationToken cancellationToken = default);
 
+    /// <summary>Deletes an asset from storage and the database. Returns false when not found.</summary>
+    Task<bool> DeleteAsync(Guid assetId, CancellationToken cancellationToken = default);
+
+    /// <summary>Updates the alt text of an asset. Returns the updated asset or null.</summary>
+    Task<MediaAsset?> SetAltTextAsync(Guid assetId, string? altText, CancellationToken cancellationToken = default);
+
     string GetUrl(MediaAsset asset);
 }
 
@@ -118,6 +124,33 @@ public sealed class MediaService : IMediaService
         return ownerType == MediaOwnerType.Article
             ? await _db.MediaAssets.AsNoTracking().Where(m => m.ArticleId == ownerId).ToListAsync(cancellationToken)
             : await _db.MediaAssets.AsNoTracking().Where(m => m.CommentId == ownerId).ToListAsync(cancellationToken);
+    }
+
+    public async Task<bool> DeleteAsync(Guid assetId, CancellationToken cancellationToken = default)
+    {
+        var asset = await _db.MediaAssets.FirstOrDefaultAsync(m => m.Id == assetId, cancellationToken);
+        if (asset is null)
+        {
+            return false;
+        }
+
+        await _storage.DeleteAsync(asset.StoragePath, cancellationToken);
+        _db.MediaAssets.Remove(asset);
+        await _db.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<MediaAsset?> SetAltTextAsync(Guid assetId, string? altText, CancellationToken cancellationToken = default)
+    {
+        var asset = await _db.MediaAssets.FirstOrDefaultAsync(m => m.Id == assetId, cancellationToken);
+        if (asset is null)
+        {
+            return null;
+        }
+
+        asset.AltText = string.IsNullOrWhiteSpace(altText) ? null : altText.Trim();
+        await _db.SaveChangesAsync(cancellationToken);
+        return asset;
     }
 
     public string GetUrl(MediaAsset asset) => _storage.GetPublicUrl(asset.StoragePath);

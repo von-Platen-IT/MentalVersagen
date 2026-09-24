@@ -83,3 +83,13 @@
     <div class="form-text">JPEG, PNG, WebP oder GIF. Wird geprüft, skaliert und ohne EXIF gespeichert. Dient als Titelbild, wenn keine externe URL gesetzt ist.</div>
     <span asp-validation-for="ImageUpload" class="text-danger"></span>
 </div>
+
+<div class="mb-3">
+    <label asp-for="ContentImageUploads" class="form-label"></label>
+    <input asp-for="ContentImageUploads" type="file" accept="image/*" multiple class="form-control" />
+    <div class="form-text">
+        Mehrere Dateien möglich. Nach dem Speichern erscheinen sie in der Bilderverwaltung
+        mit einem Markdown-Snippet, das du in den Text einbauen kannst.
+    </div>
+    <span asp-validation-for="ContentImageUploads" class="text-danger"></span>
+</div>

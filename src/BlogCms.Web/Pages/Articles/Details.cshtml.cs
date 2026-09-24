@@ -52,6 +52,16 @@ public class DetailsModel : PageModel
 
     public string? TitleImageUrl { get; private set; }
 
+    /// <summary>Alt text for the title image (from the uploaded asset, if any).</summary>
+    public string? TitleImageAlt { get; private set; }
+
+    /// <summary>Id of the media asset used as title image (to exclude it from the gallery).</summary>
+    public Guid? TitleImageAssetId { get; private set; }
+
+    /// <summary>Article images for the thumbnail gallery (title image excluded).</summary>
+    public IReadOnlyList<MediaAsset> GalleryImages =>
+        Images.Where(i => i.Id != TitleImageAssetId).ToList();
+
     public IReadOnlyList<Comment> Comments { get; private set; } = [];
 
     public IReadOnlyList<MediaAsset> Images { get; private set; } = [];
@@ -87,6 +97,15 @@ public class DetailsModel : PageModel
 
         Article = article;
         TitleImageUrl = BlogCms.Web.Content.ArticleDisplay.ResolveTitleImage(article, _media);
+
+        // When the title image comes from an uploaded asset, remember which one
+        // (alt text + exclusion from the thumbnail gallery below the article).
+        if (string.IsNullOrWhiteSpace(article.TitleImageUrl))
+        {
+            var titleAsset = article.MediaAssets.OrderBy(m => m.CreatedAt).FirstOrDefault();
+            TitleImageAssetId = titleAsset?.Id;
+            TitleImageAlt = titleAsset?.AltText;
+        }
 
         await EvaluateAccessAsync(article);
 
@@ -189,6 +208,7 @@ public class DetailsModel : PageModel
         var userId = CurrentUserId;
         var result = await _comments.AddAsync(article.Id, userId, content, parentId);
 
+        string? uploadError = null;
         if (result.Succeeded && result.Comment is not null && image is { Length: > 0 })
         {
             await using var stream = image.OpenReadStream();
@@ -197,12 +217,21 @@ public class DetailsModel : PageModel
 
             if (!upload.Succeeded)
             {
-                TempData["CommentError"] = upload.Error;
+                uploadError = upload.Error;
             }
         }
 
-        TempData[result.Succeeded ? "CommentMessage" : "CommentError"] =
-            result.Succeeded ? "Kommentar gespeichert." : result.Error;
+        // Ein fehlgeschlagener Bild-Upload (z. B. über 4 MB) muss sichtbar bleiben
+        // und darf nicht von der Erfolgsmeldung überschrieben werden.
+        if (uploadError is not null)
+        {
+            TempData["CommentError"] = uploadError;
+        }
+        else
+        {
+            TempData[result.Succeeded ? "CommentMessage" : "CommentError"] =
+                result.Succeeded ? "Kommentar gespeichert." : result.Error;
+        }
 
         return RedirectToPage("/Articles/Details", new { slug });
     }

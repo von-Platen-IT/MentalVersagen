@@ -1,5 +1,6 @@
 using BlogCms.Domain.Entities;
 using BlogCms.Domain.Enums;
+using BlogCms.Infrastructure.Captcha;
 using BlogCms.Infrastructure.Comments;
 using BlogCms.Infrastructure.Content;
 using BlogCms.Infrastructure.Data;
@@ -11,6 +12,7 @@ using BlogCms.Infrastructure.Payments;
 using BlogCms.Infrastructure.Ratings;
 using BlogCms.Web.Authorization;
 using BlogCms.Web.Configuration;
+using BlogCms.Web.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -159,6 +161,14 @@ builder.Services.AddAuthorization(options =>
 });
 builder.Services.AddScoped<IAuthorizationHandler, PremiumAuthorizationHandler>();
 
+// Captcha für die Registrierung: Aufgabe + signierter Token (Data Protection).
+builder.Services.Configure<CaptchaOptions>(builder.Configuration.GetSection(CaptchaOptions.SectionName));
+builder.Services.AddScoped<ICaptchaService, DataProtectionCaptchaService>();
+
+// Drosselung gegen Massenregistrierungen: zählt nur die tatsächlichen
+// Registrierungsversuche (POST) pro IP-Adresse — nicht die Seitenaufrufe.
+builder.Services.AddSingleton<IRegistrationThrottle, MemoryCacheRegistrationThrottle>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -183,6 +193,11 @@ app.MapStaticAssets();
 app.MapControllers();
 app.MapRazorPages()
    .WithStaticAssets();
+
+// Die frühere Akten-Liste (/Articles) ging in der Suchseite auf: dauerhafte
+// Weiterleitung mit Erhalt aller Filter-Parameter (die Namen sind identisch).
+app.MapGet("/Articles", (HttpRequest request) =>
+    Results.Redirect($"/Suche{request.QueryString.Value}", permanent: true));
 
 // Ensure all application roles exist (idempotent).
 using (var scope = app.Services.CreateScope())

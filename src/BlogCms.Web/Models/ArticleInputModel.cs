@@ -56,6 +56,9 @@ public class ArticleInputModel
     [Display(Name = "Titelbild hochladen")]
     public IFormFile? ImageUpload { get; set; }
 
+    [Display(Name = "Weitere Bilder hochladen (im Text einbaubar)")]
+    public List<IFormFile> ContentImageUploads { get; set; } = [];
+
     /// <summary>
     /// Validates that a title image source is present: either an external URL, a new
     /// upload, or (on edit) an already stored image.

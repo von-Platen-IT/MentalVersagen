@@ -1,7 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using BlogCms.Domain.Entities;
 using BlogCms.Domain.Enums;
+using BlogCms.Infrastructure.Captcha;
 using BlogCms.Infrastructure.Email;
+using BlogCms.Web.Security;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -12,15 +14,41 @@ public class RegisterModel : PageModel
 {
     private readonly UserManager<User> _userManager;
     private readonly IAppEmailSender _emailSender;
+    private readonly ICaptchaService _captcha;
+    private readonly IRegistrationThrottle _throttle;
 
-    public RegisterModel(UserManager<User> userManager, IAppEmailSender emailSender)
+    public RegisterModel(
+        UserManager<User> userManager,
+        IAppEmailSender emailSender,
+        ICaptchaService captcha,
+        IRegistrationThrottle throttle)
     {
         _userManager = userManager;
         _emailSender = emailSender;
+        _captcha = captcha;
+        _throttle = throttle;
     }
 
     [BindProperty]
     public InputModel Input { get; set; } = new();
+
+    /// <summary>Answer to the arithmetic captcha question.</summary>
+    [BindProperty]
+    [Display(Name = "Sicherheitsabfrage")]
+    public string? CaptchaAnswer { get; set; }
+
+    /// <summary>
+    /// Signed token carrying the expected answer. It is only ever validated on
+    /// the server — the client cannot read or forge the expected value.
+    /// </summary>
+    [BindProperty]
+    public string? CaptchaToken { get; set; }
+
+    /// <summary>Honeypot field: hidden from humans, must stay empty.</summary>
+    [BindProperty]
+    public string? ExtraField { get; set; }
+
+    public string CaptchaQuestion { get; private set; } = string.Empty;
 
     public class InputModel
     {
@@ -48,14 +76,45 @@ public class RegisterModel : PageModel
 
     public void OnGet()
     {
+        IssueCaptcha();
+    }
+
+    /// <summary>
+    /// Hands out a fresh challenge for the "neue Aufgabe" button (AJAX).
+    /// </summary>
+    public IActionResult OnGetCaptcha()
+    {
+        var challenge = _captcha.Issue();
+        return new JsonResult(new { question = challenge.Question, token = challenge.Token });
     }
 
     public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
     {
         returnUrl ??= Url.Content("~/");
 
+        // Drosselung: begrenzt die Registrierungsversuche pro IP-Adresse.
+        if (!_throttle.TryAcquire(HttpContext.Connection.RemoteIpAddress?.ToString()))
+        {
+            ModelState.AddModelError(
+                string.Empty,
+                "Zu viele Registrierungsversuche. Bitte in einer Minute erneut versuchen.");
+            IssueCaptcha();
+            return Page();
+        }
+
+        // Honeypot: bots fill every field they find — reject silently.
+        if (!string.IsNullOrWhiteSpace(ExtraField))
+        {
+            ModelState.AddModelError(string.Empty, "Die Registrierung konnte nicht verarbeitet werden.");
+            IssueCaptcha();
+            return Page();
+        }
+
+        ValidateCaptcha();
+
         if (!ModelState.IsValid)
         {
+            IssueCaptcha();
             return Page();
         }
 
@@ -72,6 +131,7 @@ public class RegisterModel : PageModel
         if (!result.Succeeded)
         {
             AddErrors(result);
+            IssueCaptcha();
             return Page();
         }
 
@@ -97,6 +157,32 @@ public class RegisterModel : PageModel
         await _emailSender.SendAsync(user.Email!, "E-Mail-Adresse bestätigen", html);
 
         return RedirectToPage("/Account/RegisterConfirmation", new { email = Input.Email });
+    }
+
+    private void IssueCaptcha()
+    {
+        var challenge = _captcha.Issue();
+        CaptchaQuestion = challenge.Question;
+        CaptchaToken = challenge.Token;
+    }
+
+    private void ValidateCaptcha()
+    {
+        var result = _captcha.Validate(CaptchaToken, CaptchaAnswer);
+        if (result == CaptchaResult.Valid)
+        {
+            return;
+        }
+
+        var message = result switch
+        {
+            CaptchaResult.TooFast => "Bitte nimm dir einen Moment Zeit für die Sicherheitsabfrage.",
+            CaptchaResult.Expired => "Die Sicherheitsabfrage ist abgelaufen. Bitte löse die neue Aufgabe.",
+            CaptchaResult.InvalidToken => "Die Sicherheitsabfrage ist ungültig. Bitte löse die neue Aufgabe.",
+            _ => "Die Antwort auf die Sicherheitsabfrage ist nicht korrekt."
+        };
+
+        ModelState.AddModelError(nameof(CaptchaAnswer), message);
     }
 
     private void AddErrors(IdentityResult result)

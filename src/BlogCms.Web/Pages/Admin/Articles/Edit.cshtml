@@ -22,6 +22,56 @@
     </form>
 </div>
 
+<div class="mv-doc mt-3">
+    <p class="meta-mono mb-3">Bilderverwaltung</p>
+
+    @if (Model.Images.Count == 0)
+    {
+        <p class="text-muted mb-0">
+            Noch keine Bilder. Lade oben unter „Weitere Bilder hochladen“ Dateien hoch und speichere den Artikel.
+        </p>
+    }
+    else
+    {
+        <div class="mv-admin-media">
+            @foreach (var img in Model.Images)
+            {
+                var url = Model.GetImageUrl(img);
+                var alt = img.AltText ?? "";
+                var markdown = $"![{alt}]({url})";
+
+                <div class="mv-admin-media__item">
+                    <img src="@url" alt="@alt" loading="lazy" decoding="async" />
+                    <div class="mv-admin-media__controls">
+                        <form method="post" asp-page-handler="SaveImageAlt" asp-route-id="@Model.ArticleId" asp-route-imageId="@img.Id" class="d-flex gap-2">
+                            <input type="text" name="altText" value="@alt" placeholder="Alt-Text (Barrierefreiheit)" class="form-control form-control-sm" aria-label="Alt-Text für Bild" />
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">Alt-Text speichern</button>
+                        </form>
+
+                        <div class="mv-admin-media__snippet">
+                            <input type="text" readonly value="@markdown" aria-label="Markdown-Snippet" onclick="this.select()" />
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-copy>Markdown kopieren</button>
+                        </div>
+
+                        <div class="mv-admin-media__actions">
+                            <form method="post" asp-page-handler="UseAsTitle" asp-route-id="@Model.ArticleId" asp-route-imageId="@img.Id">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">Als Titelbild verwenden</button>
+                            </form>
+                            <form method="post" asp-page-handler="DeleteImage" asp-route-id="@Model.ArticleId" asp-route-imageId="@img.Id">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Löschen</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="form-text mt-2">
+            Tipp: Baue Bilder mit dem Markdown-Snippet in den Text ein — sie erscheinen dann im Textlauf
+            und zusätzlich als Thumbnail unter dem Artikel.
+        </div>
+    }
+</div>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 }

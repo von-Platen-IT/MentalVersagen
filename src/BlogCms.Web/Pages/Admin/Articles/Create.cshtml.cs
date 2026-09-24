@@ -109,5 +109,18 @@ public class CreateModel : PageModel
             await _media.UploadAsync(
                 stream, Input.ImageUpload.FileName, MediaOwnerType.Article, articleId, authorId, null);
         }
+
+        // Weitere Bilder für den Textlauf (Verwaltung mit Markdown-Snippets im Edit-Dialog).
+        foreach (var file in Input.ContentImageUploads)
+        {
+            if (file is null || file.Length == 0)
+            {
+                continue;
+            }
+
+            await using var stream = file.OpenReadStream();
+            await _media.UploadAsync(
+                stream, file.FileName, MediaOwnerType.Article, articleId, authorId, null);
+        }
     }
 }
