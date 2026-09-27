@@ -2,7 +2,7 @@
 
 Dieses Dokument definiert das verbindliche Datenmodell für das CMS. Alle Pflichtenheft-Module (siehe `README.md`) referenzieren ausschließlich die hier definierten Entitäten, Felder und Beziehungen. Änderungen am Datenmodell werden **zuerst hier** vorgenommen, bevor sie in Feature-Dokumenten oder Code umgesetzt werden.
 
-Stand: v1.0 · ASP.NET Core / Entity Framework Core (angenommen)
+Stand: v1.2 · ASP.NET Core / Entity Framework Core (angenommen)
 
 ---
 
@@ -260,6 +260,34 @@ eingebettet werden (anklickbare Verweise auf die Beiträge).
 
 ---
 
+## 13. ActivityLogEntry (Aktivitätslog)
+
+Einheitliches, append-only Aktivitätslog. Alle Erfassungsarten (Artikelaufruf,
+Artikel-Erstellung, Kommentar-Erstellung, Beitrags-Bewertung) werden in **einer**
+Tabelle gespeichert; ereignisspezifische Felder bleiben für die übrigen
+Ereignisarten `null`.
+
+| Feld | Typ | Beschreibung |
+|---|---|---|
+| Id | Guid | PK |
+| EventType | enum: `ArticleViewed`, `ArticleCreated`, `CommentCreated`, `ArticleRated` | Ereignisart |
+| IpAddress | string? | Client-IP (IPv4/IPv6), max. 45 Zeichen; personenbezogen |
+| UserId | Guid? (FK → User) | Konto, falls angemeldet; `null` bei anonymen Aktionen |
+| ArticleId | Guid? (FK → Article) | betroffener Beitrag |
+| CommentId | Guid? (FK → Comment) | betroffener Kommentar (nur `CommentCreated`) |
+| RatingValue | enum? (`ThumbUp`, `ThumbDown`) | nur bei `ArticleRated` |
+| CreatedAt | DateTime | Ereigniszeitpunkt (UTC) |
+
+**Regeln:** Append-only (keine Updates). Sichtungen werden bei jedem Aufruf der
+Artikel-Detailseite gezählt. Bewertungen werden nur für Beiträge protokolliert
+(nicht für Kommentare). Indizes: `(ArticleId, EventType)` und `CreatedAt`.
+
+> Datenschutz: IP-Adressen sind personenbezogene Daten. Die Speicherung erfolgt
+> zur Auswertung; eine Aufbewahrungs-/Löschstrategie ist vor Produktivbetrieb
+> festzulegen.
+
+---
+
 ## Entity-Relationship-Übersicht (vereinfacht)
 
 ```
@@ -286,6 +314,10 @@ Comment 1---n Report
 Comment 1---n Rating
 
 LinkList 1---n LinkListItem
+
+User 1---n ActivityLogEntry
+Article 1---n ActivityLogEntry
+Comment 1---n ActivityLogEntry
 ```
 
 ---
@@ -296,3 +328,4 @@ LinkList 1---n LinkListItem
 |---|---|---|
 | v1.0 | Initial | Erstfassung: User, Article, Tag, Comment, MediaAsset, VideoEmbed, Subscription, Donation, NewsletterSubscriber, Report |
 | v1.1 | FeatureFix1 | Neue Rolle `Author`; `Article.TitleImageUrl`, `AccessLevel`, `ScheduledAt`, `ArticleStatus.Scheduled`; `Comment.IsHighlighted`; neue Entitäten `Hashtag`/`ArticleHashtag`, `Rating`, `LinkList`/`LinkListItem` |
+| v1.2 | Aktivitätslog | Neue Entität `ActivityLogEntry` (einheitliches Aktivitätslog für Artikelaufrufe, Artikel-Erstellung, Kommentar-Erstellung und Beitrags-Bewertungen) |

@@ -1,5 +1,6 @@
 using BlogCms.Domain.Entities;
 using BlogCms.Domain.Enums;
+using BlogCms.Infrastructure.Activity;
 using BlogCms.Infrastructure.Captcha;
 using BlogCms.Infrastructure.Comments;
 using BlogCms.Infrastructure.Content;
@@ -87,6 +88,9 @@ builder.Services.AddScoped<IRatingService, RatingService>();
 
 // Link lists: admin-curated, ordered article lists (BR-090/BR-091/BR-092).
 builder.Services.AddScoped<ILinkListService, LinkListService>();
+
+// Activity log: unified recording of views, article/comment creation and ratings.
+builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
 
 // Comments: moderation mode, blocklist filter and rate limiting are configurable.
 builder.Services.Configure<CommentOptions>(

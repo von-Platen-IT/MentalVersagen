@@ -1,0 +1,196 @@
+@page
+@model BlogCms.Web.Pages.Admin.Activity.IndexModel
+@using BlogCms.Domain.Enums
+@{
+    ViewData["Title"] = "Auswertung";
+    var header = new BlogCms.Web.Models.PageHeaderModel
+    {
+        Slide = 2,
+        Title = "Auswertung",
+        Sub = "Aktivitätslog: Aufrufe, Beiträge, Kommentare und Bewertungen."
+    };
+}
+
+<partial name="_PageHeader" model="header" />
+
+<div class="mv-doc mt-4">
+    <form method="get" class="row g-2 align-items-end mb-4">
+        <div class="col-auto">
+            <label class="form-label" for="From">Von</label>
+            <input class="form-control" type="date" id="From" name="From"
+                   value="@Model.FromDate.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-auto">
+            <label class="form-label" for="To">Bis</label>
+            <input class="form-control" type="date" id="To" name="To"
+                   value="@Model.ToDate.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Anwenden</button>
+        </div>
+    </form>
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md">
+            <div class="mv-case h-100">
+                <div class="mv-case__body text-center">
+                    <div class="h3 mb-0">@Model.Overview.TotalViews</div>
+                    <div class="text-muted small">Aufrufe</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md">
+            <div class="mv-case h-100">
+                <div class="mv-case__body text-center">
+                    <div class="h3 mb-0">@Model.Overview.TotalArticlesCreated</div>
+                    <div class="text-muted small">Beiträge erstellt</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md">
+            <div class="mv-case h-100">
+                <div class="mv-case__body text-center">
+                    <div class="h3 mb-0">@Model.Overview.TotalComments</div>
+                    <div class="text-muted small">Kommentare</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md">
+            <div class="mv-case h-100">
+                <div class="mv-case__body text-center">
+                    <div class="h3 mb-0">@Model.Overview.TotalThumbUp</div>
+                    <div class="text-muted small">Daumen hoch</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md">
+            <div class="mv-case h-100">
+                <div class="mv-case__body text-center">
+                    <div class="h3 mb-0">@Model.Overview.TotalThumbDown</div>
+                    <div class="text-muted small">Daumen runter</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <h2 class="h5">Top-Beiträge nach Aufrufen</h2>
+            @if (Model.Overview.TopViewedArticles.Count == 0)
+            {
+                <p class="text-muted">Keine Aufrufe im gewählten Zeitraum.</p>
+            }
+            else
+            {
+                <table class="table align-middle">
+                    <thead>
+                        <tr><th>Beitrag</th><th class="text-end">Aufrufe</th></tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model.Overview.TopViewedArticles)
+                    {
+                        <tr>
+                            <td>@item.Title</td>
+                            <td class="text-end">@item.Count</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            }
+        </div>
+
+        <div class="col-lg-6">
+            <h2 class="h5">Bewertungen je Beitrag</h2>
+            @if (Model.Overview.ArticleRatings.Count == 0)
+            {
+                <p class="text-muted">Keine Bewertungen im gewählten Zeitraum.</p>
+            }
+            else
+            {
+                <table class="table align-middle">
+                    <thead>
+                        <tr><th>Beitrag</th><th class="text-end">👍</th><th class="text-end">👎</th></tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model.Overview.ArticleRatings)
+                    {
+                        <tr>
+                            <td>@item.Title</td>
+                            <td class="text-end">@item.ThumbUp</td>
+                            <td class="text-end">@item.ThumbDown</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+
+    <h2 class="h5 mt-4">Aktivität pro Tag</h2>
+    @if (Model.Overview.Daily.Count == 0)
+    {
+        <p class="text-muted">Keine Aktivität im gewählten Zeitraum.</p>
+    }
+    else
+    {
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Datum</th>
+                    <th class="text-end">Aufrufe</th>
+                    <th class="text-end">Kommentare</th>
+                    <th class="text-end">Beiträge erstellt</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var day in Model.Overview.Daily)
+            {
+                <tr>
+                    <td>@day.Date.ToString("yyyy-MM-dd")</td>
+                    <td class="text-end">@day.Views</td>
+                    <td class="text-end">@day.Comments</td>
+                    <td class="text-end">@day.ArticlesCreated</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+
+    <h2 class="h5 mt-4">Letzte Ereignisse</h2>
+    @if (Model.Overview.RecentEntries.Count == 0)
+    {
+        <p class="text-muted">Noch keine Ereignisse erfasst.</p>
+    }
+    else
+    {
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Zeit (UTC)</th>
+                    <th>Ereignis</th>
+                    <th>Beitrag</th>
+                    <th>Konto</th>
+                    <th>IP</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var entry in Model.Overview.RecentEntries)
+            {
+                <tr>
+                    <td>@entry.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>
+                        @BlogCms.Web.Pages.Admin.Activity.IndexModel.EventLabel(entry.EventType)
+                        @if (entry.EventType == ActivityEventType.ArticleRated && entry.RatingValue is not null)
+                        {
+                            <span>@(entry.RatingValue == RatingValue.ThumbUp ? "👍" : "👎")</span>
+                        }
+                    </td>
+                    <td>@(entry.Article?.Title ?? "—")</td>
+                    <td>@(entry.User?.DisplayName ?? "anonym")</td>
+                    <td>@(entry.IpAddress ?? "—")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</div>

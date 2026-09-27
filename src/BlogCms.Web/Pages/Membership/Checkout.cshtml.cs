@@ -44,7 +44,7 @@ public class CheckoutModel : PageModel
             : _options.PlanIdMonthly;
 
         var successUrl = Url.Page("/Membership/CheckoutComplete", null, null, Request.Scheme)!;
-        var cancelUrl = Url.Page("/Membership/Index", null, null, Request.Scheme)!;
+        var cancelUrl = Url.Page("/Unterstuetzer/Index", null, null, Request.Scheme)!;
 
         var session = await _stripeService.CreateSubscriptionCheckoutAsync(
             user.Id, user.Email, planId, successUrl, cancelUrl, cancellationToken);

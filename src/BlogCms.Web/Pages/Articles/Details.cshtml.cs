@@ -1,10 +1,12 @@
 using BlogCms.Domain.Entities;
 using BlogCms.Domain.Enums;
+using BlogCms.Infrastructure.Activity;
 using BlogCms.Infrastructure.Comments;
 using BlogCms.Infrastructure.Content;
 using BlogCms.Infrastructure.Media;
 using BlogCms.Infrastructure.Ratings;
 using BlogCms.Web.Authorization;
+using BlogCms.Web.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -20,6 +22,7 @@ public class DetailsModel : PageModel
     private readonly IMarkdownRenderer _markdownRenderer;
     private readonly IAuthorizationService _authorizationService;
     private readonly IRatingService _ratings;
+    private readonly IActivityLogService _activity;
     private readonly UserManager<User> _userManager;
 
     public DetailsModel(
@@ -29,6 +32,7 @@ public class DetailsModel : PageModel
         IMarkdownRenderer markdownRenderer,
         IAuthorizationService authorizationService,
         IRatingService ratings,
+        IActivityLogService activity,
         UserManager<User> userManager)
     {
         _articles = articles;
@@ -37,6 +41,7 @@ public class DetailsModel : PageModel
         _markdownRenderer = markdownRenderer;
         _authorizationService = authorizationService;
         _ratings = ratings;
+        _activity = activity;
         _userManager = userManager;
     }
 
@@ -96,6 +101,10 @@ public class DetailsModel : PageModel
         }
 
         Article = article;
+
+        // Unified activity log: record the view (IP + account if signed in).
+        await _activity.LogArticleViewAsync(article.Id, CurrentUserIdOrNull, HttpContext.GetClientIp());
+
         TitleImageUrl = BlogCms.Web.Content.ArticleDisplay.ResolveTitleImage(article, _media);
 
         // When the title image comes from an uploaded asset, remember which one
@@ -153,7 +162,15 @@ public class DetailsModel : PageModel
             return RedirectToPage("/Account/Login", new { returnUrl = Url.Page("/Articles/Details", new { slug }) });
         }
 
-        var result = await _ratings.RateArticleAsync(articleId: await ResolveArticleIdAsync(slug), CurrentUserId, value);
+        var articleId = await ResolveArticleIdAsync(slug);
+        var result = await _ratings.RateArticleAsync(articleId, CurrentUserId, value);
+
+        if (result.Succeeded && articleId != Guid.Empty)
+        {
+            await _activity.LogArticleRatedAsync(
+                articleId, value, CurrentUserIdOrNull, HttpContext.GetClientIp());
+        }
+
         TempData[result.Succeeded ? "CommentMessage" : "CommentError"] =
             result.Succeeded ? "Danke für deine Bewertung." : result.Error;
 
@@ -207,6 +224,12 @@ public class DetailsModel : PageModel
 
         var userId = CurrentUserId;
         var result = await _comments.AddAsync(article.Id, userId, content, parentId);
+
+        if (result.Succeeded && result.Comment is not null)
+        {
+            await _activity.LogCommentCreatedAsync(
+                article.Id, result.Comment.Id, CurrentUserIdOrNull, HttpContext.GetClientIp());
+        }
 
         string? uploadError = null;
         if (result.Succeeded && result.Comment is not null && image is { Length: > 0 })
@@ -286,4 +309,7 @@ public class DetailsModel : PageModel
 
     private Guid CurrentUserId =>
         Guid.TryParse(_userManager.GetUserId(User), out var id) ? id : Guid.Empty;
+
+    /// <summary>Account id for the activity log, or <c>null</c> for anonymous visitors.</summary>
+    private Guid? CurrentUserIdOrNull => CurrentUserId == Guid.Empty ? null : CurrentUserId;
 }

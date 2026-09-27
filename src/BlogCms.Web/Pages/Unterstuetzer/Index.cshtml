@@ -1,0 +1,57 @@
+@page
+@model BlogCms.Web.Pages.Unterstuetzer.IndexModel
+@{
+    ViewData["Title"] = "Unterstützer";
+    var header = new BlogCms.Web.Models.PageHeaderModel
+    {
+        Slide = 1,
+        Title = "Unterstützer",
+        Sub = "Meine Arbeit honorieren – und Beiträge früher lesen."
+    };
+}
+
+<partial name="_PageHeader" model="header" />
+
+<div class="mv-doc mt-4">
+    <h2 class="h4">Danke, dass du hier bist</h2>
+    <p>
+        Ich freue mich, wenn meine Arbeit honoriert wird. Als Unterstützer:in sicherst du die
+        Zeit, die in jede Akte fließt – und du liest neue Beiträge
+        <strong>drei Tage vor allen anderen</strong>.
+    </p>
+
+    <div class="mv-case mt-4">
+        <div class="mv-case__head">
+            <span>MITGLIEDSCHAFT</span>
+        </div>
+        <div class="mv-case__body">
+            <p>
+                Mit einer Mitgliedschaft bekommst du neue Beiträge drei Tage vor der
+                Veröffentlichung zu sehen und öffnest den vollständigen Zugang zu allen
+                Premium-Akten.
+            </p>
+            <button type="button" class="btn btn-primary" disabled>
+                Mitgliedschaft abschließen (bald verfügbar)
+            </button>
+        </div>
+    </div>
+
+    <div class="mv-case mt-4">
+        <div class="mv-case__head">
+            <span>SPENDEN</span>
+        </div>
+        <div class="mv-case__body">
+            <p>
+                Du möchtest lieber einmalig und ohne Abo unterstützen? Auch das ist möglich –
+                freiwillig und anonym.
+            </p>
+            <button type="button" class="btn btn-outline-secondary" disabled>
+                Jetzt spenden (bald verfügbar)
+            </button>
+        </div>
+    </div>
+
+    <p class="meta-mono mt-3 mb-0">
+        Hinweis: Die Funktionen sind noch nicht aktiv – diese Seite ist vorerst ein Platzhalter.
+    </p>
+</div>

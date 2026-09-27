@@ -1,8 +1,10 @@
 using BlogCms.Domain.Entities;
 using BlogCms.Domain.Enums;
+using BlogCms.Infrastructure.Activity;
 using BlogCms.Infrastructure.Content;
 using BlogCms.Infrastructure.Media;
 using BlogCms.Web.Authorization;
+using BlogCms.Web.Extensions;
 using BlogCms.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -17,17 +19,20 @@ public class CreateModel : PageModel
     private readonly IArticleService _articles;
     private readonly IMediaService _media;
     private readonly IOEmbedService _oEmbed;
+    private readonly IActivityLogService _activity;
     private readonly UserManager<User> _userManager;
 
     public CreateModel(
         IArticleService articles,
         IMediaService media,
         IOEmbedService oEmbed,
+        IActivityLogService activity,
         UserManager<User> userManager)
     {
         _articles = articles;
         _media = media;
         _oEmbed = oEmbed;
+        _activity = activity;
         _userManager = userManager;
     }
 
@@ -69,6 +74,9 @@ public class CreateModel : PageModel
 
         var created = await _articles.CreateAsync(
             article, ArticleInputModel.ParseTags(Input.Tags), ArticleInputModel.ParseHashtags(Input.Hashtags));
+
+        // Unified activity log: record the creation (IP + author account).
+        await _activity.LogArticleCreatedAsync(created.Id, authorId, HttpContext.GetClientIp());
 
         await ApplyMediaAsync(created.Id, authorId);
 

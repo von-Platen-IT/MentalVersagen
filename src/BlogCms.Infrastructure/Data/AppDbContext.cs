@@ -32,6 +32,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     public DbSet<Rating> Ratings => Set<Rating>();
     public DbSet<LinkList> LinkLists => Set<LinkList>();
     public DbSet<LinkListItem> LinkListItems => Set<LinkListItem>();
+    public DbSet<ActivityLogEntry> ActivityLogEntries => Set<ActivityLogEntry>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
