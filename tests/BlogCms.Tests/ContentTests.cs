@@ -271,3 +271,80 @@ public class ArticleServiceTests
         Assert.True(items[0].MediaAssets.First().IsCover);
     }
 }
+
+public class VideoEmbedRendererTests
+{
+    [Theory]
+    [InlineData("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ")]
+    [InlineData("https://youtu.be/dQw4w9WgXcQ", "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ")]
+    [InlineData("https://www.youtube.com/embed/dQw4w9WgXcQ", "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ")]
+    [InlineData("https://www.youtube.com/shorts/dQw4w9WgXcQ", "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ")]
+    [InlineData("https://www.youtube.com/watch?list=PL123&v=dQw4w9WgXcQ", "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ")]
+    public void ResolveEmbedUrl_ExtractsYouTubeId(string url, string expected)
+    {
+        var result = BlogCms.Web.Content.VideoEmbedRenderer.ResolveEmbedUrl(VideoPlatform.YouTube, url);
+
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    [InlineData("https://vimeo.com/123456789", "https://player.vimeo.com/video/123456789")]
+    [InlineData("https://player.vimeo.com/video/123456789", "https://player.vimeo.com/video/123456789")]
+    public void ResolveEmbedUrl_ExtractsVimeoId(string url, string expected)
+    {
+        var result = BlogCms.Web.Content.VideoEmbedRenderer.ResolveEmbedUrl(VideoPlatform.Vimeo, url);
+
+        Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public void ResolveEmbedUrl_ReturnsNull_ForUnsupportedPlatform()
+    {
+        var result = BlogCms.Web.Content.VideoEmbedRenderer.ResolveEmbedUrl(
+            VideoPlatform.X, "https://x.com/user/status/123");
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void ResolveEmbedUrl_ReturnsNull_ForYouTubeUrlWithoutId()
+    {
+        var result = BlogCms.Web.Content.VideoEmbedRenderer.ResolveEmbedUrl(
+            VideoPlatform.YouTube, "https://www.youtube.com/");
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void Render_ProducesDirectIframe_WithAllowAttributes()
+    {
+        var embed = new VideoEmbed
+        {
+            Platform = VideoPlatform.YouTube,
+            OriginalUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+            EmbedHtml = "<iframe src=\"https://www.youtube.com/embed/dQw4w9WgXcQ\"></iframe>"
+        };
+
+        var html = BlogCms.Web.Content.VideoEmbedRenderer.Render(embed);
+
+        Assert.Contains("https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ", html);
+        Assert.Contains("allowfullscreen", html);
+        Assert.Contains("allow=\"accelerometer", html);
+        Assert.DoesNotContain("srcdoc", html);
+    }
+
+    [Fact]
+    public void Render_FallsBackToLink_ForUnsupportedPlatform()
+    {
+        var embed = new VideoEmbed
+        {
+            Platform = VideoPlatform.Other,
+            OriginalUrl = "https://example.com/video"
+        };
+
+        var html = BlogCms.Web.Content.VideoEmbedRenderer.Render(embed);
+
+        Assert.Contains("<a href=", html);
+        Assert.DoesNotContain("<iframe", html);
+    }
+}

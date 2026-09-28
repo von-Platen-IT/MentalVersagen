@@ -38,8 +38,20 @@ Fachliche Referenz: [`FeatureFix1.MD`](FeatureFix1.MD) (Regeln BR-022, BR-050 bi
 - Der Abruf erfolgt serverseitig und wird zwischengespeichert (nicht bei jedem Seitenaufruf erneut) — bei Bedarf lässt sich der Cache erneuern (z. B. wenn eine Plattform ihr Embed-Format ändert).
 
 ### Sicherheit
-- `EmbedHtml` wird beim Rendern in ein **sandboxed `<iframe>`** eingebettet (`sandbox`-Attribut ohne `allow-same-origin` in Kombination mit `allow-scripts`, je nach Plattform-Anforderung), um XSS-Risiken über manipulierte Embed-Inhalte zu minimieren — insbesondere relevant, da Kommentare nutzergeneriert sind.
-- Es wird ausschließlich der über oEmbed offiziell gelieferte Code verwendet, kein Parsen/Konstruieren eigener Embed-iframes aus der Roh-URL.
+- Beim Rendern wird **kein** vom Nutzer beeinflussbares HTML injiziert. Stattdessen wird die
+  Video-ID serverseitig mit einem strikten Muster (YouTube: 11 Zeichen `[A-Za-z0-9_-]`,
+  Vimeo: numerisch) aus der Original-URL extrahiert und daraus eine feste, vertrauenswürdige
+  Embed-URL gebaut (`youtube-nocookie.com/embed/{id}` bzw. `player.vimeo.com/video/{id}`).
+  Dadurch entfällt das XSS-Risiko über manipulierte Embed-Inhalte vollständig.
+- Das eingebettete `<iframe>` läuft weiterhin in einem **sandboxed `<iframe>`**
+  (`sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"`). `allow-same-origin`
+  ist erforderlich, damit der plattformfremde Player seine eigene Origin behalten und abspielen
+  kann; da die eingebettete URL ausschließlich aus einer validierten ID konstruiert wird, ist
+  dies unkritisch.
+- Plattformen, die kein sicheres iframe-Embedding erlauben (X/TikTok liefern `blockquote`+`script`),
+  werden als einfacher Link dargestellt.
+- Der oEmbed-Abruf dient weiterhin der Plattform-Erkennung und Thumbnail-Ermittlung; das
+  zurückgegebene `EmbedHtml` wird nicht mehr roh ausgeliefert.
 
 ## Akzeptanzkriterien
 
