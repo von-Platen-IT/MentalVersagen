@@ -18,6 +18,12 @@ public static class ArticleDisplay
             return article.TitleImageUrl;
         }
 
+        var cover = article.MediaAssets.FirstOrDefault(m => m.IsCover);
+        if (cover is not null)
+        {
+            return media.GetUrl(cover);
+        }
+
         var uploaded = article.MediaAssets
             .OrderBy(m => m.CreatedAt)
             .FirstOrDefault();
@@ -37,5 +43,23 @@ public static class ArticleDisplay
         ArticleAccessLevel.Registered => "bg-info text-dark",
         ArticleAccessLevel.Premium => "bg-dark",
         _ => "bg-success"
+    };
+
+    public static string StatusLabel(ArticleStatus status) => status switch
+    {
+        ArticleStatus.Draft => "Entwurf",
+        ArticleStatus.Scheduled => "Geplant",
+        ArticleStatus.Published => "Veröffentlicht",
+        ArticleStatus.Archived => "Archiviert",
+        _ => status.ToString()
+    };
+
+    public static string StatusBadgeClass(ArticleStatus status) => status switch
+    {
+        ArticleStatus.Draft => "mv-badge",
+        ArticleStatus.Scheduled => "mv-badge mv-badge--sepia",
+        ArticleStatus.Published => "mv-badge mv-badge--open",
+        ArticleStatus.Archived => "mv-badge mv-badge--red",
+        _ => "mv-badge"
     };
 }

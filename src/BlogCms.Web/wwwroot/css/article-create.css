@@ -1,0 +1,256 @@
+/*
+ * Mentalversagen — Ergonomie der Seite „Neue Akte" (/Admin/Articles/Create).
+ *
+ * Nur auf dieser Seite geladen und vollständig unter .mv-create gekapselt.
+ * Ziel: helles, gut lesbares Papier-Formular (dunkle Schrift, helle Felder,
+ * heller Editor) mit logisch gruppierten Sektionen. Die Bearbeiten-Seite
+ * bleibt unverändert.
+ */
+
+/* Native Bedienelemente (Select-Dropdown, Datumsauswahl, Scrollbar) hell. */
+.mv-create {
+  color-scheme: light;
+}
+
+/* ---------- Eingabefelder ---------- */
+.mv-create .form-control,
+.mv-create .form-select {
+  background: #fff;
+  color: var(--mv-ink);
+  border: 1px solid rgba(11, 12, 14, 0.25);
+}
+
+.mv-create .form-control:focus,
+.mv-create .form-select:focus {
+  background: #fff;
+  color: var(--mv-ink);
+  border-color: var(--mv-red);
+  box-shadow: 0 0 0 3px rgba(210, 31, 60, 0.18);
+}
+
+.mv-create .form-control::placeholder {
+  color: #8a8a8a;
+}
+
+/* Datei-Auswahl-Button hell und lesbar. */
+.mv-create .form-control[type="file"]::file-selector-button {
+  background: #e2dccb;
+  color: var(--mv-ink);
+  border: 1px solid rgba(11, 12, 14, 0.25);
+  border-radius: 2px;
+  margin-right: 0.75rem;
+}
+
+/* ---------- Labels, Hilfetexte, Validierung ---------- */
+.mv-create .form-label {
+  color: var(--mv-ink);
+  font-weight: 600;
+}
+
+.mv-create .form-text {
+  color: #5a5a5a;
+}
+
+.mv-create .mv-text-danger {
+  color: #8e1728;
+}
+
+/* ---------- Sektionen ---------- */
+.mv-create__section {
+  margin-bottom: 1.75rem;
+}
+
+.mv-create__section:last-of-type {
+  margin-bottom: 0;
+}
+
+.mv-create__legend {
+  font-family: var(--mv-font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--mv-ink);
+  border-bottom: 1px solid rgba(11, 12, 14, 0.18);
+  padding-bottom: 0.4rem;
+  margin: 0 0 1rem;
+}
+
+/* ---------- Feld-Grid ---------- */
+.mv-create__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1.25rem;
+}
+
+.mv-create__grid--4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.mv-create__field {
+  min-width: 0;
+}
+
+.mv-create__field--full {
+  grid-column: 1 / -1;
+}
+
+/* ---------- Aktionsleiste (beim Scrollen erreichbar) ---------- */
+.mv-create__actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+  padding: 1rem 0;
+  background: var(--mv-paper);
+  border-top: 1px solid rgba(11, 12, 14, 0.18);
+}
+
+/* ---------- Markdown-Editor hell (überschreibt markdown-editor.css) ---------- */
+.mv-create .EasyMDEContainer .editor-toolbar {
+  background: #f4f1e8;
+  border-color: rgba(11, 12, 14, 0.2);
+}
+
+.mv-create .EasyMDEContainer .editor-toolbar button {
+  color: #3a3a3a;
+}
+
+.mv-create .EasyMDEContainer .editor-toolbar button:hover,
+.mv-create .EasyMDEContainer .editor-toolbar button.active {
+  background: #e2dccb;
+  color: var(--mv-ink);
+}
+
+.mv-create .EasyMDEContainer .editor-toolbar i.separator {
+  border-left-color: rgba(11, 12, 14, 0.2);
+}
+
+.mv-create .EasyMDEContainer .CodeMirror {
+  background: #fff;
+  color: var(--mv-ink);
+  border-color: rgba(11, 12, 14, 0.25);
+}
+
+.mv-create .EasyMDEContainer .CodeMirror-cursor {
+  border-left-color: var(--mv-ink);
+}
+
+.mv-create .EasyMDEContainer .CodeMirror-selected {
+  background: rgba(210, 31, 60, 0.18) !important;
+}
+
+.mv-create .EasyMDEContainer .CodeMirror-focused .CodeMirror-selected {
+  background: rgba(210, 31, 60, 0.28) !important;
+}
+
+.mv-create .EasyMDEContainer .CodeMirror-placeholder {
+  color: #8a8a8a;
+}
+
+.mv-create .EasyMDEContainer .cm-s-easymde .cm-header {
+  color: #8e1728;
+}
+
+.mv-create .EasyMDEContainer .cm-s-easymde .cm-link,
+.mv-create .EasyMDEContainer .cm-s-easymde .cm-url {
+  color: #8e1728;
+}
+
+.mv-create .EasyMDEContainer .cm-s-easymde .cm-quote,
+.mv-create .EasyMDEContainer .cm-s-easymde .cm-comment {
+  color: #5a5a5a;
+}
+
+.mv-create .EasyMDEContainer .editor-preview,
+.mv-create .EasyMDEContainer .editor-preview-side {
+  background: #fff;
+  color: var(--mv-ink);
+  border-color: rgba(11, 12, 14, 0.25);
+}
+
+.mv-create .EasyMDEContainer .editor-preview a,
+.mv-create .EasyMDEContainer .editor-preview-side a {
+  color: #8e1728;
+}
+
+.mv-create .EasyMDEContainer .editor-statusbar {
+  color: #5a5a5a;
+}
+
+.mv-create .EasyMDEContainer .CodeMirror-fullscreen,
+.mv-create .EasyMDEContainer .editor-preview-side.editor-preview-active-side {
+  background: #fff;
+}
+
+/* ---------- Bildergalerie (Sektion „Bilder") ---------- */
+.mv-create__images {
+  border: 1px solid rgba(11, 12, 14, 0.18);
+  background: #faf8f2;
+  padding: 0.9rem 1rem;
+}
+
+.mv-create__images-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.mv-create__images-actions .form-text {
+  margin: 0;
+}
+
+.mv-create__images-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 0.5rem;
+}
+
+.mv-create__images-item {
+  padding: 0;
+  border: 1px solid rgba(11, 12, 14, 0.25);
+  background: #fff;
+  border-radius: 2px;
+  cursor: pointer;
+  overflow: hidden;
+  aspect-ratio: 1 / 1;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.mv-create__images-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mv-create__images-item:hover,
+.mv-create__images-item:focus-visible {
+  border-color: var(--mv-red);
+  box-shadow: 0 0 0 3px rgba(210, 31, 60, 0.18);
+  transform: translateY(-2px);
+}
+
+.mv-create__images-empty {
+  margin: 0;
+  color: #5a5a5a;
+  font-size: 0.9rem;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 991.98px) {
+  .mv-create__grid--4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 575.98px) {
+  .mv-create__grid,
+  .mv-create__grid--4 {
+    grid-template-columns: 1fr;
+  }
+}

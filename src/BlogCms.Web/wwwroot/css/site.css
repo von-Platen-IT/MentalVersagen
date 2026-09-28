@@ -1234,6 +1234,26 @@ code { font-family: var(--mv-font-mono); }
   border-bottom: 1px solid var(--mv-border);
 }
 
+/* Tabellen auf hellem Papier (.mv-doc) lesbar machen (WCAG AA konform) */
+.mv-doc .table,
+.mv-paper .table {
+  color: var(--mv-ink);
+  --bs-table-color: var(--mv-ink);
+  --bs-table-bg: transparent;
+  --bs-table-border-color: rgba(11, 12, 14, 0.15);
+}
+
+.mv-doc .table thead th,
+.mv-paper .table thead th {
+  color: rgba(11, 12, 14, 0.72);
+  border-bottom: 1px solid rgba(11, 12, 14, 0.25);
+}
+
+.mv-doc .table tbody tr:hover,
+.mv-paper .table tbody tr:hover {
+  background-color: rgba(11, 12, 14, 0.04);
+}
+
 /* ---------- Akten-Face (heller Leseflucht) ---------- */
 .mv-doc {
   background: var(--mv-paper);

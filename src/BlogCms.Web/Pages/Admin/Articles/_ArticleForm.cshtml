@@ -1,0 +1,129 @@
+@using BlogCms.Domain.Enums
+@using BlogCms.Web.Models
+@model ArticleInputModel
+
+<section class="mv-create__section">
+    <h2 class="mv-create__legend">Basisdaten</h2>
+    <div class="mv-create__grid">
+        <div class="mv-create__field mv-create__field--full">
+            <label asp-for="Title" class="form-label"></label>
+            <input asp-for="Title" class="form-control" placeholder="Aussagekräftiger Titel der Akte" required />
+            <span asp-validation-for="Title" class="mv-text-danger"></span>
+        </div>
+
+        <div class="mv-create__field">
+            <label asp-for="Slug" class="form-label"></label>
+            <input asp-for="Slug" class="form-control" placeholder="wird sonst automatisch aus dem Titel erzeugt" />
+            <div class="form-text">Bereits veröffentlichte URLs bleiben bei Titeländerung stabil.</div>
+            <span asp-validation-for="Slug" class="mv-text-danger"></span>
+        </div>
+
+        <div class="mv-create__field">
+            <label asp-for="Excerpt" class="form-label"></label>
+            <textarea asp-for="Excerpt" class="form-control" rows="2" placeholder="Kurze Einführung / Teaser für Kacheln und Übersichten" required></textarea>
+            <div class="form-text">Kurzbeschreibung für Vorschau, Teaser und RSS (Pflichtfeld).</div>
+            <span asp-validation-for="Excerpt" class="mv-text-danger"></span>
+        </div>
+    </div>
+</section>
+
+<section class="mv-create__section">
+    <h2 class="mv-create__legend">Einordnung & Themengebiet</h2>
+    <div class="mv-create__grid mv-create__grid--4">
+        <div class="mv-create__field">
+            <label asp-for="Category" class="form-label"></label>
+            <select asp-for="Category" class="form-select" asp-items="Html.GetEnumSelectList<ArticleCategory>()"></select>
+            <span asp-validation-for="Category" class="mv-text-danger"></span>
+        </div>
+        <div class="mv-create__field">
+            <label asp-for="AccessLevel" class="form-label"></label>
+            <select asp-for="AccessLevel" class="form-select" asp-items="Html.GetEnumSelectList<ArticleAccessLevel>()"></select>
+            <span asp-validation-for="AccessLevel" class="mv-text-danger"></span>
+        </div>
+        <div class="mv-create__field">
+            <label asp-for="Status" class="form-label"></label>
+            <select asp-for="Status" class="form-select" asp-items="Html.GetEnumSelectList<ArticleStatus>()"></select>
+            <span asp-validation-for="Status" class="mv-text-danger"></span>
+        </div>
+        <div class="mv-create__field">
+            <label asp-for="ScheduledAt" class="form-label"></label>
+            <input asp-for="ScheduledAt" type="datetime-local" class="form-control" />
+            <div class="form-text">Nur erforderlich bei Status „Geplant”.</div>
+            <span asp-validation-for="ScheduledAt" class="mv-text-danger"></span>
+        </div>
+    </div>
+</section>
+
+<section class="mv-create__section">
+    <h2 class="mv-create__legend">Verknüpfungen (Tags & Hashtags)</h2>
+    <div class="mv-create__grid">
+        <div class="mv-create__field">
+            <label asp-for="Tags" class="form-label"></label>
+            <input asp-for="Tags" class="form-control" placeholder="z. B. parteien, wahlen, skandal" />
+            <div class="form-text">Freie Schlagwörter zur Filterung (kommagetrennt).</div>
+            <span asp-validation-for="Tags" class="mv-text-danger"></span>
+        </div>
+        <div class="mv-create__field">
+            <label asp-for="Hashtags" class="form-label"></label>
+            <input asp-for="Hashtags" class="form-control" placeholder="z. B. #wahlen, #satire" />
+            <div class="form-text">Hashtags für Startseiten-Suche (mit oder ohne #).</div>
+            <span asp-validation-for="Hashtags" class="mv-text-danger"></span>
+        </div>
+    </div>
+</section>
+
+<section class="mv-create__section">
+    <h2 class="mv-create__legend">Inhalt (Markdown)</h2>
+    <div class="mv-create__field">
+        <label asp-for="ContentMarkdown" class="form-label"></label>
+        <input type="hidden" asp-for="UploadedImageIds" />
+        <input type="hidden" asp-for="UploadedImagesJson" />
+        <textarea asp-for="ContentMarkdown" class="form-control font-monospace" rows="16" placeholder="Akte im Markdown-Format verfassen …"></textarea>
+        <div class="form-text">
+            Editor mit Live-Vorschau. Hochgeladene Bilder können per Klick direkt an der Cursorposition eingefügt werden.
+        </div>
+        <span asp-validation-for="ContentMarkdown" class="mv-text-danger"></span>
+    </div>
+</section>
+
+<section class="mv-create__section">
+    <h2 class="mv-create__legend">Bildergalerie</h2>
+    <div class="mv-create__images" data-editor-images>
+        <div class="mv-create__images-actions d-flex align-items-center gap-2 mb-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-editor-images-upload>
+                Bild hochladen
+            </button>
+            <span class="form-text mb-0">
+                Hochgeladene Bilder erscheinen hier. Klicke ein Bild, um es in den Text einzufügen.
+            </span>
+        </div>
+        <div class="mv-create__images-grid" data-editor-images-grid hidden></div>
+        <p class="mv-create__images-empty text-muted small" data-editor-images-empty>
+            Noch keine Bilder hochgeladen.
+        </p>
+    </div>
+</section>
+
+<section class="mv-create__section">
+    <h2 class="mv-create__legend">Titelbild & Externe Medien</h2>
+    <div class="mv-create__grid">
+        <div class="mv-create__field">
+            <label asp-for="TitleImageUrl" class="form-label"></label>
+            <input asp-for="TitleImageUrl" class="form-control" placeholder="https://… (externe Bild-URL)" />
+            <div class="form-text">Alternative externe URL. Wenn leer, dient das erste hochgeladene Bild automatisch als Titelbild.</div>
+            <span asp-validation-for="TitleImageUrl" class="mv-text-danger"></span>
+        </div>
+        <div class="mv-create__field">
+            <label asp-for="VideoUrl" class="form-label"></label>
+            <input asp-for="VideoUrl" class="form-control" placeholder="https://www.youtube.com/watch?v=..." />
+            <div class="form-text">YouTube, Vimeo, X oder TikTok. Wird automatisch als sicherer oEmbed-Player eingebettet.</div>
+            <span asp-validation-for="VideoUrl" class="mv-text-danger"></span>
+        </div>
+        <div class="mv-create__field">
+            <label asp-for="ImageUpload" class="form-label"></label>
+            <input asp-for="ImageUpload" type="file" accept="image/*" class="form-control" />
+            <div class="form-text">JPEG, PNG, WebP oder GIF. Dient als Titelbild, sofern nicht bereits in der Galerie hochgeladen.</div>
+            <span asp-validation-for="ImageUpload" class="mv-text-danger"></span>
+        </div>
+    </div>
+</section>

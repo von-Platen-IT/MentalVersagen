@@ -137,6 +137,10 @@ public class EditModel : PageModel
 
         await UploadContentImagesAsync(article);
 
+        // Attach images uploaded through the Markdown editor (still unassigned).
+        // The uploader is the current user (an admin may edit another author's article).
+        await _media.AttachToArticleAsync(Input.ParseUploadedImageIds(), article.Id, CurrentUserId);
+
         TempData["Message"] = $"Artikel „{article.Title}“ wurde aktualisiert.";
         return RedirectToPage("Index");
     }

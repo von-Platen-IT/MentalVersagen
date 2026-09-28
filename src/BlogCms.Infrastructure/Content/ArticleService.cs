@@ -68,6 +68,8 @@ public interface IArticleService
     /// <summary>Articles the given author may manage (their own only).</summary>
     Task<IReadOnlyList<Article>> GetForAuthorAsync(Guid authorId, CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<Category>> GetAllCategoriesAsync(CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<Tag>> GetAllTagsAsync(CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Hashtag>> GetAllHashtagsAsync(CancellationToken cancellationToken = default);
@@ -179,29 +181,43 @@ public sealed class ArticleService : IArticleService
 
         articles = query.Sort switch
         {
-            ArticleSortOrder.Oldest => articles.OrderBy(a => a.PublishedAt),
-            ArticleSortOrder.Title => articles.OrderBy(a => a.Title),
+            ArticleSortOrder.Oldest => articles
+                .OrderBy(a => a.PublishedAt)
+                .ThenBy(a => a.CreatedAt)
+                .ThenBy(a => a.Id),
+            ArticleSortOrder.Title => articles
+                .OrderBy(a => a.Title)
+                .ThenByDescending(a => a.PublishedAt),
             ArticleSortOrder.MostLiked => articles
                 .OrderByDescending(a => a.Ratings.Count(r => r.Value == RatingValue.ThumbUp))
                 .ThenByDescending(a => a.Ratings.Count(r => r.Value == RatingValue.ThumbDown))
-                .ThenByDescending(a => a.PublishedAt),
+                .ThenByDescending(a => a.PublishedAt)
+                .ThenByDescending(a => a.CreatedAt),
             ArticleSortOrder.MostUpvoted => articles
                 .OrderByDescending(a => a.Ratings.Count(r => r.Value == RatingValue.ThumbUp))
-                .ThenByDescending(a => a.PublishedAt),
+                .ThenByDescending(a => a.PublishedAt)
+                .ThenByDescending(a => a.CreatedAt),
             ArticleSortOrder.MostDownvoted => articles
                 .OrderByDescending(a => a.Ratings.Count(r => r.Value == RatingValue.ThumbDown))
-                .ThenByDescending(a => a.PublishedAt),
+                .ThenByDescending(a => a.PublishedAt)
+                .ThenByDescending(a => a.CreatedAt),
             ArticleSortOrder.MostCommented => articles
                 .OrderByDescending(a => a.Comments.Count)
-                .ThenByDescending(a => a.PublishedAt),
+                .ThenByDescending(a => a.PublishedAt)
+                .ThenByDescending(a => a.CreatedAt),
             ArticleSortOrder.Popular => articles
                 .OrderByDescending(a => a.Ratings.Count + a.Comments.Count)
-                .ThenByDescending(a => a.PublishedAt),
-            _ => articles.OrderByDescending(a => a.PublishedAt)
+                .ThenByDescending(a => a.PublishedAt)
+                .ThenByDescending(a => a.CreatedAt),
+            _ => articles
+                .OrderByDescending(a => a.PublishedAt)
+                .ThenByDescending(a => a.CreatedAt)
+                .ThenByDescending(a => a.Id)
         };
 
         var items = await articles
             .Include(a => a.Author)
+            .Include(a => a.CategoryEntity)
             .Include(a => a.ArticleTags).ThenInclude(at => at.Tag)
             .Include(a => a.ArticleHashtags).ThenInclude(ah => ah.Hashtag)
             .Include(a => a.MediaAssets)
@@ -226,6 +242,7 @@ public sealed class ArticleService : IArticleService
         return _db.Articles
             .AsNoTracking()
             .Include(a => a.Author)
+            .Include(a => a.CategoryEntity)
             .Include(a => a.ArticleTags).ThenInclude(at => at.Tag)
             .Include(a => a.ArticleHashtags).ThenInclude(ah => ah.Hashtag)
             .Include(a => a.VideoEmbeds)
@@ -239,6 +256,7 @@ public sealed class ArticleService : IArticleService
     {
         return _db.Articles
             .Include(a => a.Author)
+            .Include(a => a.CategoryEntity)
             .Include(a => a.ArticleTags).ThenInclude(at => at.Tag)
             .Include(a => a.ArticleHashtags).ThenInclude(ah => ah.Hashtag)
             .Include(a => a.VideoEmbeds)
@@ -246,11 +264,22 @@ public sealed class ArticleService : IArticleService
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Category>> GetAllCategoriesAsync(CancellationToken cancellationToken = default)
+    {
+        return await _db.Categories
+            .AsNoTracking()
+            .OrderBy(c => c.DisplayOrder)
+            .ThenBy(c => c.Name)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<Article>> GetForAdminAsync(CancellationToken cancellationToken = default)
     {
         return await _db.Articles
             .AsNoTracking()
             .Include(a => a.Author)
+            .Include(a => a.CategoryEntity)
+            .Include(a => a.MediaAssets)
             .OrderByDescending(a => a.UpdatedAt)
             .ToListAsync(cancellationToken);
     }
@@ -261,6 +290,8 @@ public sealed class ArticleService : IArticleService
         return await _db.Articles
             .AsNoTracking()
             .Include(a => a.Author)
+            .Include(a => a.CategoryEntity)
+            .Include(a => a.MediaAssets)
             .Where(a => a.AuthorId == authorId)
             .OrderByDescending(a => a.UpdatedAt)
             .ToListAsync(cancellationToken);
@@ -350,6 +381,7 @@ public sealed class ArticleService : IArticleService
 
         article.UpdatedAt = DateTime.UtcNow;
         ApplyPublishTiming(article);
+        await SyncCategoryAsync(article, cancellationToken);
 
         _db.Articles.Add(article);
         await _db.SaveChangesAsync(cancellationToken);
@@ -375,6 +407,7 @@ public sealed class ArticleService : IArticleService
             string.IsNullOrWhiteSpace(article.Slug) ? article.Title : article.Slug, article.Id, cancellationToken);
 
         ApplyPublishTiming(article);
+        await SyncCategoryAsync(article, cancellationToken);
 
         article.UpdatedAt = DateTime.UtcNow;
 
@@ -526,6 +559,18 @@ public sealed class ArticleService : IArticleService
             }
 
             _db.ArticleHashtags.Add(new ArticleHashtag { ArticleId = article.Id, HashtagId = hashtag.Id });
+        }
+    }
+
+    private async Task SyncCategoryAsync(Article article, CancellationToken cancellationToken)
+    {
+        if (article.CategoryId.HasValue)
+        {
+            var cat = await _db.Categories.FirstOrDefaultAsync(c => c.Id == article.CategoryId.Value, cancellationToken);
+            if (cat is not null && Enum.TryParse<ArticleCategory>(cat.Name, ignoreCase: true, out var parsed))
+            {
+                article.Category = parsed;
+            }
         }
     }
 

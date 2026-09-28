@@ -148,4 +148,126 @@ public class ArticleServiceTests
         Assert.Equal(0, total);
         Assert.Empty(items);
     }
+
+    [Fact]
+    public async Task SearchPublishedAsync_ReturnsLatestPublishedArticlesFirst_WithDeterministicOrdering()
+    {
+        var service = CreateService(out var db);
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            UserName = "autor@example.com",
+            Email = "autor@example.com",
+            DisplayName = "Testautor"
+        };
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+        var authorId = user.Id;
+
+        var older = await service.CreateAsync(new Article
+        {
+            Title = "Older Article",
+            ContentMarkdown = "x",
+            Category = ArticleCategory.Politik,
+            Status = ArticleStatus.Published,
+            AuthorId = authorId,
+            PublishedAt = DateTime.UtcNow.AddHours(-2)
+        }, []);
+
+        var newer1 = await service.CreateAsync(new Article
+        {
+            Title = "Newer Article 1",
+            ContentMarkdown = "x",
+            Category = ArticleCategory.Satire,
+            Status = ArticleStatus.Published,
+            AuthorId = authorId,
+            PublishedAt = DateTime.UtcNow
+        }, []);
+
+        var newer2 = await service.CreateAsync(new Article
+        {
+            Title = "Newer Article 2",
+            ContentMarkdown = "x",
+            Category = ArticleCategory.Verschwoerungstheorien,
+            Status = ArticleStatus.Published,
+            AuthorId = authorId,
+            PublishedAt = DateTime.UtcNow
+        }, []);
+
+        var (items, total) = await service.SearchPublishedAsync(new ArticleQuery(1, 10));
+
+        Assert.Equal(3, total);
+        Assert.Equal(3, items.Count);
+        // Newer articles must precede the older article
+        Assert.Equal("Older Article", items[2].Title);
+        Assert.Contains(items[0].Title, new[] { "Newer Article 1", "Newer Article 2" });
+    }
+
+    [Theory]
+    [InlineData(ArticleStatus.Draft, "Entwurf")]
+    [InlineData(ArticleStatus.Published, "Veröffentlicht")]
+    [InlineData(ArticleStatus.Scheduled, "Geplant")]
+    [InlineData(ArticleStatus.Archived, "Archiviert")]
+    public void StatusLabel_ReturnsCorrectLocalizedName(ArticleStatus status, string expected)
+    {
+        Assert.Equal(expected, BlogCms.Web.Content.ArticleDisplay.StatusLabel(status));
+    }
+
+    [Fact]
+    public void ArticleInputModel_HasTitleImageSource_RecognizesUploadedEditorImages()
+    {
+        var model = new BlogCms.Web.Models.ArticleInputModel
+        {
+            UploadedImageIds = Guid.NewGuid().ToString()
+        };
+
+        Assert.True(model.HasTitleImageSource(hasExistingImage: false));
+    }
+
+    [Fact]
+    public async Task CreateAsync_WithUploadedMedia_PublishesToSearch_AndResolvesCoverImage()
+    {
+        var service = CreateService(out var db);
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            UserName = "uploader@example.com",
+            Email = "uploader@example.com",
+            DisplayName = "Uploader"
+        };
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+
+        var article = new Article
+        {
+            Title = "Neuer Artikel mit Bild",
+            ContentMarkdown = "Spannender Inhalt",
+            Excerpt = "Kurzer Teaser",
+            Category = ArticleCategory.Politik,
+            Status = ArticleStatus.Published,
+            AuthorId = user.Id
+        };
+
+        var created = await service.CreateAsync(article, ["politik"]);
+
+        var asset = new MediaAsset
+        {
+            Id = Guid.NewGuid(),
+            ArticleId = created.Id,
+            UploadedByUserId = user.Id,
+            StoragePath = "uploads/cover.jpg",
+            MimeType = "image/jpeg",
+            IsCover = true
+        };
+        db.MediaAssets.Add(asset);
+        await db.SaveChangesAsync();
+
+        var (items, total) = await service.SearchPublishedAsync(new ArticleQuery(1, 10));
+
+        Assert.Equal(1, total);
+        Assert.Single(items);
+        Assert.Equal("Neuer Artikel mit Bild", items[0].Title);
+        Assert.Single(items[0].MediaAssets);
+        Assert.True(items[0].MediaAssets.First().IsCover);
+    }
 }

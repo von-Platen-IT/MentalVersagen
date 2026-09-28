@@ -30,6 +30,9 @@ public class ArticleInputModel
     [Display(Name = "Kategorie")]
     public ArticleCategory Category { get; set; }
 
+    [Display(Name = "Themengebiet")]
+    public Guid? CategoryId { get; set; }
+
     [Display(Name = "Zugriffsstufe")]
     public ArticleAccessLevel AccessLevel { get; set; } = ArticleAccessLevel.Public;
 
@@ -60,12 +63,44 @@ public class ArticleInputModel
     public List<IFormFile> ContentImageUploads { get; set; } = [];
 
     /// <summary>
+    /// Comma-separated ids of images uploaded through the Markdown editor before the
+    /// article existed. They are attached to the article on save (see
+    /// IMediaService.AttachToArticleAsync).
+    /// </summary>
+    public string? UploadedImageIds { get; set; }
+
+    /// <summary>
+    /// JSON list of images uploaded through the editor (<c>[{id,url,alt}]</c>), used
+    /// by the create page to render the click-to-insert gallery. Round-trips through
+    /// the form so the gallery survives a validation error.
+    /// </summary>
+    public string? UploadedImagesJson { get; set; }
+
+    /// <summary>Parses the comma-separated <see cref="UploadedImageIds"/> into GUIDs.</summary>
+    public IEnumerable<Guid> ParseUploadedImageIds()
+    {
+        if (string.IsNullOrWhiteSpace(UploadedImageIds))
+        {
+            return [];
+        }
+
+        return UploadedImageIds
+            .Split([',', ';', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(v => Guid.TryParse(v, out var id) ? id : Guid.Empty)
+            .Where(id => id != Guid.Empty)
+            .Distinct();
+    }
+
+    /// <summary>
     /// Validates that a title image source is present: either an external URL, a new
     /// upload, or (on edit) an already stored image.
     /// </summary>
     public bool HasTitleImageSource(bool hasExistingImage)
     {
-        return !string.IsNullOrWhiteSpace(TitleImageUrl) || ImageUpload is { Length: > 0 } || hasExistingImage;
+        return !string.IsNullOrWhiteSpace(TitleImageUrl)
+            || ImageUpload is { Length: > 0 }
+            || hasExistingImage
+            || ParseUploadedImageIds().Any();
     }
 
     public static IEnumerable<string> ParseTags(string? value) => Parse(value);

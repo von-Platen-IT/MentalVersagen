@@ -35,4 +35,7 @@ public class MediaAsset : EntityBase
 
     /// <summary>Accessibility alternative text.</summary>
     public string? AltText { get; set; }
+
+    /// <summary>True when this asset is chosen as the cover / title image.</summary>
+    public bool IsCover { get; set; }
 }

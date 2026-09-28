@@ -31,6 +31,11 @@ public class ArticleConfiguration : IEntityTypeConfiguration<Article>
             .HasForeignKey(a => a.AuthorId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne(a => a.CategoryEntity)
+            .WithMany(c => c.Articles)
+            .HasForeignKey(a => a.CategoryId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // Soft delete: deleted articles are hidden from normal queries.
         builder.HasQueryFilter(a => a.DeletedAt == null);
     }

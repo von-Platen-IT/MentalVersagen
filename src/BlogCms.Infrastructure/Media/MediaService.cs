@@ -22,6 +22,15 @@ public interface IMediaService
     Task<IReadOnlyList<MediaAsset>> GetForOwnerAsync(
         MediaOwnerType ownerType, Guid ownerId, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Attaches previously uploaded, still unassigned article images (uploaded by the
+    /// given user) to an article. Used by the Markdown editor: images are uploaded
+    /// before the article exists (create) and claimed on save. Returns the count.
+    /// </summary>
+    Task<int> AttachToArticleAsync(
+        IEnumerable<Guid> assetIds, Guid articleId, Guid uploadedByUserId,
+        CancellationToken cancellationToken = default);
+
     /// <summary>Deletes an asset from storage and the database. Returns false when not found.</summary>
     Task<bool> DeleteAsync(Guid assetId, CancellationToken cancellationToken = default);
 
@@ -100,8 +109,10 @@ public sealed class MediaService : IMediaService
         var asset = new MediaAsset
         {
             OwnerType = ownerType,
-            ArticleId = ownerType == MediaOwnerType.Article ? ownerId : null,
-            CommentId = ownerType == MediaOwnerType.Comment ? ownerId : null,
+            // Guid.Empty marks a still unassigned asset (e.g. editor upload before the
+            // article exists); it is claimed later via AttachToArticleAsync.
+            ArticleId = ownerType == MediaOwnerType.Article && ownerId != Guid.Empty ? ownerId : null,
+            CommentId = ownerType == MediaOwnerType.Comment && ownerId != Guid.Empty ? ownerId : null,
             UploadedByUserId = uploadedByUserId,
             StoragePath = key,
             MimeType = processed.ContentType,
@@ -124,6 +135,43 @@ public sealed class MediaService : IMediaService
         return ownerType == MediaOwnerType.Article
             ? await _db.MediaAssets.AsNoTracking().Where(m => m.ArticleId == ownerId).ToListAsync(cancellationToken)
             : await _db.MediaAssets.AsNoTracking().Where(m => m.CommentId == ownerId).ToListAsync(cancellationToken);
+    }
+
+    public async Task<int> AttachToArticleAsync(
+        IEnumerable<Guid> assetIds, Guid articleId, Guid uploadedByUserId,
+        CancellationToken cancellationToken = default)
+    {
+        var ids = assetIds.Distinct().ToList();
+        if (ids.Count == 0)
+        {
+            return 0;
+        }
+
+        // Only claim assets that are still unassigned and were uploaded by this user.
+        var assets = await _db.MediaAssets
+            .Where(m => ids.Contains(m.Id) &&
+                        m.ArticleId == null &&
+                        m.OwnerType == MediaOwnerType.Article &&
+                        m.UploadedByUserId == uploadedByUserId)
+            .ToListAsync(cancellationToken);
+
+        var hasCover = await _db.MediaAssets.AnyAsync(m => m.ArticleId == articleId && m.IsCover, cancellationToken);
+        for (var i = 0; i < assets.Count; i++)
+        {
+            assets[i].ArticleId = articleId;
+            if (!hasCover && i == 0)
+            {
+                assets[i].IsCover = true;
+                hasCover = true;
+            }
+        }
+
+        if (assets.Count > 0)
+        {
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+
+        return assets.Count;
     }
 
     public async Task<bool> DeleteAsync(Guid assetId, CancellationToken cancellationToken = default)

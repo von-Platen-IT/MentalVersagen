@@ -1,6 +1,7 @@
 using BlogCms.Domain.Entities;
 using BlogCms.Domain.Enums;
 using BlogCms.Infrastructure.Content;
+using BlogCms.Infrastructure.Media;
 using BlogCms.Web.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -13,29 +14,54 @@ namespace BlogCms.Web.Pages.Admin.Articles;
 public class IndexModel : PageModel
 {
     private readonly IArticleService _articles;
+    private readonly IMediaService _media;
     private readonly UserManager<User> _userManager;
 
-    public IndexModel(IArticleService articles, UserManager<User> userManager)
+    public IndexModel(IArticleService articles, IMediaService media, UserManager<User> userManager)
     {
         _articles = articles;
+        _media = media;
         _userManager = userManager;
     }
 
     public IReadOnlyList<Article> Articles { get; private set; } = [];
 
+    [BindProperty(SupportsGet = true)]
+    public string? Filter { get; set; }
+
     public bool IsAdmin => User.IsInRole(nameof(UserRole.Admin));
+
+    public string? TitleImageUrl(Article article) => BlogCms.Web.Content.ArticleDisplay.ResolveTitleImage(article, _media);
 
     public async Task OnGetAsync()
     {
-        // Admins manage all articles; authors only see their own (FeatureFix1 BR-013/BR-014).
+        IReadOnlyList<Article> all;
         if (IsAdmin)
         {
-            Articles = await _articles.GetForAdminAsync();
-            return;
+            all = await _articles.GetForAdminAsync();
+        }
+        else
+        {
+            var userId = Guid.TryParse(_userManager.GetUserId(User), out var id) ? id : Guid.Empty;
+            all = await _articles.GetForAuthorAsync(userId);
         }
 
-        var userId = Guid.TryParse(_userManager.GetUserId(User), out var id) ? id : Guid.Empty;
-        Articles = await _articles.GetForAuthorAsync(userId);
+        if (string.Equals(Filter, "Published", StringComparison.OrdinalIgnoreCase))
+        {
+            Articles = all.Where(a => a.Status == ArticleStatus.Published).ToList();
+        }
+        else if (string.Equals(Filter, "Draft", StringComparison.OrdinalIgnoreCase))
+        {
+            Articles = all.Where(a => a.Status == ArticleStatus.Draft).ToList();
+        }
+        else if (string.Equals(Filter, "Scheduled", StringComparison.OrdinalIgnoreCase))
+        {
+            Articles = all.Where(a => a.Status == ArticleStatus.Scheduled).ToList();
+        }
+        else
+        {
+            Articles = all;
+        }
     }
 
     public async Task<IActionResult> OnPostDeleteAsync(Guid id)

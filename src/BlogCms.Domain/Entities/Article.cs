@@ -28,6 +28,10 @@ public class Article : EntityBase
     /// <summary>Mandatory editorial category; drives disclaimer/badge logic.</summary>
     public ArticleCategory Category { get; set; }
 
+    /// <summary>Optional foreign key to the dedicated Category table (Themengebiete).</summary>
+    public Guid? CategoryId { get; set; }
+    public Category? CategoryEntity { get; set; }
+
     /// <summary>Access level (public / registered / premium) — FeatureFix1 BR-110/BR-113.</summary>
     public ArticleAccessLevel AccessLevel { get; set; } = ArticleAccessLevel.Public;
 

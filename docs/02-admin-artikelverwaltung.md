@@ -58,7 +58,7 @@ Folgende Felder stehen zur Verfügung:
 | **Geplante Veröffentlichung** | nein | Zeitpunkt (`ScheduledAt`); erforderlich bei `Status = Scheduled` — der Beitrag wird dann automatisch veröffentlicht |
 | **Tags** | nein | kommagetrennt (auch `;` oder Zeilenumbruch); neue Tags werden automatisch angelegt |
 | **Hashtags** | nein | kommagetrennt, mit oder ohne führendes `#`; eigene Struktur für Filter/Navigation |
-| **Inhalt (Markdown)** | ja | wird serverseitig gerendert und sanitized |
+| **Inhalt (Markdown)** | ja | Editor mit Live-Vorschau (EasyMDE); wird serverseitig gerendert und sanitized |
 | **Video-URL** | nein | YouTube, Vimeo, X, TikTok — wird per oEmbed aufgelöst |
 | **Bild hochladen** | nein | JPEG, PNG, WebP oder GIF; dient als Titelbild, wenn keine externe URL gesetzt ist |
 
@@ -79,6 +79,36 @@ Nach dem Absenden wird der Artikel angelegt und man landet zurück in der
 - **Bild:** Die Datei wird anhand des echten Inhalts validiert, skaliert,
   optional nach WebP konvertiert und **ohne EXIF** gespeichert. Im Dev-Modus
   liegt sie unter `wwwroot/uploads` (Provider `Local`).
+
+## Markdown-Editor
+
+Das Feld **Inhalt (Markdown)** wird mit dem Editor
+[EasyMDE](https://github.com/Ionaru/easy-markdown-editor) ausgestattet. Er
+funktioniert beim **Anlegen und Bearbeiten** gleichermaßen und lädt den
+vorhandenen Inhalt automatisch.
+
+- **Formatted Mode:** Über die Toolbar-Buttons *Vorschau* bzw. *Side-by-Side*
+  wird der formatierte Inhalt neben dem Text angezeigt. Die Vorschau wird
+  serverseitig mit demselben Renderer wie die öffentliche Seite erzeugt
+  (Markdig + HtmlSanitizer) und entspricht damit exakt der späteren Ausgabe.
+- **Bilder einfügen:** Der Bild-Button der Toolbar öffnet den Dateidialog,
+  lädt das Bild hoch und fügt an der Cursorposition `![alt](url)` ein. Das Bild
+  erscheint nach dem Speichern zusätzlich in der Bilderverwaltung und als
+  Artikel-Galerie.
+- **Bildergalerie (nur beim Anlegen):** Auf der Seite *Neue Akte* gibt es die
+  Sektion **„Bilder"**. Dort werden alle in dieser Sitzung hochgeladenen Bilder
+  als Thumbnails angezeigt. Ein Klick auf ein Thumbnail fügt das Bild an der
+  aktuellen Cursorposition in den Text ein. Über **„Bild hochladen"** lassen
+  sich weitere Bilder direkt ergänzen.
+- **Video einfügen:** Der Video-Button fragt eine URL ab, trägt sie in das Feld
+  **Video-URL** ein und setzt einen Verweis im Text. Das Video wird wie bisher
+  unter dem Artikel eingebettet.
+- **Ohne JavaScript:** Der Editor ist ein Progressive Enhancement. Ohne
+  JavaScript bleibt das normale Textfeld samt Datei-Upload vollständig nutzbar.
+
+> Hinweis: Bilder, die im Editor hochgeladen, aber vor dem Speichern verworfen
+> werden, bleiben als unzugeordnete Medien-Assets liegen. Sie sind öffentlich
+> nicht sichtbar und können später aufgeräumt werden.
 
 ## Artikeltags & Kategorien
 

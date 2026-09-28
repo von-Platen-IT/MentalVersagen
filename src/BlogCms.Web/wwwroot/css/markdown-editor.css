@@ -1,0 +1,110 @@
+/*
+ * Mentalversagen — Dark-Theme-Anpassung für den EasyMDE-Markdown-Editor.
+ * Wird nur auf den Admin-Artikel-Seiten geladen (Create/Edit).
+ * Nutzt die Design-Tokens aus site.css.
+ */
+
+.EasyMDEContainer {
+  color: var(--mv-text);
+}
+
+/* Toolbar */
+.EasyMDEContainer .editor-toolbar {
+  background: var(--mv-bg-card);
+  border: 1px solid var(--mv-border);
+  border-bottom: none;
+  border-radius: 0.25rem 0.25rem 0 0;
+}
+
+.EasyMDEContainer .editor-toolbar button {
+  color: var(--mv-text-dim);
+  background: transparent;
+  border: none;
+}
+
+.EasyMDEContainer .editor-toolbar button:hover,
+.EasyMDEContainer .editor-toolbar button.active {
+  background: var(--mv-bg-elev);
+  color: var(--mv-text);
+  border: none;
+}
+
+.EasyMDEContainer .editor-toolbar i.separator {
+  border-left: 1px solid var(--mv-border);
+  border-right: none;
+}
+
+/* Editorfläche (CodeMirror) */
+.EasyMDEContainer .CodeMirror {
+  background: var(--mv-bg-deep);
+  color: var(--mv-text);
+  border: 1px solid var(--mv-border);
+  border-radius: 0 0 0.25rem 0.25rem;
+  font-family: var(--mv-font-mono);
+  font-size: 0.95rem;
+}
+
+.EasyMDEContainer .CodeMirror-cursor {
+  border-left-color: var(--mv-sepia);
+}
+
+.EasyMDEContainer .CodeMirror-selected {
+  background: rgba(210, 31, 60, 0.25) !important;
+}
+
+.EasyMDEContainer .CodeMirror-focused .CodeMirror-selected {
+  background: rgba(210, 31, 60, 0.35) !important;
+}
+
+.EasyMDEContainer .CodeMirror-placeholder {
+  color: var(--mv-text-dim);
+}
+
+/* Markdown-Syntaxhervorhebung */
+.EasyMDEContainer .cm-s-easymde .cm-header {
+  color: var(--mv-sepia);
+  font-weight: 600;
+}
+
+.EasyMDEContainer .cm-s-easymde .cm-link,
+.EasyMDEContainer .cm-s-easymde .cm-url {
+  color: var(--mv-sepia);
+}
+
+.EasyMDEContainer .cm-s-easymde .cm-quote {
+  color: var(--mv-text-dim);
+}
+
+.EasyMDEContainer .cm-s-easymde .cm-comment {
+  color: var(--mv-text-dim);
+}
+
+/* Vorschau */
+.EasyMDEContainer .editor-preview,
+.EasyMDEContainer .editor-preview-side {
+  background: var(--mv-bg-card);
+  color: var(--mv-text);
+  border: 1px solid var(--mv-border);
+}
+
+.EasyMDEContainer .editor-preview a,
+.EasyMDEContainer .editor-preview-side a {
+  color: var(--mv-sepia);
+}
+
+.EasyMDEContainer .editor-preview img,
+.EasyMDEContainer .editor-preview-side img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Statusleiste */
+.EasyMDEContainer .editor-statusbar {
+  color: var(--mv-text-dim);
+}
+
+/* Vollbild */
+.EasyMDEContainer .CodeMirror-fullscreen,
+.EasyMDEContainer .editor-preview-side.editor-preview-active-side {
+  background: var(--mv-bg-deep);
+}

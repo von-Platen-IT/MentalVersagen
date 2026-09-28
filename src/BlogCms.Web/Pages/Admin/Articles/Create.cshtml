@@ -13,15 +13,28 @@
 
 <partial name="_PageHeader" model="header" />
 
-<div class="mv-doc mt-4">
-    <div asp-validation-summary="ModelOnly" class="mv-text-danger"></div>
-    <form method="post" enctype="multipart/form-data">
-        <partial name="_ArticleFormFields" model="Model.Input" />
-        <button type="submit" class="btn btn-primary">Anlegen</button>
-        <a class="btn btn-outline-secondary" asp-page="/Admin/Articles/Index">Abbrechen</a>
+<div class="mv-doc mv-create mt-4">
+    <div asp-validation-summary="All" class="mv-text-danger mb-3"></div>
+    <form method="post" enctype="multipart/form-data" id="articleForm">
+        <partial name="_ArticleForm" model="Model.Input" />
+
+        <div class="mv-create__actions d-flex flex-wrap gap-2 mt-4">
+            <button type="submit" asp-page-handler="Publish" class="btn btn-primary">Sofort veröffentlichen</button>
+            <button type="submit" asp-page-handler="SaveDraft" class="btn btn-outline-secondary">Als Entwurf speichern</button>
+            <a class="btn btn-outline-secondary ms-auto" asp-page="/Admin/Articles/Index">Abbrechen</a>
+        </div>
     </form>
 </div>
 
+@section Head {
+    <link rel="stylesheet" href="~/lib/font-awesome/css/font-awesome.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/easymde/dist/easymde.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/markdown-editor.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/article-create.css" asp-append-version="true" />
+}
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/lib/easymde/dist/easymde.min.js" asp-append-version="true"></script>
+    <script src="~/js/markdown-editor.js" asp-append-version="true"></script>
 }

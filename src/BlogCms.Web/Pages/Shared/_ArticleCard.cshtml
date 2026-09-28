@@ -10,7 +10,7 @@
 *@
 <article class="mv-case">
     <div class="mv-case__head">
-        <span>ARCHIV @article.Category.ToString().ToUpperInvariant()</span>
+        <span>ARCHIV @((article.CategoryEntity?.Name ?? article.Category.ToString()).ToUpperInvariant())</span>
         <span class="text-end">#@article.Id.ToString("N").Substring(0, 8).ToUpperInvariant()</span>
     </div>
     @if (Model.ImageUrl is not null)

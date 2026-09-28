@@ -203,9 +203,19 @@ app.MapRazorPages()
 app.MapGet("/Articles", (HttpRequest request) =>
     Results.Redirect($"/Suche{request.QueryString.Value}", permanent: true));
 
-// Ensure all application roles exist (idempotent).
+// Ensure database is created/migrated, roles exist, and standard categories are seeded (idempotent).
 using (var scope = app.Services.CreateScope())
 {
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    if (db.Database.IsRelational())
+    {
+        await db.Database.MigrateAsync();
+    }
+    else
+    {
+        await db.Database.EnsureCreatedAsync();
+    }
+
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
     foreach (var roleName in Enum.GetNames<UserRole>())
     {
@@ -214,6 +224,29 @@ using (var scope = app.Services.CreateScope())
             await roleManager.CreateAsync(new IdentityRole<Guid>(roleName));
         }
     }
+
+    // Standard-Themengebiete (Kategorien) initial anlegen
+    var defaultCategories = new (string Name, string Slug, string Description, int Order)[]
+    {
+        ("Politik", "politik", "Politische Analysen und Recherchen", 1),
+        ("Satire", "satire", "Glosser, Realsatire und bissige Kommentare", 2),
+        ("Verschwörungstheorien", "verschwoerungstheorien", "Mythen, Theorien und Dossiers", 3)
+    };
+
+    foreach (var (name, slug, desc, order) in defaultCategories)
+    {
+        if (!await db.Categories.AnyAsync(c => c.Slug == slug))
+        {
+            db.Categories.Add(new Category
+            {
+                Name = name,
+                Slug = slug,
+                Description = desc,
+                DisplayOrder = order
+            });
+        }
+    }
+    await db.SaveChangesAsync();
 }
 
 app.Run();

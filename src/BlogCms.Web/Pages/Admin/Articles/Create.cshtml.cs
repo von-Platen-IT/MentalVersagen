@@ -45,6 +45,27 @@ public class CreateModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        return await ProcessCreateAsync(Input.Status);
+    }
+
+    public async Task<IActionResult> OnPostPublishAsync()
+    {
+        // Wenn keine geplante Veröffentlichung mit Zukunftsdatum vorliegt, direkt veröffentlichen.
+        var targetStatus = Input.Status == ArticleStatus.Scheduled && Input.ScheduledAt > DateTime.UtcNow
+            ? ArticleStatus.Scheduled
+            : ArticleStatus.Published;
+
+        return await ProcessCreateAsync(targetStatus);
+    }
+
+    public async Task<IActionResult> OnPostSaveDraftAsync()
+    {
+        return await ProcessCreateAsync(ArticleStatus.Draft);
+    }
+
+    private async Task<IActionResult> ProcessCreateAsync(ArticleStatus targetStatus)
+    {
+        Input.Status = targetStatus;
         ValidateInput(hasExistingImage: false);
 
         if (!ModelState.IsValid)
@@ -80,7 +101,16 @@ public class CreateModel : PageModel
 
         await ApplyMediaAsync(created.Id, authorId);
 
-        TempData["Message"] = $"Artikel „{article.Title}“ wurde angelegt.";
+        // Attach images uploaded through the Markdown editor before the article existed.
+        await _media.AttachToArticleAsync(Input.ParseUploadedImageIds(), created.Id, authorId);
+
+        TempData["Message"] = article.Status switch
+        {
+            ArticleStatus.Published => $"Akte „{article.Title}“ wurde erfolgreich veröffentlicht und ist nun auf der Startseite sichtbar.",
+            ArticleStatus.Scheduled => $"Akte „{article.Title}“ wurde für die geplante Veröffentlichung am {article.ScheduledAt:dd.MM.yyyy HH:mm} gespeichert.",
+            _ => $"Akte „{article.Title}“ wurde als Entwurf gespeichert."
+        };
+
         return RedirectToPage("Index");
     }
 

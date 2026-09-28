@@ -15,6 +15,11 @@ Bootstrap wird nicht eingecheckt, sondern über **LibMan** verwaltet
 ([`src/BlogCms.Web/libman.json`](src/BlogCms.Web/libman.json)); die Dateien landen
 unter `src/BlogCms.Web/wwwroot/lib/bootstrap/dist/`.
 
+Ebenso werden der Markdown-Editor **EasyMDE** (`wwwroot/lib/easymde/`) und
+**FontAwesome 4.7** für dessen Toolbar-Icons (`wwwroot/lib/font-awesome/`)
+über LibMan bezogen. Beide werden nur auf den Admin-Artikel-Seiten geladen
+(siehe [`docs/02-admin-artikelverwaltung.md`](docs/02-admin-artikelverwaltung.md)).
+
 Das NuGet-Paket `Microsoft.Web.LibraryManager.Build` (referenziert in
 [`BlogCms.Web.csproj`](src/BlogCms.Web/BlogCms.Web.csproj)) führt den Restore
 **automatisch** bei jedem `dotnet build`/`dotnet publish` aus. Es ist daher

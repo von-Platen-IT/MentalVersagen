@@ -14,9 +14,17 @@
 <partial name="_PageHeader" model="header" />
 
 <div class="mv-doc mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="h4 mb-0">Aktenliste</h2>
-        <a class="btn btn-primary" asp-page="/Admin/Articles/Create">Neue Akte</a>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h2 class="h4 mb-1">Aktenliste (@Model.Articles.Count)</h2>
+            <div class="btn-group btn-group-sm" role="group" aria-label="Statusfilter">
+                <a class="btn @(string.IsNullOrEmpty(Model.Filter) ? "btn-primary" : "btn-outline-secondary")" asp-page="./Index">Alle</a>
+                <a class="btn @(string.Equals(Model.Filter, "Published", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")" asp-page="./Index" asp-route-filter="Published">Veröffentlicht</a>
+                <a class="btn @(string.Equals(Model.Filter, "Draft", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")" asp-page="./Index" asp-route-filter="Draft">Entwürfe</a>
+                <a class="btn @(string.Equals(Model.Filter, "Scheduled", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")" asp-page="./Index" asp-route-filter="Scheduled">Geplant</a>
+            </div>
+        </div>
+        <a class="btn btn-primary" asp-page="/Admin/Articles/Create">Neue Akte anlegen</a>
     </div>
 
     @if (TempData["Message"] is string message)
@@ -24,48 +32,86 @@
         <div class="mv-teaser mb-3">@message</div>
     }
 
-    <table class="table align-middle">
-        <thead>
-            <tr>
-                <th>Titel</th>
-                <th>Kategorie</th>
-                <th>Zugriff</th>
-                <th>Status</th>
-                <th>Veröffentlicht / Geplant</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-        @foreach (var article in Model.Articles)
-        {
-            <tr>
-                <td>@article.Title</td>
-                <td>
-                    <span class="mv-pill">@CategoryDisplay.Label(article.Category)</span>
-                </td>
-                <td>@article.AccessLevel</td>
-                <td>@article.Status</td>
-                <td>
-                    @if (article.Status == BlogCms.Domain.Enums.ArticleStatus.Scheduled && article.ScheduledAt is not null)
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th style="width: 52px;">Bild</th>
+                    <th>Titel</th>
+                    @if (Model.IsAdmin)
                     {
-                        <span class="meta-mono">geplant: @article.ScheduledAt.Value.ToString("dd.MM.yyyy HH:mm")</span>
+                        <th>Autor</th>
                     }
-                    else
+                    <th>Themengebiet</th>
+                    <th>Zugriff</th>
+                    <th>Status</th>
+                    <th>Veröffentlicht / Geplant</th>
+                    <th class="text-end">Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var article in Model.Articles)
+            {
+                var thumb = Model.TitleImageUrl(article);
+                <tr>
+                    <td>
+                        @if (!string.IsNullOrEmpty(thumb))
+                        {
+                            <img src="@thumb" alt="" class="rounded" style="width: 44px; height: 32px; object-fit: cover;" loading="lazy" />
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary" style="width: 44px; height: 32px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.65rem;">Text</span>
+                        }
+                    </td>
+                    <td>
+                        <a asp-page="/Admin/Articles/Edit" asp-route-id="@article.Id" class="fw-semibold text-decoration-none">
+                            @article.Title
+                        </a>
+                        @if (!string.IsNullOrWhiteSpace(article.Excerpt))
+                        {
+                            <div class="small text-muted text-truncate" style="max-width: 320px;">@article.Excerpt</div>
+                        }
+                    </td>
+                    @if (Model.IsAdmin)
                     {
-                        @(article.PublishedAt?.ToString("dd.MM.yyyy HH:mm") ?? "–")
+                        <td>@(article.Author?.DisplayName ?? "Archiv")</td>
                     }
-                </td>
-                <td class="text-end">
-                    <a class="btn btn-sm btn-outline-secondary" asp-page="/Admin/Articles/Edit" asp-route-id="@article.Id">Bearbeiten</a>
-                    <form method="post" asp-page-handler="Delete" asp-route-id="@article.Id" class="d-inline"
-                          onsubmit="return confirm('Akte wirklich löschen?');">
-                        <button type="submit" class="btn btn-sm btn-outline-danger">Löschen</button>
-                    </form>
-                </td>
-            </tr>
-        }
-        </tbody>
-    </table>
+                    <td>
+                        <span class="mv-pill">@(article.CategoryEntity?.Name ?? CategoryDisplay.Label(article.Category))</span>
+                    </td>
+                    <td>
+                        <span class="meta-mono">@ArticleDisplay.AccessLabel(article.AccessLevel)</span>
+                    </td>
+                    <td>
+                        <span class="@ArticleDisplay.StatusBadgeClass(article.Status)">@ArticleDisplay.StatusLabel(article.Status)</span>
+                    </td>
+                    <td>
+                        @if (article.Status == BlogCms.Domain.Enums.ArticleStatus.Scheduled && article.ScheduledAt is not null)
+                        {
+                            <span class="meta-mono">geplant: @article.ScheduledAt.Value.ToString("dd.MM.yyyy HH:mm")</span>
+                        }
+                        else
+                        {
+                            @(article.PublishedAt?.ToString("dd.MM.yyyy HH:mm") ?? "–")
+                        }
+                    </td>
+                    <td class="text-end text-nowrap">
+                        @if (article.Status == BlogCms.Domain.Enums.ArticleStatus.Published)
+                        {
+                            <a class="btn btn-sm btn-outline-secondary me-1" asp-page="/Articles/Details" asp-route-slug="@article.Slug" target="_blank" title="Akte öffentlich ansehen">Ansehen</a>
+                        }
+                        <a class="btn btn-sm btn-outline-secondary me-1" asp-page="/Admin/Articles/Edit" asp-route-id="@article.Id">Bearbeiten</a>
+                        <form method="post" asp-page-handler="Delete" asp-route-id="@article.Id" class="d-inline"
+                              onsubmit="return confirm('Akte wirklich löschen?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Löschen</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
 
     @if (Model.Articles.Count == 0)
     {
