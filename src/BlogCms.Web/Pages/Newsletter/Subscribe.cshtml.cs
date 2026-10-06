@@ -13,15 +13,18 @@ public class SubscribeModel : PageModel
     private readonly INewsletterService _newsletterService;
     private readonly IAppEmailSender _emailSender;
     private readonly UserManager<User> _userManager;
+    private readonly ILogger<SubscribeModel> _logger;
 
     public SubscribeModel(
         INewsletterService newsletterService,
         IAppEmailSender emailSender,
-        UserManager<User> userManager)
+        UserManager<User> userManager,
+        ILogger<SubscribeModel> logger)
     {
         _newsletterService = newsletterService;
         _emailSender = emailSender;
         _userManager = userManager;
+        _logger = logger;
     }
 
     [BindProperty]
@@ -66,9 +69,19 @@ public class SubscribeModel : PageModel
             <p style="font-size:12px">Kein Interesse? <a href="{unsubscribeUrl}">Abmelden</a></p>
             """;
 
-        await _emailSender.SendAsync(Email, "Newsletter-Anmeldung bestätigen", html, cancellationToken);
+        // Das Abo besteht zu diesem Zeitpunkt bereits. Ein Versandfehler darf es
+        // daher nicht verwerfen — der Nutzer bekommt stattdessen eine klare Meldung.
+        try
+        {
+            await _emailSender.SendAsync(Email, "Newsletter-Anmeldung bestätigen", html, cancellationToken);
+            Message = "Fast fertig: Bitte bestätige den Link in der soeben gesendeten E-Mail.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Bestätigungs-E-Mail für das Newsletter-Abo konnte nicht gesendet werden.");
+            Message = "Die Bestätigungs-E-Mail konnte gerade nicht versendet werden. Bitte später erneut versuchen.";
+        }
 
-        Message = "Fast fertig: Bitte bestätige den Link in der soeben gesendeten E-Mail.";
         ModelState.Clear();
         return Page();
     }

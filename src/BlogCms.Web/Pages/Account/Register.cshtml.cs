@@ -16,17 +16,20 @@ public class RegisterModel : PageModel
     private readonly IAppEmailSender _emailSender;
     private readonly ICaptchaService _captcha;
     private readonly IRegistrationThrottle _throttle;
+    private readonly ILogger<RegisterModel> _logger;
 
     public RegisterModel(
         UserManager<User> userManager,
         IAppEmailSender emailSender,
         ICaptchaService captcha,
-        IRegistrationThrottle throttle)
+        IRegistrationThrottle throttle,
+        ILogger<RegisterModel> logger)
     {
         _userManager = userManager;
         _emailSender = emailSender;
         _captcha = captcha;
         _throttle = throttle;
+        _logger = logger;
     }
 
     [BindProperty]
@@ -154,7 +157,17 @@ public class RegisterModel : PageModel
             <p><a href="{callbackUrl}">E-Mail-Adresse bestätigen</a></p>
             """;
 
-        await _emailSender.SendAsync(user.Email!, "E-Mail-Adresse bestätigen", html);
+        // Ein Versandfehler darf die Registrierung NICHT abbrechen: der User ist
+        // zu diesem Zeitpunkt bereits in der DB und der Rolle Reader zugewiesen.
+        // Nur so entsteht kein halbfertiges Konto mit gelber Fehlerseite.
+        try
+        {
+            await _emailSender.SendAsync(user.Email!, "E-Mail-Adresse bestätigen", html);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Bestätigungs-E-Mail an {Email} konnte nicht gesendet werden.", user.Email);
+        }
 
         return RedirectToPage("/Account/RegisterConfirmation", new { email = Input.Email });
     }

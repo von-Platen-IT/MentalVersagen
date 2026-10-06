@@ -20,6 +20,7 @@ Sie ergänzt die bestehenden Dokumente im Projekt-Root:
 | [`01-rollen-und-admin.md`](01-rollen-und-admin.md) | Rollenmodell, Admin („Root") werden, Admin-Status in der DB prüfen, Moderator-Zugang |
 | [`02-admin-artikelverwaltung.md`](02-admin-artikelverwaltung.md) | Den Admin-Bereich verwenden: Artikel anlegen, bearbeiten, löschen, veröffentlichen |
 | [`03-blog-nutzen.md`](03-blog-nutzen.md) | Rudimentäre Blog-Nutzung: Lesen, Kategorien/Tags, RSS, Kommentare, Newsletter, Mitgliedschaft |
+| [`04-mailversand.md`](04-mailversand.md) | Umsetzungsvorgabe für den echten SMTP-Versand (ersetzt den Dev-Platzhalter, der auf Produktion die Registrierung abbrechen lässt) |
 
 ## Schnellnavigation
 
