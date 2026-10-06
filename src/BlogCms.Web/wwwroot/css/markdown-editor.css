@@ -60,23 +60,89 @@
   color: var(--mv-text-dim);
 }
 
-/* Markdown-Syntaxhervorhebung */
+/* Markdown-Syntaxhervorhebung (Quellcode-Modus) ------------------------------
+ * Jede Formatierungsart erhält eine eigene Farbe, damit sich Überschriften,
+ * Betonung, Listen, Links, Zitate und Code im Quelltext farblich unterscheiden.
+ */
 .EasyMDEContainer .cm-s-easymde .cm-header {
   color: var(--mv-sepia);
   font-weight: 600;
 }
 
+/* Überschriften-Markup (#, ##, …) zusätzlich abheben */
+.EasyMDEContainer .cm-s-easymde .cm-formatting-header {
+  color: #d2a24c;
+  font-weight: 400;
+}
+
+/* Fett / Kursiv */
+.EasyMDEContainer .cm-s-easymde .cm-formatting-strong,
+.EasyMDEContainer .cm-s-easymde .cm-strong {
+  color: #f2657a;
+}
+
+.EasyMDEContainer .cm-s-easymde .cm-formatting-em,
+.EasyMDEContainer .cm-s-easymde .cm-em {
+  color: #7fb4d8;
+  font-style: italic;
+}
+
+/* Listen */
+.EasyMDEContainer .cm-s-easymde .cm-formatting-list,
+.EasyMDEContainer .cm-s-easymde .cm-formatting-list-ul,
+.EasyMDEContainer .cm-s-easymde .cm-formatting-list-ol {
+  color: #9ec97f;
+}
+
+/* Zitate */
+.EasyMDEContainer .cm-s-easymde .cm-quote {
+  color: var(--mv-text-dim);
+}
+
+.EasyMDEContainer .cm-s-easymde .cm-formatting-quote {
+  color: #b08fd8;
+}
+
+/* Links und URLs */
 .EasyMDEContainer .cm-s-easymde .cm-link,
 .EasyMDEContainer .cm-s-easymde .cm-url {
   color: var(--mv-sepia);
 }
 
-.EasyMDEContainer .cm-s-easymde .cm-quote {
-  color: var(--mv-text-dim);
+.EasyMDEContainer .cm-s-easymde .cm-formatting-link {
+  color: #d2a24c;
 }
 
+/* Inline- und Blockcode */
 .EasyMDEContainer .cm-s-easymde .cm-comment {
-  color: var(--mv-text-dim);
+  color: #6ec2a0;
+}
+
+.EasyMDEContainer .cm-s-easymde .cm-formatting-code,
+.EasyMDEContainer .cm-s-easymde .cm-formatting-code-block {
+  color: #6ec2a0;
+}
+
+/* Bilder */
+.EasyMDEContainer .cm-s-easymde .cm-image {
+  color: var(--mv-text);
+}
+
+.EasyMDEContainer .cm-s-easymde .cm-formatting-image {
+  color: #d2a24c;
+}
+
+/* Horizontale Linien und sonstiges Markup */
+.EasyMDEContainer .cm-s-easymde .cm-hr,
+.EasyMDEContainer .cm-s-easymde .cm-formatting-hr {
+  color: #b08fd8;
+}
+
+/* Vorschau-Modus: Steuerzeichen sind dort von EasyMDE ohnehin verborgen
+ * (gerenderter HTML-Text). Die Papier-/Karten-Optik bleibt erhalten. */
+.EasyMDEContainer .editor-preview-active,
+.EasyMDEContainer .editor-preview-side.editor-preview-active-side {
+  font-family: var(--mv-font-body, inherit);
 }
 
 /* Vorschau */

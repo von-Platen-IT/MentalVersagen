@@ -3,6 +3,7 @@ using BlogCms.Domain.Enums;
 using BlogCms.Infrastructure.Content;
 using BlogCms.Infrastructure.Media;
 using BlogCms.Web.Authorization;
+using BlogCms.Web.Content;
 using BlogCms.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -11,23 +12,27 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace BlogCms.Web.Pages.Admin.Articles;
 
+/// <summary>
+/// Presentation only: loads the article, enforces ownership (FeatureFix1 BR-013),
+/// manages the image section and delegates saving to IArticlePostingService.
+/// </summary>
 [Authorize(Policy = Policies.RequireAuthor)]
 public class EditModel : PageModel
 {
     private readonly IArticleService _articles;
+    private readonly IArticlePostingService _posting;
     private readonly IMediaService _media;
-    private readonly IOEmbedService _oEmbed;
     private readonly UserManager<User> _userManager;
 
     public EditModel(
         IArticleService articles,
+        IArticlePostingService posting,
         IMediaService media,
-        IOEmbedService oEmbed,
         UserManager<User> userManager)
     {
         _articles = articles;
+        _posting = posting;
         _media = media;
-        _oEmbed = oEmbed;
         _userManager = userManager;
     }
 
@@ -100,48 +105,20 @@ public class EditModel : PageModel
             return Forbid();
         }
 
-        HasExistingImage = article.MediaAssets.Count > 0;
-        ValidateInput(HasExistingImage);
-
-        if (!ModelState.IsValid)
+        var result = await _posting.UpdateAsync(id, Input.ToRequest(Input.Status), CurrentUserId);
+        if (!result.Succeeded)
         {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(error.Field, error.Message);
+            }
+
+            HasExistingImage = article.MediaAssets.Count > 0;
             await LoadImagesAsync(id);
             return Page();
         }
 
-        article.Title = Input.Title;
-        article.Slug = Input.Slug ?? string.Empty;
-        article.TitleImageUrl = Input.TitleImageUrl;
-        article.ContentMarkdown = Input.ContentMarkdown;
-        article.Excerpt = Input.Excerpt;
-        article.Category = Input.Category;
-        article.AccessLevel = Input.AccessLevel;
-        article.Status = Input.Status;
-        article.ScheduledAt = Input.Status == ArticleStatus.Scheduled ? Input.ScheduledAt : null;
-
-        await _articles.UpdateAsync(
-            article, ArticleInputModel.ParseTags(Input.Tags), ArticleInputModel.ParseHashtags(Input.Hashtags));
-
-        if (!string.IsNullOrWhiteSpace(Input.VideoUrl))
-        {
-            var resolved = await _oEmbed.ResolveAsync(Input.VideoUrl);
-            await _articles.SetVideoEmbedAsync(article.Id, Input.VideoUrl, resolved);
-        }
-
-        if (Input.ImageUpload is { Length: > 0 })
-        {
-            await using var stream = Input.ImageUpload.OpenReadStream();
-            await _media.UploadAsync(
-                stream, Input.ImageUpload.FileName, MediaOwnerType.Article, article.Id, article.AuthorId, null);
-        }
-
-        await UploadContentImagesAsync(article);
-
-        // Attach images uploaded through the Markdown editor (still unassigned).
-        // The uploader is the current user (an admin may edit another author's article).
-        await _media.AttachToArticleAsync(Input.ParseUploadedImageIds(), article.Id, CurrentUserId);
-
-        TempData["Message"] = $"Artikel „{article.Title}“ wurde aktualisiert.";
+        TempData["Message"] = ArticleMessages.ForUpdate(article);
         return RedirectToPage("Index");
     }
 
@@ -205,40 +182,6 @@ public class EditModel : PageModel
 
         TempData["Message"] = "Das Bild wurde gelöscht.";
         return RedirectToPage(new { id });
-    }
-
-    /// <summary>Applies FeatureFix1 requirements: teaser always, title image and schedule time.</summary>
-    private void ValidateInput(bool hasExistingImage)
-    {
-        if (!Input.HasTitleImageSource(hasExistingImage))
-        {
-            ModelState.AddModelError(
-                nameof(Input.ImageUpload),
-                "Bitte eine Titelbild-URL angeben oder ein Bild hochladen (FeatureFix1 BR-022).");
-        }
-
-        if (Input.Status == ArticleStatus.Scheduled &&
-            (Input.ScheduledAt is null || Input.ScheduledAt <= DateTime.UtcNow))
-        {
-            ModelState.AddModelError(
-                nameof(Input.ScheduledAt),
-                "Für eine geplante Veröffentlichung ist ein zukünftiger Zeitpunkt erforderlich.");
-        }
-    }
-
-    private async Task UploadContentImagesAsync(Article article)
-    {
-        foreach (var file in Input.ContentImageUploads)
-        {
-            if (file is null || file.Length == 0)
-            {
-                continue;
-            }
-
-            await using var stream = file.OpenReadStream();
-            await _media.UploadAsync(
-                stream, file.FileName, MediaOwnerType.Article, article.Id, article.AuthorId, null);
-        }
     }
 
     private async Task LoadImagesAsync(Guid articleId)

@@ -5,8 +5,12 @@
 // initialisiert, wenn das Feld #ContentMarkdown vorhanden ist.
 //
 // Funktionen:
-// - Side-by-Side-Vorschau (formatted mode) über den serverseitigen Renderer
-//   (/api/markdown/preview) — die Vorschau entspricht der späteren Ausgabe.
+// - Getrennte Ansichten: „Quellcode" (CodeMirror mit Syntaxfarben) und
+//   „Vorschau" (formatierter Endtext, serverseitig gerendert) — umschaltbar
+//   über Toolbar-Buttons; in der Vorschau sind die Steuerzeichen verborgen.
+// - MD-Upload: lokale .md/.markdown/.txt-Datei vom Rechner des Autors laden
+//   und den Inhalt in den Editor übernehmen.
+// - Download: den aktuellen Markdown-Quelltext als .md-Datei herunterladen.
 // - Bild-Button: AJAX-Upload (/api/media/upload), fügt ![alt](url) ein und
 //   merkt sich die Asset-Id im Hidden-Feld #UploadedImageIds.
 // - Video-Button: setzt das VideoUrl-Feld und fügt einen Markdown-Verweis ein.
@@ -165,6 +169,64 @@
         input.click();
     }
 
+    // --- MD-Datei-Upload (lokale .md-Datei in den Editor laden) --------------
+    function importMarkdownFile(editor) {
+        var input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.md,.markdown,.txt,text/markdown,text/plain';
+        input.addEventListener('change', function () {
+            var file = (input.files || [])[0];
+            if (!file) {
+                return;
+            }
+
+            var reader = new FileReader();
+            reader.onload = function () {
+                var content = String(reader.result || '');
+                if (!content) {
+                    window.alert('Die Datei ist leer.');
+                    return;
+                }
+
+                // Vorhandenen Inhalt ersetzen und die Textarea synchron halten.
+                editor.value(content);
+                textarea.value = content;
+                editor.codemirror.focus();
+            };
+            reader.onerror = function () {
+                window.alert('Die Datei konnte nicht gelesen werden.');
+            };
+            reader.readAsText(file, 'utf-8');
+        });
+        input.click();
+    }
+
+    // --- Download des Markdown-Quelltexts ------------------------------------
+    function downloadMarkdown(editor) {
+        var content = editor.value() || '';
+        var blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+        var url = URL.createObjectURL(blob);
+
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = buildFileName();
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
+    function buildFileName() {
+        var titleField = document.getElementById('Title');
+        var base = titleField && titleField.value ? titleField.value : 'akte';
+        var slug = base.toLowerCase()
+            .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue')
+            .replace(/ß/g, 'ss')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+        return (slug || 'akte') + '.md';
+    }
+
     function insertVideo(editor) {
         var url = window.prompt('Video-URL (YouTube, Vimeo, X, TikTok):');
         if (!url) {
@@ -239,6 +301,18 @@
                 action: insertVideo,
                 className: 'fa fa-video-camera',
                 title: 'Video einfügen'
+            },
+            {
+                name: 'import-md',
+                action: importMarkdownFile,
+                className: 'fa fa-folder-open',
+                title: 'Markdown-Datei vom Rechner laden'
+            },
+            {
+                name: 'download-md',
+                action: downloadMarkdown,
+                className: 'fa fa-download',
+                title: 'Markdown-Quelltext herunterladen'
             },
             '|',
             'preview', 'side-by-side', 'fullscreen', '|',

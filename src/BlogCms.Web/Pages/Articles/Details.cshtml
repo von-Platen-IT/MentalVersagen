@@ -27,12 +27,18 @@
 
 @if (!string.IsNullOrWhiteSpace(Model.TitleImageUrl))
 {
-    <figure class="mv-title-image mt-4 mb-0">
-        <img src="@Model.TitleImageUrl" alt="@(Model.TitleImageAlt ?? article.Title)" decoding="async" />
-    </figure>
-}
-
-<article class="mt-3">
+    @*
+        Statisches Titelbild: Das Bild klebt beim Scrollen unter der Navbar
+        (CSS position: sticky), während der opake Artikel-Container darüber
+        gleitet. Beim Aufruf ist das Bild vollständig sichtbar, der Text
+        beginnt darunter; beim Hochscrollen kehrt sich das Verhalten um, bis
+        das gesamte Bild wieder frei liegt. Ohne JavaScript, rein per CSS.
+    *@
+    <div class="mv-title-wrap">
+        <figure class="mv-title-backdrop" aria-hidden="true">
+            <img src="@Model.TitleImageUrl" alt="" decoding="async" />
+        </figure>
+        <article class="mv-title-article">
     @if (disclaimer is not null)
     {
         <div class="mv-teaser mb-3" role="note">
@@ -150,6 +156,8 @@
         }
     </section>
 </article>
+        </div>
+}
 
 @{
     Guid RootOf(BlogCms.Domain.Entities.Comment c)

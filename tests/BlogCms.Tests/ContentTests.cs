@@ -214,14 +214,14 @@ public class ArticleServiceTests
     }
 
     [Fact]
-    public void ArticleInputModel_HasTitleImageSource_RecognizesUploadedEditorImages()
+    public void ArticlePostRequest_HasTitleImageSource_RecognizesUploadedEditorImages()
     {
-        var model = new BlogCms.Web.Models.ArticleInputModel
-        {
-            UploadedImageIds = Guid.NewGuid().ToString()
-        };
+        var request = new BlogCms.Infrastructure.Content.ArticlePostRequest(
+            "Titel", null, null, "Teaser", "Inhalt",
+            ArticleCategory.Politik, ArticleAccessLevel.Public, ArticleStatus.Draft,
+            null, [], [], null, null, [], [Guid.NewGuid()]);
 
-        Assert.True(model.HasTitleImageSource(hasExistingImage: false));
+        Assert.True(request.HasTitleImageSource(hasExistingImage: false));
     }
 
     [Fact]

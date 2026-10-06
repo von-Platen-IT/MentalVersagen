@@ -72,13 +72,25 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.ExpireTimeSpan = TimeSpan.FromDays(14);
 });
 
-// Email: abstraction with a local dev implementation (writes .html files).
-builder.Services.AddScoped<IAppEmailSender, DevEmailSender>();
+// Email: der Versand ist konfigurierbar. Ohne Zugangsdaten bleibt der
+// Dev-Fallback aktiv (schreibt .html-Dateien), damit die App ohne Credentials
+// startet — Tests, CI und der frische Dev-Container brauchen keine Mail.
+// Siehe docs/04-mailversand.md.
+builder.Services.Configure<EmailOptions>(
+    builder.Configuration.GetSection(EmailOptions.SectionName));
+builder.Services.AddScoped<IAppEmailSender>(serviceProvider =>
+{
+    var emailOptions = serviceProvider.GetRequiredService<IOptions<EmailOptions>>().Value;
+    return emailOptions.IsConfigured
+        ? ActivatorUtilities.CreateInstance<SmtpEmailSender>(serviceProvider)
+        : ActivatorUtilities.CreateInstance<DevEmailSender>(serviceProvider);
+});
 
 // Content: Markdown rendering (sanitized), slug generation and article logic.
 builder.Services.AddSingleton<IMarkdownRenderer, MarkdownRenderer>();
 builder.Services.AddSingleton<ISlugGenerator, SlugGenerator>();
 builder.Services.AddScoped<IArticleService, ArticleService>();
+builder.Services.AddScoped<IArticlePostingService, ArticlePostingService>();
 
 // Scheduled publication: background poller that flips due "Scheduled" articles (BR-032).
 builder.Services.AddHostedService<ArticleSchedulerService>();
@@ -174,6 +186,27 @@ builder.Services.AddScoped<ICaptchaService, DataProtectionCaptchaService>();
 builder.Services.AddSingleton<IRegistrationThrottle, MemoryCacheRegistrationThrottle>();
 
 var app = builder.Build();
+
+// Welcher Mailversand tatsächlich aktiv ist, gehört ins Log: nur der Providername
+// und das IsConfigured-Flag, niemals Host mit Zugangsdaten.
+{
+    var mailOptions = app.Services.GetRequiredService<IOptions<EmailOptions>>().Value;
+
+    app.Logger.LogInformation(
+        "E-Mail-Versand aktiv: {Provider} (konfiguriert: {Configured})",
+        mailOptions.Provider,
+        mailOptions.IsConfigured);
+
+    if (!mailOptions.IsConfigured && !app.Environment.IsDevelopment())
+    {
+        // Auf Produktion ohne konfigurierten Versand landen keine E-Mails an.
+        app.Logger.LogWarning(
+            "E-Mail-Versand ist NICHT konfiguriert (Provider '{Provider}'). Registrierungs- " +
+            "und Newsletter-Bestätigungen werden nicht zugestellt. Bitte Email__Provider, " +
+            "Email__Host, Email__UserName, Email__Password und Email__FromAddress setzen.",
+            mailOptions.Provider);
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

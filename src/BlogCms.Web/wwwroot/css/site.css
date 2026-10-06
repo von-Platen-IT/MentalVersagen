@@ -1387,16 +1387,54 @@ code { font-family: var(--mv-font-mono); }
 .mv-reveal.mv-lift.is-visible { transform: translateY(0); }
 
 /* ---------- Titelbild (Artikeldetail) ---------- */
-.mv-title-image {
-  margin: 0;
+/*
+ * Statisches Titelbild hinter dem Text:
+ * Das Bild klebt beim Scrollen unter der sticky Navbar (position: sticky),
+ * während der opake Artikel-Container darüber gleitet. Beim Aufruf ist das
+ * Bild vollständig sichtbar und der Text beginnt darunter; beim Hochscrollen
+ * kehrt sich das Verhalten um, bis das gesamte Bild wieder frei liegt.
+ * Rein per CSS, ohne JavaScript.
+ */
+.mv-title-wrap {
+  position: relative;
 }
-.mv-title-image img {
+
+.mv-title-backdrop {
+  position: sticky;
+  /* Klebt unterhalb der sticky Navbar (deren Höhe via CSS-Variable). */
+  top: var(--mv-navbar-height, 0px);
+  z-index: 0;
+  margin: 1rem 0 0;
+}
+
+.mv-title-backdrop img {
   display: block;
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: cover;
   border: 1px solid var(--mv-border);
   box-shadow: var(--mv-shadow-lift);
+}
+
+/*
+ * Der Artikel-Container läuft opak über das klebende Bild: Er überlappt das
+ * Bild um einen negativen oberen Rand und liegt mit z-index über ihm.
+ */
+.mv-title-article {
+  position: relative;
+  z-index: 1;
+  background: var(--mv-bg-deep);
+  border: 1px solid var(--mv-border);
+  padding: clamp(1rem, 2vw, 1.5rem);
+  margin-top: -1px;
+}
+
+/* Nutzer mit reduzierter Bewegung / kleinen Viewports: klassisches Bild
+ * über dem Text, ohne Klebe-Effekt. */
+@media (prefers-reduced-motion: reduce), (max-width: 767.98px) {
+  .mv-title-backdrop {
+    position: static;
+  }
 }
 
 /* ---------- Thumbnail-Galerie (Artikeldetail) ---------- */

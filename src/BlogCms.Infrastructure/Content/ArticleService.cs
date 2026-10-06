@@ -100,6 +100,26 @@ public interface IArticleService
         Article article, IEnumerable<string> tagNames, IEnumerable<string> hashtagNames,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Prepares a new article for saving (slug, publish timing, tag/hashtag sync)
+    /// WITHOUT calling SaveChanges — used by <see cref="ArticlePostingService"/>
+    /// inside its transaction. The public <see cref="CreateAsync"/> wraps this with
+    /// a single SaveChanges.
+    /// </summary>
+    Task PrepareCreateAsync(
+        Article article, IEnumerable<string> tagNames, IEnumerable<string> hashtagNames,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Prepares an existing article for saving. The slug is only regenerated when it
+    /// actually changed, so published URLs stay stable across title edits. No
+    /// SaveChanges — used by <see cref="ArticlePostingService"/> inside its
+    /// transaction.
+    /// </summary>
+    Task PrepareUpdateAsync(
+        Article article, string? originalSlug, IEnumerable<string> tagNames,
+        IEnumerable<string> hashtagNames, CancellationToken cancellationToken = default);
+
     Task SoftDeleteAsync(Guid id, CancellationToken cancellationToken = default);
 
     /// <summary>Publishes all scheduled articles whose time has come; returns the count.</summary>
@@ -376,21 +396,24 @@ public sealed class ArticleService : IArticleService
         Article article, IEnumerable<string> tagNames, IEnumerable<string> hashtagNames,
         CancellationToken cancellationToken = default)
     {
+        await PrepareCreateAsync(article, tagNames, hashtagNames, cancellationToken);
+        await _db.SaveChangesAsync(cancellationToken);
+        return article;
+    }
+
+    public async Task PrepareCreateAsync(
+        Article article, IEnumerable<string> tagNames, IEnumerable<string> hashtagNames,
+        CancellationToken cancellationToken = default)
+    {
         article.Slug = await EnsureUniqueSlugAsync(
             string.IsNullOrWhiteSpace(article.Slug) ? article.Title : article.Slug, null, cancellationToken);
 
         article.UpdatedAt = DateTime.UtcNow;
         ApplyPublishTiming(article);
-        await SyncCategoryAsync(article, cancellationToken);
 
         _db.Articles.Add(article);
-        await _db.SaveChangesAsync(cancellationToken);
-
         await SyncTagsAsync(article, tagNames, cancellationToken);
         await SyncHashtagsAsync(article, hashtagNames, cancellationToken);
-        await _db.SaveChangesAsync(cancellationToken);
-
-        return article;
     }
 
     public Task UpdateAsync(
@@ -403,20 +426,43 @@ public sealed class ArticleService : IArticleService
         Article article, IEnumerable<string> tagNames, IEnumerable<string> hashtagNames,
         CancellationToken cancellationToken = default)
     {
-        article.Slug = await EnsureUniqueSlugAsync(
-            string.IsNullOrWhiteSpace(article.Slug) ? article.Title : article.Slug, article.Id, cancellationToken);
+        await PrepareUpdateAsync(article, article.Slug, tagNames, hashtagNames, cancellationToken);
+        await _db.SaveChangesAsync(cancellationToken);
+    }
 
+    public async Task PrepareUpdateAsync(
+        Article article, string? originalSlug, IEnumerable<string> tagNames,
+        IEnumerable<string> hashtagNames, CancellationToken cancellationToken = default)
+    {
+        await ApplyStableSlugAsync(article, originalSlug, cancellationToken);
         ApplyPublishTiming(article);
-        await SyncCategoryAsync(article, cancellationToken);
-
         article.UpdatedAt = DateTime.UtcNow;
 
         _db.Articles.Update(article);
-        await _db.SaveChangesAsync(cancellationToken);
-
         await SyncTagsAsync(article, tagNames, cancellationToken);
         await SyncHashtagsAsync(article, hashtagNames, cancellationToken);
-        await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// URL-Stabilität (docs/02-admin-artikelverwaltung.md): Ein leerer oder
+    /// unveränderter Slug lässt den bisherigen Slug unverändert; nur eine echte
+    /// Änderung wird auf Eindeutigkeit geprüft.
+    /// </summary>
+    private async Task ApplyStableSlugAsync(
+        Article article, string? originalSlug, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(article.Slug))
+        {
+            article.Slug = string.IsNullOrWhiteSpace(originalSlug)
+                ? await EnsureUniqueSlugAsync(article.Title, article.Id, cancellationToken)
+                : originalSlug;
+            return;
+        }
+
+        if (!string.Equals(article.Slug, originalSlug, StringComparison.Ordinal))
+        {
+            article.Slug = await EnsureUniqueSlugAsync(article.Slug, article.Id, cancellationToken);
+        }
     }
 
     /// <summary>
@@ -522,9 +568,10 @@ public sealed class ArticleService : IArticleService
             var tag = await _db.Tags.FirstOrDefaultAsync(t => t.Slug == slug, cancellationToken);
             if (tag is null)
             {
+                // GUID primary keys are assigned client-side on Add, so the join
+                // entry can reference the new tag without an intermediate SaveChanges.
                 tag = new Tag { Name = name, Slug = slug };
                 _db.Tags.Add(tag);
-                await _db.SaveChangesAsync(cancellationToken);
             }
 
             _db.ArticleTags.Add(new ArticleTag { ArticleId = article.Id, TagId = tag.Id });
@@ -555,22 +602,9 @@ public sealed class ArticleService : IArticleService
             {
                 hashtag = new Hashtag { Name = name, Slug = slug };
                 _db.Hashtags.Add(hashtag);
-                await _db.SaveChangesAsync(cancellationToken);
             }
 
             _db.ArticleHashtags.Add(new ArticleHashtag { ArticleId = article.Id, HashtagId = hashtag.Id });
-        }
-    }
-
-    private async Task SyncCategoryAsync(Article article, CancellationToken cancellationToken)
-    {
-        if (article.CategoryId.HasValue)
-        {
-            var cat = await _db.Categories.FirstOrDefaultAsync(c => c.Id == article.CategoryId.Value, cancellationToken);
-            if (cat is not null && Enum.TryParse<ArticleCategory>(cat.Name, ignoreCase: true, out var parsed))
-            {
-                article.Category = parsed;
-            }
         }
     }
 

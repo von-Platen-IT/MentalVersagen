@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using BlogCms.Domain.Enums;
+using BlogCms.Infrastructure.Content;
 using Microsoft.AspNetCore.Http;
 
 namespace BlogCms.Web.Models;
@@ -29,9 +30,6 @@ public class ArticleInputModel
     [Required(ErrorMessage = "Kategorie ist Pflichtfeld.")]
     [Display(Name = "Kategorie")]
     public ArticleCategory Category { get; set; }
-
-    [Display(Name = "Themengebiet")]
-    public Guid? CategoryId { get; set; }
 
     [Display(Name = "Zugriffsstufe")]
     public ArticleAccessLevel AccessLevel { get; set; } = ArticleAccessLevel.Public;
@@ -76,58 +74,33 @@ public class ArticleInputModel
     /// </summary>
     public string? UploadedImagesJson { get; set; }
 
-    /// <summary>Parses the comma-separated <see cref="UploadedImageIds"/> into GUIDs.</summary>
-    public IEnumerable<Guid> ParseUploadedImageIds()
-    {
-        if (string.IsNullOrWhiteSpace(UploadedImageIds))
-        {
-            return [];
-        }
-
-        return UploadedImageIds
-            .Split([',', ';', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(v => Guid.TryParse(v, out var id) ? id : Guid.Empty)
-            .Where(id => id != Guid.Empty)
-            .Distinct();
-    }
-
     /// <summary>
-    /// Validates that a title image source is present: either an external URL, a new
-    /// upload, or (on edit) an already stored image.
+    /// Maps the form data onto the application-layer request. Pure mapping — all
+    /// business rules (validation, target status, persistence) live in
+    /// IArticlePostingService.
     /// </summary>
-    public bool HasTitleImageSource(bool hasExistingImage)
+    public ArticlePostRequest ToRequest(ArticleStatus requestedStatus)
     {
-        return !string.IsNullOrWhiteSpace(TitleImageUrl)
-            || ImageUpload is { Length: > 0 }
-            || hasExistingImage
-            || ParseUploadedImageIds().Any();
-    }
-
-    public static IEnumerable<string> ParseTags(string? value) => Parse(value);
-
-    public static IEnumerable<string> ParseHashtags(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return [];
-        }
-
-        return value
-            .Split([',', ';', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(v => v.TrimStart('#'))
-            .Where(v => v.Length > 0)
-            .Distinct(StringComparer.OrdinalIgnoreCase);
-    }
-
-    private static IEnumerable<string> Parse(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return [];
-        }
-
-        return value
-            .Split([',', ';', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Distinct(StringComparer.OrdinalIgnoreCase);
+        return new ArticlePostRequest(
+            Title,
+            Slug,
+            TitleImageUrl,
+            Excerpt ?? string.Empty,
+            ContentMarkdown,
+            Category,
+            AccessLevel,
+            requestedStatus,
+            ScheduledAt,
+            ArticlePostRequest.ParseTags(Tags),
+            ArticlePostRequest.ParseHashtags(Hashtags),
+            VideoUrl,
+            ImageUpload is { Length: > 0 }
+                ? new ArticleUpload(ImageUpload.OpenReadStream(), ImageUpload.FileName)
+                : null,
+            ContentImageUploads
+                .Where(f => f is { Length: > 0 })
+                .Select(f => new ArticleUpload(f.OpenReadStream(), f.FileName))
+                .ToList(),
+            ArticlePostRequest.ParseUploadedImageIds(UploadedImageIds));
     }
 }
