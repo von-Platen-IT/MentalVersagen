@@ -1,3 +1,5 @@
+> **Commit:** `c9ff706fb60ea2f96ddc157aa9f54f8762311096` (2026-09-24)
+
 # Design-Refinement — „Aktenlicht": Atmosphärische Glow- & Lichteffekte
 
 **Stilrichtung:** Atmosphärisch-dezent — sanfte Glows, Hover-Lift, subtile Spotlight-Gradienten.

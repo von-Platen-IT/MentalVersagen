@@ -1,3 +1,5 @@
+> **Commit:** `a246ca4e446fa7f9f3d7923bcd044905f23ca4bd` (2026-09-24)
+
 # Mobile-Navigation — Auffälliger Menü-Button & Klarer Drawer
 
 **Ziel:** Die mobile Navigation klar sichtbar und gut bedienbar machen — ohne neue

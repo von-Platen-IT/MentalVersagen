@@ -1,3 +1,5 @@
+> **Commit:** `f03bf60904b516fc6ebeddbce12d234d02fe85eb` (2026-10-06)
+
 # Refactoring-Plan: Beitrags-Posten-Funktion (Artikel anlegen/bearbeiten)
 
 Stand: Analyse auf Basis von `DataSchema.md` (v1.2), `docs/02-admin-artikelverwaltung.md`,

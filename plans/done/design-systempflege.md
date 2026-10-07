@@ -1,3 +1,5 @@
+> **Commit:** `a246ca4e446fa7f9f3d7923bcd044905f23ca4bd` (2026-09-24)
+
 # Optik-Session — Systempflege & Qualität
 
 **Fokus:** Kein neuer Look, sondern den bestehenden Akten-Look *sauber, konsistent und

@@ -1,3 +1,5 @@
+> **Commit:** `407dcf1cefc3325fdc1698b62ae739b2e87a2681` (2026-09-28)
+
 # Plan: Refactoring Artikelverwaltung (/Admin/Articles) und Beitragsdarstellung auf der Startseite
 
 ## 1. Analyse & Problembeschreibung

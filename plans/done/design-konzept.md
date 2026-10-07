@@ -1,3 +1,5 @@
+> **Commit:** `a04fc17348c7ed2cc45f759f0c029ef33a13d617` (2026-09-14)
+
 # Design-Konzept — Mentalversagen Blog
 
 **Stil:** Investigativer Retro-Dokumentarstil × moderner Verschwörungsthriller

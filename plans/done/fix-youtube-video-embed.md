@@ -1,3 +1,5 @@
+> **Commit:** `a7031877ebe823f4e78197f79862f49f0561051b` (2026-09-28)
+
 # Fix: YouTube-Videos erscheinen als schwarzes Rechteck
 
 ## Ursache

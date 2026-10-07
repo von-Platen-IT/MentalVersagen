@@ -1,3 +1,5 @@
+> **Commit:** `16c3124d17c4c803d96daf7321f28ecff0751d45` (2026-09-17)
+
 # Feature-Flags: Monetarisierung & Login im UI ausblenden
 
 ## Ziel

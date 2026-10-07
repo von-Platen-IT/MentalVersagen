@@ -1,3 +1,5 @@
+> **Commit:** `407dcf1cefc3325fdc1698b62ae739b2e87a2681` (2026-09-28)
+
 # Create-Seite: Bildergalerie zum Einfügen in den Beitrag
 
 ## Ziel
