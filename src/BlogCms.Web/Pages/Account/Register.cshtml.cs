@@ -177,6 +177,15 @@ public class RegisterModel : PageModel
         var challenge = _captcha.Issue();
         CaptchaQuestion = challenge.Question;
         CaptchaToken = challenge.Token;
+
+        // Wichtig: Die alten POST-Werte aus dem ModelState entfernen. Die
+        // Tag-Helper rendern gebundene Werte bevorzugt aus dem ModelState —
+        // bliebe dort der alte Token stehen, würde das Formular nach einem
+        // fehlgeschlagenen POST (z. B. verletzte Passwortregeln) die NEUE
+        // Frage zusammen mit dem ALTEN Token senden und jede korrekte Antwort
+        // würde als falsch gewertet.
+        ModelState.Remove(nameof(CaptchaToken));
+        ModelState.Remove(nameof(CaptchaAnswer));
     }
 
     private void ValidateCaptcha()
