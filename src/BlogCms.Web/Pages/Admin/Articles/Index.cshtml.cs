@@ -29,39 +29,57 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? Filter { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public string? Search { get; set; }
+
     public bool IsAdmin => User.IsInRole(nameof(UserRole.Admin));
+
+    private Guid CurrentUserId =>
+        Guid.TryParse(_userManager.GetUserId(User), out var id) ? id : Guid.Empty;
 
     public string? TitleImageUrl(Article article) => BlogCms.Web.Content.ArticleDisplay.ResolveTitleImage(article, _media);
 
     public async Task OnGetAsync()
     {
-        IReadOnlyList<Article> all;
-        if (IsAdmin)
+        ArticleStatus? statusFilter = Enum.TryParse<ArticleStatus>(Filter, ignoreCase: true, out var parsed)
+            ? parsed
+            : null;
+
+        Guid? authorFilter = IsAdmin ? null : CurrentUserId;
+        Articles = await _articles.GetForManagementAsync(authorFilter, statusFilter, Search);
+    }
+
+    public async Task<IActionResult> OnPostChangeStatusAsync(Guid id, ArticleStatus targetStatus)
+    {
+        var article = await _articles.GetByIdAsync(id);
+        if (article is null)
         {
-            all = await _articles.GetForAdminAsync();
-        }
-        else
-        {
-            var userId = Guid.TryParse(_userManager.GetUserId(User), out var id) ? id : Guid.Empty;
-            all = await _articles.GetForAuthorAsync(userId);
+            return RedirectToPage(new { Filter, Search });
         }
 
-        if (string.Equals(Filter, "Published", StringComparison.OrdinalIgnoreCase))
+        if (!IsAdmin && article.AuthorId != CurrentUserId)
         {
-            Articles = all.Where(a => a.Status == ArticleStatus.Published).ToList();
+            return Forbid();
         }
-        else if (string.Equals(Filter, "Draft", StringComparison.OrdinalIgnoreCase))
+
+        if (targetStatus == ArticleStatus.Published)
         {
-            Articles = all.Where(a => a.Status == ArticleStatus.Draft).ToList();
+            var hasCover = !string.IsNullOrWhiteSpace(article.TitleImageUrl) || article.MediaAssets.Count > 0;
+            if (!hasCover || string.IsNullOrWhiteSpace(article.Excerpt) || string.IsNullOrWhiteSpace(article.ContentMarkdown))
+            {
+                TempData["Error"] = "Zum Veröffentlichen müssen Titelbild, Kurzbeschreibung und Inhalt vorhanden sein.";
+                return RedirectToPage(new { Filter, Search });
+            }
         }
-        else if (string.Equals(Filter, "Scheduled", StringComparison.OrdinalIgnoreCase))
-        {
-            Articles = all.Where(a => a.Status == ArticleStatus.Scheduled).ToList();
-        }
-        else
-        {
-            Articles = all;
-        }
+
+        article.Status = targetStatus;
+        await _articles.UpdateAsync(
+            article,
+            article.ArticleTags.Select(at => at.Tag!.Name),
+            article.ArticleHashtags.Select(ah => ah.Hashtag!.Name));
+
+        TempData["Message"] = $"Status für „{article.Title}“ auf {BlogCms.Web.Content.ArticleDisplay.StatusLabel(targetStatus)} geändert.";
+        return RedirectToPage(new { Filter, Search });
     }
 
     public async Task<IActionResult> OnPostDeleteAsync(Guid id)

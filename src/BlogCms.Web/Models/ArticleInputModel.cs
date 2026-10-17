@@ -22,7 +22,6 @@ public class ArticleInputModel
     [Display(Name = "Titelbild-URL (extern)")]
     public string? TitleImageUrl { get; set; }
 
-    [Required(ErrorMessage = "Kurzbeschreibung ist erforderlich.")]
     [StringLength(500)]
     [Display(Name = "Kurzbeschreibung / Teaser")]
     public string? Excerpt { get; set; }
@@ -47,7 +46,6 @@ public class ArticleInputModel
     [Display(Name = "Hashtags (kommagetrennt, mit oder ohne #)")]
     public string? Hashtags { get; set; }
 
-    [Required(ErrorMessage = "Inhalt ist erforderlich.")]
     [Display(Name = "Inhalt (Markdown)")]
     public string ContentMarkdown { get; set; } = string.Empty;
 
@@ -86,7 +84,7 @@ public class ArticleInputModel
             Slug,
             TitleImageUrl,
             Excerpt ?? string.Empty,
-            ContentMarkdown,
+            ContentMarkdown ?? string.Empty,
             Category,
             AccessLevel,
             requestedStatus,

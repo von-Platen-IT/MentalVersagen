@@ -81,7 +81,7 @@ public class EditModel : PageModel
             Category = article.Category,
             AccessLevel = article.AccessLevel,
             Status = article.Status,
-            ScheduledAt = article.ScheduledAt,
+            ScheduledAt = article.ScheduledAt?.ToLocalTime(),
             Tags = string.Join(", ", article.ArticleTags.Select(at => at.Tag!.Name)),
             Hashtags = string.Join(", ", article.ArticleHashtags.Select(ah => ah.Hashtag!.Name)),
             VideoUrl = article.VideoEmbeds.FirstOrDefault()?.OriginalUrl
@@ -105,6 +105,13 @@ public class EditModel : PageModel
             return Forbid();
         }
 
+        if (!ModelState.IsValid)
+        {
+            HasExistingImage = article.MediaAssets.Count > 0;
+            await LoadImagesAsync(id);
+            return Page();
+        }
+
         var result = await _posting.UpdateAsync(id, Input.ToRequest(Input.Status), CurrentUserId);
         if (!result.Succeeded)
         {
@@ -118,7 +125,7 @@ public class EditModel : PageModel
             return Page();
         }
 
-        TempData["Message"] = ArticleMessages.ForUpdate(article);
+        TempData["Message"] = ArticleMessages.ForUpdate(result.Article ?? article);
         return RedirectToPage("Index");
     }
 
@@ -137,8 +144,12 @@ public class EditModel : PageModel
             return NotFound();
         }
 
-        article.TitleImageUrl = _media.GetUrl(asset);
-        await _articles.UpdateAsync(article, TagNames(article), HashtagNames(article));
+        await _media.SetCoverAsync(article.Id, asset.Id);
+        if (!string.IsNullOrWhiteSpace(article.TitleImageUrl))
+        {
+            article.TitleImageUrl = null;
+            await _articles.UpdateAsync(article, TagNames(article), HashtagNames(article));
+        }
 
         TempData["Message"] = "Das Bild wurde als Titelbild übernommen.";
         return RedirectToPage(new { id });

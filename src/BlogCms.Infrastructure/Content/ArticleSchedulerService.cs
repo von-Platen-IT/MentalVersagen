@@ -1,3 +1,4 @@
+using BlogCms.Infrastructure.Media;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -38,6 +39,14 @@ public sealed class ArticleSchedulerService : BackgroundService
                 {
                     _logger.LogInformation(
                         "Scheduled publication: {Count} article(s) published.", published);
+                }
+
+                var media = scope.ServiceProvider.GetRequiredService<IMediaService>();
+                var cleaned = await media.CleanupOrphanedAsync(DateTime.UtcNow.AddHours(-24), stoppingToken);
+                if (cleaned > 0)
+                {
+                    _logger.LogInformation(
+                        "Media cleanup: {Count} orphaned upload(s) removed.", cleaned);
                 }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)

@@ -20,37 +20,67 @@
     }
     else
     {
-        <table class="table align-middle">
-            <thead>
-                <tr>
-                    <th>Meldungen</th>
-                    <th>Zeugenspruch</th>
-                    <th>Autor</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-            @foreach (var group in Model.ReportGroups)
-            {
-                <tr>
-                    <td><span class="mv-badge mv-badge--red">@group.ReportCount</span></td>
-                    <td class="mv-preline">@(group.Comment.DeletedAt is null ? group.Comment.ContentText : "(gelöscht)")</td>
-                    <td>@(group.Comment.User?.DisplayName ?? "Gelöschter Nutzer")</td>
-                    <td class="text-end">
-                        <form method="post" asp-page-handler="Approve" asp-route-commentId="@group.Comment.Id" class="d-inline">
-                            <button type="submit" class="btn btn-sm btn-outline-secondary">Freigeben</button>
-                        </form>
-                        <form method="post" asp-page-handler="Reject" asp-route-commentId="@group.Comment.Id" class="d-inline">
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Ablehnen</button>
-                        </form>
-                        <form method="post" asp-page-handler="DismissReports" asp-route-commentId="@group.Comment.Id" class="d-inline">
-                            <button type="submit" class="btn btn-sm btn-outline-secondary">Meldungen verwerfen</button>
-                        </form>
-                    </td>
-                </tr>
-            }
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Meldungen</th>
+                        <th>Gründe / Hinweise</th>
+                        <th>Akte</th>
+                        <th>Zeugenspruch</th>
+                        <th>Autor</th>
+                        <th class="text-end">Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var group in Model.ReportGroups)
+                {
+                    <tr>
+                        <td><span class="mv-badge mv-badge--red">@group.ReportCount</span></td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-1">
+                                @foreach (var reason in group.Reasons)
+                                {
+                                    <span class="mv-pill">@reason</span>
+                                }
+                            </div>
+                            @if (group.Notes.Count > 0)
+                            {
+                                <div class="small text-muted mt-1">
+                                    @string.Join(" · ", group.Notes)
+                                </div>
+                            }
+                        </td>
+                        <td>
+                            @if (group.Comment.Article is not null)
+                            {
+                                <a asp-page="/Articles/Details" asp-route-slug="@group.Comment.Article.Slug" asp-fragment="comment-@group.Comment.Id" target="_blank">
+                                    @group.Comment.Article.Title
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="text-muted">–</span>
+                            }
+                        </td>
+                        <td class="mv-preline">@(group.Comment.DeletedAt is null ? group.Comment.ContentText : "(gelöscht)")</td>
+                        <td>@(group.Comment.User?.DisplayName ?? "Gelöschter Nutzer")</td>
+                        <td class="text-end text-nowrap">
+                            <form method="post" asp-page-handler="Approve" asp-route-commentId="@group.Comment.Id" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">Freigeben</button>
+                            </form>
+                            <form method="post" asp-page-handler="Reject" asp-route-commentId="@group.Comment.Id" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Ablehnen</button>
+                            </form>
+                            <form method="post" asp-page-handler="DismissReports" asp-route-commentId="@group.Comment.Id" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">Meldungen verwerfen</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
     }
 
     <h2 class="h4 mt-4">Ausstehend / markiert</h2>
@@ -60,33 +90,48 @@
     }
     else
     {
-        <table class="table align-middle">
-            <thead>
-                <tr>
-                    <th>Status</th>
-                    <th>Zeugenspruch</th>
-                    <th>Autor</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-            @foreach (var comment in Model.PendingAndFlagged)
-            {
-                <tr>
-                    <td><span class="mv-badge">@comment.Status</span></td>
-                    <td class="mv-preline">@comment.ContentText</td>
-                    <td>@(comment.User?.DisplayName ?? "Gelöschter Nutzer")</td>
-                    <td class="text-end">
-                        <form method="post" asp-page-handler="Approve" asp-route-commentId="@comment.Id" class="d-inline">
-                            <button type="submit" class="btn btn-sm btn-outline-secondary">Freigeben</button>
-                        </form>
-                        <form method="post" asp-page-handler="Reject" asp-route-commentId="@comment.Id" class="d-inline">
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Ablehnen</button>
-                        </form>
-                    </td>
-                </tr>
-            }
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Akte</th>
+                        <th>Zeugenspruch</th>
+                        <th>Autor</th>
+                        <th class="text-end">Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var comment in Model.PendingAndFlagged)
+                {
+                    <tr>
+                        <td><span class="mv-badge">@comment.Status</span></td>
+                        <td>
+                            @if (comment.Article is not null)
+                            {
+                                <a asp-page="/Articles/Details" asp-route-slug="@comment.Article.Slug" target="_blank">
+                                    @comment.Article.Title
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="text-muted">–</span>
+                            }
+                        </td>
+                        <td class="mv-preline">@comment.ContentText</td>
+                        <td>@(comment.User?.DisplayName ?? "Gelöschter Nutzer")</td>
+                        <td class="text-end text-nowrap">
+                            <form method="post" asp-page-handler="Approve" asp-route-commentId="@comment.Id" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">Freigeben</button>
+                            </form>
+                            <form method="post" asp-page-handler="Reject" asp-route-commentId="@comment.Id" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Ablehnen</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
     }
 </div>

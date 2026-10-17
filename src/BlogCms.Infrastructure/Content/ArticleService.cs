@@ -61,6 +61,12 @@ public interface IArticleService
 
     Task<Article?> GetPublishedBySlugAsync(string slug, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Loads any non-deleted article by slug regardless of publication status
+    /// (used for author/admin preview of drafts, scheduled and archived articles).
+    /// </summary>
+    Task<Article?> GetBySlugForPreviewAsync(string slug, CancellationToken cancellationToken = default);
+
     Task<Article?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Article>> GetForAdminAsync(CancellationToken cancellationToken = default);
@@ -68,7 +74,13 @@ public interface IArticleService
     /// <summary>Articles the given author may manage (their own only).</summary>
     Task<IReadOnlyList<Article>> GetForAuthorAsync(Guid authorId, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<Category>> GetAllCategoriesAsync(CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Server-side filtered and searched list of articles for the admin/author
+    /// management table (/Admin/Articles).
+    /// </summary>
+    Task<IReadOnlyList<Article>> GetForManagementAsync(
+        Guid? authorId, ArticleStatus? statusFilter = null, string? search = null,
+        CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Tag>> GetAllTagsAsync(CancellationToken cancellationToken = default);
 
@@ -209,8 +221,10 @@ public sealed class ArticleService : IArticleService
                 .OrderBy(a => a.Title)
                 .ThenByDescending(a => a.PublishedAt),
             ArticleSortOrder.MostLiked => articles
-                .OrderByDescending(a => a.Ratings.Count(r => r.Value == RatingValue.ThumbUp))
-                .ThenByDescending(a => a.Ratings.Count(r => r.Value == RatingValue.ThumbDown))
+                .OrderByDescending(a =>
+                    a.Ratings.Count(r => r.Value == RatingValue.ThumbUp) -
+                    a.Ratings.Count(r => r.Value == RatingValue.ThumbDown))
+                .ThenByDescending(a => a.Ratings.Count(r => r.Value == RatingValue.ThumbUp))
                 .ThenByDescending(a => a.PublishedAt)
                 .ThenByDescending(a => a.CreatedAt),
             ArticleSortOrder.MostUpvoted => articles
@@ -237,7 +251,6 @@ public sealed class ArticleService : IArticleService
 
         var items = await articles
             .Include(a => a.Author)
-            .Include(a => a.CategoryEntity)
             .Include(a => a.ArticleTags).ThenInclude(at => at.Tag)
             .Include(a => a.ArticleHashtags).ThenInclude(ah => ah.Hashtag)
             .Include(a => a.MediaAssets)
@@ -262,7 +275,6 @@ public sealed class ArticleService : IArticleService
         return _db.Articles
             .AsNoTracking()
             .Include(a => a.Author)
-            .Include(a => a.CategoryEntity)
             .Include(a => a.ArticleTags).ThenInclude(at => at.Tag)
             .Include(a => a.ArticleHashtags).ThenInclude(ah => ah.Hashtag)
             .Include(a => a.VideoEmbeds)
@@ -272,11 +284,22 @@ public sealed class ArticleService : IArticleService
                 cancellationToken);
     }
 
+    public Task<Article?> GetBySlugForPreviewAsync(string slug, CancellationToken cancellationToken = default)
+    {
+        return _db.Articles
+            .AsNoTracking()
+            .Include(a => a.Author)
+            .Include(a => a.ArticleTags).ThenInclude(at => at.Tag)
+            .Include(a => a.ArticleHashtags).ThenInclude(ah => ah.Hashtag)
+            .Include(a => a.VideoEmbeds)
+            .Include(a => a.MediaAssets)
+            .FirstOrDefaultAsync(a => a.Slug == slug, cancellationToken);
+    }
+
     public Task<Article?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return _db.Articles
             .Include(a => a.Author)
-            .Include(a => a.CategoryEntity)
             .Include(a => a.ArticleTags).ThenInclude(at => at.Tag)
             .Include(a => a.ArticleHashtags).ThenInclude(ah => ah.Hashtag)
             .Include(a => a.VideoEmbeds)
@@ -284,35 +307,43 @@ public sealed class ArticleService : IArticleService
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Category>> GetAllCategoriesAsync(CancellationToken cancellationToken = default)
-    {
-        return await _db.Categories
-            .AsNoTracking()
-            .OrderBy(c => c.DisplayOrder)
-            .ThenBy(c => c.Name)
-            .ToListAsync(cancellationToken);
-    }
+    public Task<IReadOnlyList<Article>> GetForAdminAsync(CancellationToken cancellationToken = default)
+        => GetForManagementAsync(authorId: null, cancellationToken: cancellationToken);
 
-    public async Task<IReadOnlyList<Article>> GetForAdminAsync(CancellationToken cancellationToken = default)
-    {
-        return await _db.Articles
-            .AsNoTracking()
-            .Include(a => a.Author)
-            .Include(a => a.CategoryEntity)
-            .Include(a => a.MediaAssets)
-            .OrderByDescending(a => a.UpdatedAt)
-            .ToListAsync(cancellationToken);
-    }
-
-    public async Task<IReadOnlyList<Article>> GetForAuthorAsync(
+    public Task<IReadOnlyList<Article>> GetForAuthorAsync(
         Guid authorId, CancellationToken cancellationToken = default)
+        => GetForManagementAsync(authorId: authorId, cancellationToken: cancellationToken);
+
+    public async Task<IReadOnlyList<Article>> GetForManagementAsync(
+        Guid? authorId, ArticleStatus? statusFilter = null, string? search = null,
+        CancellationToken cancellationToken = default)
     {
-        return await _db.Articles
+        var query = _db.Articles
             .AsNoTracking()
             .Include(a => a.Author)
-            .Include(a => a.CategoryEntity)
             .Include(a => a.MediaAssets)
-            .Where(a => a.AuthorId == authorId)
+            .AsQueryable();
+
+        if (authorId is not null)
+        {
+            query = query.Where(a => a.AuthorId == authorId);
+        }
+
+        if (statusFilter is not null)
+        {
+            query = query.Where(a => a.Status == statusFilter);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLowerInvariant();
+            query = query.Where(a =>
+                a.Title.ToLower().Contains(term) ||
+                a.Slug.ToLower().Contains(term) ||
+                (a.Excerpt != null && a.Excerpt.ToLower().Contains(term)));
+        }
+
+        return await query
             .OrderByDescending(a => a.UpdatedAt)
             .ToListAsync(cancellationToken);
     }

@@ -103,6 +103,13 @@ public sealed class RatingService : IRatingService
             };
             _db.Ratings.Add(rating);
         }
+        else if (rating.Value == value)
+        {
+            // Toggle: a repeated click on the same thumb withdraws the rating.
+            _db.Ratings.Remove(rating);
+            await _db.SaveChangesAsync(cancellationToken);
+            return new RatingResult(true, null, null);
+        }
         else
         {
             rating.Value = value;

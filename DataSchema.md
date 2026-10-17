@@ -127,6 +127,7 @@ Bild-Uploads — sowohl für Artikel als auch für Kommentare nutzbar.
 | Width | int? | |
 | Height | int? | |
 | AltText | string? | Barrierefreiheit |
+| IsCover | bool | `true`, wenn dieses Asset explizit als Titelbild des Artikels gewählt wurde |
 | CreatedAt | DateTime | |
 
 > Details zu Storage-Backend, Validierung und Bildverarbeitung: siehe `03-Medien-Upload-und-Embedding.md`.
@@ -329,3 +330,4 @@ Comment 1---n ActivityLogEntry
 | v1.0 | Initial | Erstfassung: User, Article, Tag, Comment, MediaAsset, VideoEmbed, Subscription, Donation, NewsletterSubscriber, Report |
 | v1.1 | FeatureFix1 | Neue Rolle `Author`; `Article.TitleImageUrl`, `AccessLevel`, `ScheduledAt`, `ArticleStatus.Scheduled`; `Comment.IsHighlighted`; neue Entitäten `Hashtag`/`ArticleHashtag`, `Rating`, `LinkList`/`LinkListItem` |
 | v1.2 | Aktivitätslog | Neue Entität `ActivityLogEntry` (einheitliches Aktivitätslog für Artikelaufrufe, Artikel-Erstellung, Kommentar-Erstellung und Beitrags-Bewertungen) |
+| v1.3 | Backend-Refactoring | `MediaAsset.IsCover` für explizite Titelbild-Kennzeichnung aufgenommen; redundante `Category`-Tabelle zugunsten des `ArticleCategory`-Enums entfernt |

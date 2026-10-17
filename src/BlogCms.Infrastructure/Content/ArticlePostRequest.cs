@@ -8,7 +8,12 @@ namespace BlogCms.Infrastructure.Content;
 /// original file name. The Web layer opens the streams; this layer stays free of
 /// ASP.NET Core types (no <c>IFormFile</c> dependency).
 /// </summary>
-public sealed record ArticleUpload(Stream Content, string FileName);
+public sealed record ArticleUpload(Stream Content, string FileName) : IDisposable, IAsyncDisposable
+{
+    public void Dispose() => Content.Dispose();
+
+    public ValueTask DisposeAsync() => Content.DisposeAsync();
+}
 
 /// <summary>
 /// Application-layer description of a posted article (create or edit). Carries all
@@ -90,6 +95,9 @@ public sealed record ArticlePostRequest(
 public sealed record PostError(string Field, string Message)
 {
     public const string GenericField = "";
+    public const string TitleField = "Title";
+    public const string ExcerptField = "Excerpt";
+    public const string ContentMarkdownField = "ContentMarkdown";
     public const string ImageUploadField = "ImageUpload";
     public const string ContentUploadsField = "ContentImageUploads";
     public const string ScheduledAtField = "ScheduledAt";

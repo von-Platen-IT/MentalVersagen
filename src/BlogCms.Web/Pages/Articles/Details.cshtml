@@ -25,20 +25,32 @@
 
 <partial name="_PageHeader" model="header" />
 
-@if (!string.IsNullOrWhiteSpace(Model.TitleImageUrl))
+@if (Model.IsPreview)
 {
-    @*
-        Statisches Titelbild: Das Bild klebt beim Scrollen unter der Navbar
-        (CSS position: sticky), während der opake Artikel-Container darüber
-        gleitet. Beim Aufruf ist das Bild vollständig sichtbar, der Text
-        beginnt darunter; beim Hochscrollen kehrt sich das Verhalten um, bis
-        das gesamte Bild wieder frei liegt. Ohne JavaScript, rein per CSS.
-    *@
-    <div class="mv-title-wrap">
+    <div class="mv-teaser mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2" role="status">
+        <div>
+            <span class="mv-stamped me-2">VORSCHAU</span>
+            <strong>Status: @ArticleDisplay.StatusLabel(article.Status)</strong> — Dieser Beitrag ist öffentlich noch nicht sichtbar.
+        </div>
+        <a class="btn btn-sm btn-outline-secondary" asp-page="/Admin/Articles/Edit" asp-route-id="@article.Id">Akte bearbeiten</a>
+    </div>
+}
+
+<div class="@(!string.IsNullOrWhiteSpace(Model.TitleImageUrl) ? "mv-title-wrap" : "")">
+    @if (!string.IsNullOrWhiteSpace(Model.TitleImageUrl))
+    {
+        @*
+            Statisches Titelbild: Das Bild klebt beim Scrollen unter der Navbar
+            (CSS position: sticky), während der opake Artikel-Container darüber
+            gleitet. Beim Aufruf ist das Bild vollständig sichtbar, der Text
+            beginnt darunter; beim Hochscrollen kehrt sich das Verhalten um, bis
+            das gesamte Bild wieder frei liegt. Ohne JavaScript, rein per CSS.
+        *@
         <figure class="mv-title-backdrop" aria-hidden="true">
-            <img src="@Model.TitleImageUrl" alt="" decoding="async" />
+            <img src="@Model.TitleImageUrl" alt="@(Model.TitleImageAlt ?? "")" decoding="async" />
         </figure>
-        <article class="mv-title-article">
+    }
+    <article class="@(!string.IsNullOrWhiteSpace(Model.TitleImageUrl) ? "mv-title-article" : "")">
     @if (disclaimer is not null)
     {
         <div class="mv-teaser mb-3" role="note">
@@ -127,7 +139,7 @@
         </div>
     }
 
-    <section class="mt-3">
+    <section id="article-rating" class="mt-3">
         <div class="d-flex align-items-center gap-2 flex-wrap">
             <span class="meta-mono">Bewertung dieser Akte</span>
             <span class="mv-badge">👍 @Model.ArticleRating.ThumbUp</span>
@@ -135,7 +147,7 @@
             <span class="meta-mono">Score: @Model.ArticleRating.Score</span>
         </div>
 
-        @if (isAuthenticated)
+        @if (isAuthenticated && Model.CanReadContent && !Model.IsPreview)
         {
             <div class="d-flex align-items-center gap-2 mt-2">
                 <form method="post" asp-page-handler="RateArticle" asp-route-slug="@article.Slug">
@@ -148,16 +160,15 @@
                 </form>
             </div>
         }
-        else if (FeatureConfig.Value.LoginEnabled)
+        else if (!isAuthenticated && FeatureConfig.Value.LoginEnabled)
         {
             <p class="meta-mono mt-2 mb-0">
                 <a asp-page="/Account/Login" asp-route-returnUrl="@Url.Page("/Articles/Details", new { slug = article.Slug })">Melde dich an</a>, um die Akte zu bewerten.
             </p>
         }
     </section>
-</article>
-        </div>
-}
+    </article>
+</div>
 
 @{
     Guid RootOf(BlogCms.Domain.Entities.Comment c)
@@ -203,7 +214,7 @@
             um zu kommentieren.
         </p>
     }
-    else if (isAuthenticated)
+    else if (isAuthenticated && Model.CanReadContent && !Model.IsPreview)
     {
         <form method="post" asp-page-handler="AddComment" asp-route-slug="@article.Slug" enctype="multipart/form-data" class="mb-4">
             <div class="mb-2">
@@ -310,7 +321,7 @@
                         </form>
                     }
 
-                    @if (isOwner)
+                    @if (Model.IsCommentEditable(root))
                     {
                         <details class="mt-1">
                             <summary class="text-secondary mv-summary">Bearbeiten</summary>
@@ -414,6 +425,27 @@
                                     <input type="hidden" name="commentId" value="@reply.Id" />
                                     <button type="submit" class="btn btn-link btn-sm mv-text-danger p-0">Löschen</button>
                                 </form>
+                            }
+                            <details class="mt-1">
+                                <summary class="text-secondary mv-summary">Antworten</summary>
+                                <form method="post" asp-page-handler="AddComment" asp-route-slug="@article.Slug" enctype="multipart/form-data" class="mt-2">
+                                    <input type="hidden" name="parentId" value="@reply.Id" />
+                                    <textarea name="content" class="form-control form-control-sm" rows="2" maxlength="5000" required></textarea>
+                                    <input type="file" name="image" accept="image/*" class="form-control form-control-sm mt-1"
+                                           data-max-bytes="4194304" data-max-label="4 MB" />
+                                    <button type="submit" class="btn btn-outline-secondary btn-sm mt-1">Antwort senden</button>
+                                </form>
+                            </details>
+                            @if (Model.IsCommentEditable(reply))
+                            {
+                                <details class="mt-1">
+                                    <summary class="text-secondary mv-summary">Bearbeiten</summary>
+                                    <form method="post" asp-page-handler="EditComment" asp-route-slug="@article.Slug" class="mt-2">
+                                        <input type="hidden" name="commentId" value="@reply.Id" />
+                                        <textarea name="content" class="form-control form-control-sm" rows="2" required>@reply.ContentText</textarea>
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm mt-1">Speichern</button>
+                                    </form>
+                                </details>
                             }
                             @if (!replyIsOwner)
                             {

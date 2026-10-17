@@ -18,18 +18,30 @@
         <div>
             <h2 class="h4 mb-1">Aktenliste (@Model.Articles.Count)</h2>
             <div class="btn-group btn-group-sm" role="group" aria-label="Statusfilter">
-                <a class="btn @(string.IsNullOrEmpty(Model.Filter) ? "btn-primary" : "btn-outline-secondary")" asp-page="./Index">Alle</a>
-                <a class="btn @(string.Equals(Model.Filter, "Published", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")" asp-page="./Index" asp-route-filter="Published">Veröffentlicht</a>
-                <a class="btn @(string.Equals(Model.Filter, "Draft", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")" asp-page="./Index" asp-route-filter="Draft">Entwürfe</a>
-                <a class="btn @(string.Equals(Model.Filter, "Scheduled", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")" asp-page="./Index" asp-route-filter="Scheduled">Geplant</a>
+                <a class="btn @(string.IsNullOrEmpty(Model.Filter) ? "btn-primary" : "btn-outline-secondary")" asp-page="./Index" asp-route-search="@Model.Search">Alle</a>
+                <a class="btn @(string.Equals(Model.Filter, "Published", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")" asp-page="./Index" asp-route-filter="Published" asp-route-search="@Model.Search">Veröffentlicht</a>
+                <a class="btn @(string.Equals(Model.Filter, "Draft", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")" asp-page="./Index" asp-route-filter="Draft" asp-route-search="@Model.Search">Entwürfe</a>
+                <a class="btn @(string.Equals(Model.Filter, "Scheduled", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")" asp-page="./Index" asp-route-filter="Scheduled" asp-route-search="@Model.Search">Geplant</a>
+                <a class="btn @(string.Equals(Model.Filter, "Archived", StringComparison.OrdinalIgnoreCase) ? "btn-primary" : "btn-outline-secondary")" asp-page="./Index" asp-route-filter="Archived" asp-route-search="@Model.Search">Archiviert</a>
             </div>
         </div>
-        <a class="btn btn-primary" asp-page="/Admin/Articles/Create">Neue Akte anlegen</a>
+        <div class="d-flex align-items-center gap-2">
+            <form method="get" class="d-flex gap-1">
+                <input type="hidden" name="filter" value="@Model.Filter" />
+                <input type="search" name="search" value="@Model.Search" class="form-control form-control-sm" placeholder="Titel oder Slug suchen …" />
+                <button type="submit" class="btn btn-sm btn-outline-secondary">Suchen</button>
+            </form>
+            <a class="btn btn-primary" asp-page="/Admin/Articles/Create">Neue Akte anlegen</a>
+        </div>
     </div>
 
     @if (TempData["Message"] is string message)
     {
         <div class="mv-teaser mb-3">@message</div>
+    }
+    @if (TempData["Error"] is string errorMsg)
+    {
+        <div class="mv-teaser mb-3 mv-text-danger">@errorMsg</div>
     }
 
     <div class="table-responsive">
@@ -78,7 +90,7 @@
                         <td>@(article.Author?.DisplayName ?? "Archiv")</td>
                     }
                     <td>
-                        <span class="mv-pill">@(article.CategoryEntity?.Name ?? CategoryDisplay.Label(article.Category))</span>
+                        <span class="mv-pill">@CategoryDisplay.Label(article.Category)</span>
                     </td>
                     <td>
                         <span class="meta-mono">@ArticleDisplay.AccessLabel(article.AccessLevel)</span>
@@ -97,11 +109,28 @@
                         }
                     </td>
                     <td class="text-end text-nowrap">
+                        <a class="btn btn-sm btn-outline-secondary me-1" asp-page="/Articles/Details" asp-route-slug="@article.Slug" target="_blank"
+                           title="@(article.Status == BlogCms.Domain.Enums.ArticleStatus.Published ? "Akte öffentlich ansehen" : "Vorschau der Akte öffnen")">
+                            @(article.Status == BlogCms.Domain.Enums.ArticleStatus.Published ? "Ansehen" : "Vorschau")
+                        </a>
+                        <a class="btn btn-sm btn-outline-secondary me-1" asp-page="/Admin/Articles/Edit" asp-route-id="@article.Id">Bearbeiten</a>
+
+                        @if (article.Status != BlogCms.Domain.Enums.ArticleStatus.Published)
+                        {
+                            <form method="post" asp-page-handler="ChangeStatus" asp-route-id="@article.Id" asp-route-targetStatus="Published" class="d-inline me-1">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="Sofort veröffentlichen">Freigeben</button>
+                            </form>
+                        }
                         @if (article.Status == BlogCms.Domain.Enums.ArticleStatus.Published)
                         {
-                            <a class="btn btn-sm btn-outline-secondary me-1" asp-page="/Articles/Details" asp-route-slug="@article.Slug" target="_blank" title="Akte öffentlich ansehen">Ansehen</a>
+                            <form method="post" asp-page-handler="ChangeStatus" asp-route-id="@article.Id" asp-route-targetStatus="Draft" class="d-inline me-1">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="Zurück in Entwurf">Entwurf</button>
+                            </form>
+                            <form method="post" asp-page-handler="ChangeStatus" asp-route-id="@article.Id" asp-route-targetStatus="Archived" class="d-inline me-1">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="Archivieren">Archiv</button>
+                            </form>
                         }
-                        <a class="btn btn-sm btn-outline-secondary me-1" asp-page="/Admin/Articles/Edit" asp-route-id="@article.Id">Bearbeiten</a>
+
                         <form method="post" asp-page-handler="Delete" asp-route-id="@article.Id" class="d-inline"
                               onsubmit="return confirm('Akte wirklich löschen?');">
                             <button type="submit" class="btn btn-sm btn-outline-danger">Löschen</button>

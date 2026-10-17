@@ -13,7 +13,11 @@ public sealed record CommentResult(bool Succeeded, string? Error, Comment? Comme
     public static CommentResult Fail(string error) => new(false, error);
 }
 
-public sealed record ReportGroup(Comment Comment, int ReportCount);
+public sealed record ReportGroup(
+    Comment Comment,
+    int ReportCount,
+    IReadOnlyList<ReportReason> Reasons,
+    IReadOnlyList<string> Notes);
 
 public interface ICommentService
 {
@@ -47,6 +51,8 @@ public interface ICommentService
     Task<IReadOnlyList<Comment>> GetPendingAndFlaggedAsync(CancellationToken cancellationToken = default);
 
     Task DismissReportsForCommentAsync(Guid commentId, CancellationToken cancellationToken = default);
+
+    int EditWindowMinutes { get; }
 }
 
 /// <summary>
@@ -63,6 +69,8 @@ public sealed class CommentService : ICommentService
         _db = db;
         _options = options.Value;
     }
+
+    public int EditWindowMinutes => _options.EditWindowMinutes;
 
     public async Task<IReadOnlyList<Comment>> GetThreadAsync(
         Guid articleId, CancellationToken cancellationToken = default)
@@ -200,8 +208,20 @@ public sealed class CommentService : ICommentService
                 $"Das Bearbeitungsfenster von {_options.EditWindowMinutes} Minuten ist abgelaufen.");
         }
 
+        if (content.Length > 5000)
+        {
+            return CommentResult.Fail("Kommentar ist zu lang (max. 5000 Zeichen).");
+        }
+
         comment.ContentText = content;
         comment.EditedAt = DateTime.UtcNow;
+
+        // Re-run blocklist check on edit so users cannot bypass moderation after posting.
+        if (DetermineInitialStatus(content) == CommentStatus.Flagged)
+        {
+            comment.Status = CommentStatus.Flagged;
+        }
+
         await _db.SaveChangesAsync(cancellationToken);
 
         return CommentResult.Ok(comment);
@@ -210,13 +230,19 @@ public sealed class CommentService : ICommentService
     public async Task<bool> SoftDeleteAsync(
         Guid commentId, Guid userId, bool isModerator, CancellationToken cancellationToken = default)
     {
-        var comment = await _db.Comments.FirstOrDefaultAsync(c => c.Id == commentId, cancellationToken);
+        var comment = await _db.Comments
+            .FirstOrDefaultAsync(c => c.Id == commentId, cancellationToken);
+
         if (comment is null || comment.DeletedAt is not null)
         {
             return false;
         }
 
-        if (comment.UserId != userId && !isModerator)
+        // Allowed for the comment's author, the article's author (BR-063) or a moderator/admin.
+        var isArticleAuthor = userId != Guid.Empty &&
+            await _db.Articles.AnyAsync(a => a.Id == comment.ArticleId && a.AuthorId == userId, cancellationToken);
+
+        if (comment.UserId != userId && !isArticleAuthor && !isModerator)
         {
             return false;
         }
@@ -283,6 +309,16 @@ public sealed class CommentService : ICommentService
             comment.DeletedAt = DateTime.UtcNow;
         }
 
+        // Mark all open reports for this comment as Reviewed when moderated.
+        var openReports = await _db.Reports
+            .Where(r => r.CommentId == commentId && r.Status == ReportStatus.Open)
+            .ToListAsync(cancellationToken);
+
+        foreach (var report in openReports)
+        {
+            report.Status = ReportStatus.Reviewed;
+        }
+
         await _db.SaveChangesAsync(cancellationToken);
         return CommentResult.Ok(comment);
     }
@@ -319,27 +355,44 @@ public sealed class CommentService : ICommentService
             .Where(r => r.Status == ReportStatus.Open)
             .ToListAsync(cancellationToken);
 
-        var grouped = openReports
-            .GroupBy(r => r.CommentId)
-            .Select(g => new { CommentId = g.Key, Count = g.Count() })
-            .OrderByDescending(x => x.Count)
-            .ToList();
-
-        var result = new List<ReportGroup>();
-        foreach (var group in grouped)
+        if (openReports.Count == 0)
         {
-            var comment = await _db.Comments
-                .AsNoTracking()
-                .Include(c => c.User)
-                .FirstOrDefaultAsync(c => c.Id == group.CommentId, cancellationToken);
+            return [];
+        }
 
-            if (comment is not null)
+        var commentIds = openReports.Select(r => r.CommentId).Distinct().ToList();
+        var comments = await _db.Comments
+            .AsNoTracking()
+            .Include(c => c.User)
+            .Where(c => commentIds.Contains(c.Id))
+            .ToListAsync(cancellationToken);
+
+        var articleIds = comments.Select(c => c.ArticleId).Distinct().ToList();
+        var articlesById = await _db.Articles
+            .AsNoTracking()
+            .Where(a => articleIds.Contains(a.Id))
+            .ToDictionaryAsync(a => a.Id, cancellationToken);
+
+        foreach (var c in comments)
+        {
+            if (articlesById.TryGetValue(c.ArticleId, out var article))
             {
-                result.Add(new ReportGroup(comment, group.Count));
+                c.Article = article;
             }
         }
 
-        return result;
+        var commentsById = comments.ToDictionary(c => c.Id);
+
+        return openReports
+            .GroupBy(r => r.CommentId)
+            .OrderByDescending(g => g.Count())
+            .Where(g => commentsById.ContainsKey(g.Key))
+            .Select(g => new ReportGroup(
+                commentsById[g.Key],
+                g.Count(),
+                g.Select(r => r.Reason).Distinct().ToList(),
+                g.Where(r => !string.IsNullOrWhiteSpace(r.Note)).Select(r => r.Note!).Distinct().ToList()))
+            .ToList();
     }
 
     public async Task<IReadOnlyList<Comment>> GetPendingAndFlaggedAsync(

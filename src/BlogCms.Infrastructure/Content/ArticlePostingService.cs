@@ -57,6 +57,8 @@ public sealed class ArticlePostingService : IArticlePostingService
         ArticlePostRequest request, Guid authorId,
         string? clientIp = null, CancellationToken cancellationToken = default)
     {
+        await using var _ = new UploadScope(request);
+
         var errors = ArticleValidator.Validate(request, hasExistingImage: false);
         if (errors.Count > 0)
         {
@@ -64,17 +66,18 @@ public sealed class ArticlePostingService : IArticlePostingService
         }
 
         var status = ArticleValidator.ResolveTargetStatus(request.Status, request.ScheduledAt);
+        var scheduledUtc = ArticleValidator.NormalizeScheduledAtToUtc(request.ScheduledAt);
         var article = new Article
         {
-            Title = request.Title,
+            Title = request.Title.Trim(),
             Slug = request.Slug ?? string.Empty,
-            TitleImageUrl = request.TitleImageUrl,
+            TitleImageUrl = string.IsNullOrWhiteSpace(request.TitleImageUrl) ? null : request.TitleImageUrl.Trim(),
             ContentMarkdown = request.ContentMarkdown,
-            Excerpt = request.Excerpt,
+            Excerpt = string.IsNullOrWhiteSpace(request.Excerpt) ? null : request.Excerpt.Trim(),
             Category = request.Category,
             AccessLevel = request.AccessLevel,
             Status = status,
-            ScheduledAt = status == ArticleStatus.Scheduled ? request.ScheduledAt : null,
+            ScheduledAt = status == ArticleStatus.Scheduled ? scheduledUtc : null,
             AuthorId = authorId
         };
 
@@ -84,7 +87,8 @@ public sealed class ArticlePostingService : IArticlePostingService
             await _articles.PrepareCreateAsync(article, request.Tags, request.Hashtags, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
 
-            var mediaErrors = await ApplyMediaAsync(article, request, uploaderId: authorId, cancellationToken);
+            var mediaErrors = await ApplyMediaAsync(
+                article, request, uploaderId: authorId, clearVideoWhenEmpty: false, cancellationToken);
             if (mediaErrors.Count > 0)
             {
                 await RollbackAsync(tx, cancellationToken);
@@ -112,6 +116,8 @@ public sealed class ArticlePostingService : IArticlePostingService
         Guid articleId, ArticlePostRequest request, Guid actorId,
         CancellationToken cancellationToken = default)
     {
+        await using var _ = new UploadScope(request);
+
         var article = await _articles.GetByIdAsync(articleId, cancellationToken);
         if (article is null)
         {
@@ -124,16 +130,19 @@ public sealed class ArticlePostingService : IArticlePostingService
             return PostResult.Fail(errors.ToArray());
         }
 
+        var status = ArticleValidator.ResolveTargetStatus(request.Status, request.ScheduledAt);
+        var scheduledUtc = ArticleValidator.NormalizeScheduledAtToUtc(request.ScheduledAt);
         var originalSlug = article.Slug;
-        article.Title = request.Title;
+
+        article.Title = request.Title.Trim();
         article.Slug = request.Slug ?? string.Empty;
-        article.TitleImageUrl = request.TitleImageUrl;
+        article.TitleImageUrl = string.IsNullOrWhiteSpace(request.TitleImageUrl) ? null : request.TitleImageUrl.Trim();
         article.ContentMarkdown = request.ContentMarkdown;
-        article.Excerpt = request.Excerpt;
+        article.Excerpt = string.IsNullOrWhiteSpace(request.Excerpt) ? null : request.Excerpt.Trim();
         article.Category = request.Category;
         article.AccessLevel = request.AccessLevel;
-        article.Status = request.Status;
-        article.ScheduledAt = request.Status == ArticleStatus.Scheduled ? request.ScheduledAt : null;
+        article.Status = status;
+        article.ScheduledAt = status == ArticleStatus.Scheduled ? scheduledUtc : null;
 
         await using var tx = await BeginTransactionAsync(cancellationToken);
         try
@@ -142,7 +151,8 @@ public sealed class ArticlePostingService : IArticlePostingService
                 article, originalSlug, request.Tags, request.Hashtags, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
 
-            var mediaErrors = await ApplyMediaAsync(article, request, uploaderId: article.AuthorId, cancellationToken);
+            var mediaErrors = await ApplyMediaAsync(
+                article, request, uploaderId: article.AuthorId, clearVideoWhenEmpty: true, cancellationToken);
             if (mediaErrors.Count > 0)
             {
                 await RollbackAsync(tx, cancellationToken);
@@ -169,7 +179,8 @@ public sealed class ArticlePostingService : IArticlePostingService
     /// file becomes a field error and aborts the whole operation (rollback).
     /// </summary>
     private async Task<List<PostError>> ApplyMediaAsync(
-        Article article, ArticlePostRequest request, Guid uploaderId, CancellationToken cancellationToken)
+        Article article, ArticlePostRequest request, Guid uploaderId, bool clearVideoWhenEmpty,
+        CancellationToken cancellationToken)
     {
         var errors = new List<PostError>();
 
@@ -188,16 +199,28 @@ public sealed class ArticlePostingService : IArticlePostingService
 
             await _articles.SetVideoEmbedAsync(article.Id, request.VideoUrl, resolved, cancellationToken);
         }
+        else if (clearVideoWhenEmpty)
+        {
+            // Clearing the VideoUrl field on Edit removes existing video embeds.
+            await _articles.SetVideoEmbedAsync(
+                article.Id, string.Empty,
+                new OEmbedResult(VideoPlatform.Other, false, null, null), cancellationToken);
+        }
 
         if (request.CoverUpload is not null)
         {
             var result = await _media.UploadAsync(
                 request.CoverUpload.Content, request.CoverUpload.FileName,
                 MediaOwnerType.Article, article.Id, uploaderId, null, cancellationToken);
-            if (!result.Succeeded)
+            if (!result.Succeeded || result.Asset is null)
             {
                 errors.Add(new PostError(
                     PostError.ImageUploadField, result.Error ?? "Das Titelbild konnte nicht hochgeladen werden."));
+            }
+            else
+            {
+                // Explicitly uploaded cover image always becomes the active cover asset.
+                await _media.SetCoverAsync(article.Id, result.Asset.Id, cancellationToken);
             }
         }
 
@@ -214,6 +237,22 @@ public sealed class ArticlePostingService : IArticlePostingService
         }
 
         return errors;
+    }
+
+    private readonly struct UploadScope(ArticlePostRequest request) : IAsyncDisposable
+    {
+        public async ValueTask DisposeAsync()
+        {
+            if (request.CoverUpload is not null)
+            {
+                await request.CoverUpload.DisposeAsync();
+            }
+
+            foreach (var upload in request.ContentUploads)
+            {
+                await upload.DisposeAsync();
+            }
+        }
     }
 
     /// <summary>

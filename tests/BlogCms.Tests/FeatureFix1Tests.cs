@@ -36,6 +36,30 @@ public class RatingServiceTests
     }
 
     [Fact]
+    public async Task RateArticle_SameValueTwice_WithdrawsRating()
+    {
+        // Toggle: a repeated click on the same thumb removes the rating again.
+        var db = TestDb.Create();
+        var article = new Article { Title = "A", ContentMarkdown = "x", Category = ArticleCategory.Politik, Status = ArticleStatus.Published, PublishedAt = DateTime.UtcNow, AuthorId = Guid.NewGuid() };
+        db.Articles.Add(article);
+        await db.SaveChangesAsync();
+
+        var service = new RatingService(db);
+        var userId = Guid.NewGuid();
+
+        var first = await service.RateArticleAsync(article.Id, userId, RatingValue.ThumbUp);
+        Assert.NotNull(first.Rating);
+
+        var second = await service.RateArticleAsync(article.Id, userId, RatingValue.ThumbUp);
+        Assert.True(second.Succeeded);
+        Assert.Null(second.Rating);
+
+        var summary = await service.GetArticleSummaryAsync(article.Id);
+        Assert.Equal(0, summary.ThumbUp);
+        Assert.Equal(0, await db.Ratings.CountAsync());
+    }
+
+    [Fact]
     public async Task RateArticle_RejectsAnonymous()
     {
         // Acceptance criterion: anonymous visitors must not rate.

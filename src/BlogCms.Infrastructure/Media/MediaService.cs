@@ -37,6 +37,12 @@ public interface IMediaService
     /// <summary>Updates the alt text of an asset. Returns the updated asset or null.</summary>
     Task<MediaAsset?> SetAltTextAsync(Guid assetId, string? altText, CancellationToken cancellationToken = default);
 
+    /// <summary>Marks a specific media asset of an article as its cover/title image and clears the flag on all other assets of that article.</summary>
+    Task<bool> SetCoverAsync(Guid articleId, Guid assetId, CancellationToken cancellationToken = default);
+
+    /// <summary>Deletes unassigned editor uploads older than the given cutoff from storage and database.</summary>
+    Task<int> CleanupOrphanedAsync(DateTime olderThanUtc, CancellationToken cancellationToken = default);
+
     string GetUrl(MediaAsset asset);
 }
 
@@ -186,6 +192,47 @@ public sealed class MediaService : IMediaService
         _db.MediaAssets.Remove(asset);
         await _db.SaveChangesAsync(cancellationToken);
         return true;
+    }
+
+    public async Task<bool> SetCoverAsync(Guid articleId, Guid assetId, CancellationToken cancellationToken = default)
+    {
+        var assets = await _db.MediaAssets
+            .Where(m => m.ArticleId == articleId)
+            .ToListAsync(cancellationToken);
+
+        var target = assets.FirstOrDefault(m => m.Id == assetId);
+        if (target is null)
+        {
+            return false;
+        }
+
+        foreach (var asset in assets)
+        {
+            asset.IsCover = asset.Id == assetId;
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<int> CleanupOrphanedAsync(DateTime olderThanUtc, CancellationToken cancellationToken = default)
+    {
+        var orphans = await _db.MediaAssets
+            .Where(m => m.ArticleId == null && m.CommentId == null && m.CreatedAt < olderThanUtc)
+            .ToListAsync(cancellationToken);
+
+        foreach (var orphan in orphans)
+        {
+            await _storage.DeleteAsync(orphan.StoragePath, cancellationToken);
+            _db.MediaAssets.Remove(orphan);
+        }
+
+        if (orphans.Count > 0)
+        {
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+
+        return orphans.Count;
     }
 
     public async Task<MediaAsset?> SetAltTextAsync(Guid assetId, string? altText, CancellationToken cancellationToken = default)

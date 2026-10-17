@@ -81,9 +81,6 @@ namespace BlogCms.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("CategoryId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("ContentMarkdown")
                         .IsRequired()
                         .HasColumnType("text");
@@ -128,8 +125,6 @@ namespace BlogCms.Infrastructure.Data.Migrations
 
                     b.HasIndex("AuthorId");
 
-                    b.HasIndex("CategoryId");
-
                     b.HasIndex("Slug")
                         .IsUnique();
 
@@ -164,40 +159,6 @@ namespace BlogCms.Infrastructure.Data.Migrations
                     b.HasIndex("TagId");
 
                     b.ToTable("ArticleTags");
-                });
-
-            modelBuilder.Entity("BlogCms.Domain.Entities.Category", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("Slug")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Slug")
-                        .IsUnique();
-
-                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("BlogCms.Domain.Entities.Comment", b =>
@@ -911,14 +872,7 @@ namespace BlogCms.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("BlogCms.Domain.Entities.Category", "CategoryEntity")
-                        .WithMany("Articles")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.Navigation("Author");
-
-                    b.Navigation("CategoryEntity");
                 });
 
             modelBuilder.Entity("BlogCms.Domain.Entities.ArticleHashtag", b =>
@@ -1187,11 +1141,6 @@ namespace BlogCms.Infrastructure.Data.Migrations
                     b.Navigation("Ratings");
 
                     b.Navigation("VideoEmbeds");
-                });
-
-            modelBuilder.Entity("BlogCms.Domain.Entities.Category", b =>
-                {
-                    b.Navigation("Articles");
                 });
 
             modelBuilder.Entity("BlogCms.Domain.Entities.Comment", b =>

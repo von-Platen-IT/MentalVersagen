@@ -1,0 +1,66 @@
+@page
+@using BlogCms.Domain.Enums
+@model BlogCms.Web.Pages.Admin.Users.IndexModel
+@{
+    ViewData["Title"] = "Benutzerverwaltung";
+    var header = new BlogCms.Web.Models.PageHeaderModel
+    {
+        Slide = 1,
+        Title = "Benutzerverwaltung",
+        Sub = "Konten und Rollen verwalten (BR-014)."
+    };
+}
+
+<partial name="_PageHeader" model="header" />
+
+<div class="mv-doc mt-4">
+    <h2 class="h4 mb-3">Registrierte Benutzer (@Model.Users.Count)</h2>
+
+    @if (TempData["Message"] is string message)
+    {
+        <div class="mv-teaser mb-3">@message</div>
+    }
+
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Anzeigename</th>
+                    <th>E-Mail</th>
+                    <th>Bestätigt</th>
+                    <th>Abo-Status</th>
+                    <th>Registriert</th>
+                    <th>Rolle</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var user in Model.Users)
+            {
+                <tr>
+                    <td class="fw-semibold">@user.DisplayName</td>
+                    <td>@user.Email</td>
+                    <td>
+                        <span class="mv-badge @(user.EmailConfirmed ? "mv-badge--open" : "")">
+                            @(user.EmailConfirmed ? "Ja" : "Nein")
+                        </span>
+                    </td>
+                    <td class="meta-mono">@user.SubscriptionStatus</td>
+                    <td class="meta-mono">@user.CreatedAt.ToString("dd.MM.yyyy")</td>
+                    <td>
+                        <form method="post" asp-page-handler="SetRole" class="d-flex align-items-center gap-2">
+                            <input type="hidden" name="userId" value="@user.Id" />
+                            <select name="role" class="form-select form-select-sm" style="max-width: 150px;">
+                                @foreach (var r in Enum.GetValues<UserRole>())
+                                {
+                                    <option value="@r" selected="@(user.Role == r)">@r</option>
+                                }
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">Speichern</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

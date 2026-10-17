@@ -85,6 +85,33 @@ public class ArticlePostingServiceTests
     }
 
     [Fact]
+    public void Validate_DraftWithoutExcerptContentOrImage_Succeeds()
+    {
+        var (service, _) = CreateService();
+        var request = new ArticlePostRequest(
+            "Nur eine Idee", null, null, "", "",
+            ArticleCategory.Politik, ArticleAccessLevel.Public, ArticleStatus.Draft,
+            null, [], [], null, null, [], []);
+
+        Assert.Empty(service.Validate(request, hasExistingImage: false));
+    }
+
+    [Fact]
+    public void Validate_PublishedWithoutExcerptOrContent_ReturnsFieldErrors()
+    {
+        var (service, _) = CreateService();
+        var request = new ArticlePostRequest(
+            "Titel", null, "https://example.com/cover.jpg", "", "",
+            ArticleCategory.Politik, ArticleAccessLevel.Public, ArticleStatus.Published,
+            null, [], [], null, null, [], []);
+
+        var errors = service.Validate(request, hasExistingImage: false);
+
+        Assert.Contains(errors, e => e.Field == PostError.ExcerptField);
+        Assert.Contains(errors, e => e.Field == PostError.ContentMarkdownField);
+    }
+
+    [Fact]
     public void Validate_ScheduledWithoutFutureDate_ReturnsErrorAtScheduledAt()
     {
         var (service, _) = CreateService();
@@ -195,6 +222,26 @@ public class ArticlePostingServiceTests
         Assert.True(updated.Succeeded, string.Join("; ", updated.Errors.Select(e => e.Message)));
         var reloaded = await db.Articles.SingleAsync(a => a.Id == created.Article.Id);
         Assert.Equal("brandneuer-slug", reloaded.Slug);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ClearsVideoEmbed_WhenVideoUrlEmptied()
+    {
+        var (service, db) = CreateService();
+        var authorId = await CreateUserAsync(db);
+        var created = await service.CreateAsync(
+            BuildRequest(title: "Video-Artikel", videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
+            authorId);
+
+        Assert.Single(await db.VideoEmbeds.Where(v => v.ArticleId == created.Article!.Id).ToListAsync());
+
+        var updated = await service.UpdateAsync(
+            created.Article!.Id,
+            BuildRequest(title: "Video-Artikel", videoUrl: ""),
+            authorId);
+
+        Assert.True(updated.Succeeded);
+        Assert.Empty(await db.VideoEmbeds.Where(v => v.ArticleId == created.Article.Id).ToListAsync());
     }
 
     [Fact]

@@ -43,8 +43,14 @@ public class CreateModel : PageModel
     public Task<IActionResult> OnPostPublishAsync()
     {
         // Geschäftsregel „geplant mit Zukunftsdatum vs. sofort veröffentlichen“
-        // liegt im ArticleValidator, nicht mehr im PageModel.
-        return PostAsync(ArticleValidator.ResolveTargetStatus(Input.Status, Input.ScheduledAt));
+        // liegt im ArticleValidator; ist im Dropdown noch „Entwurf“ gewählt,
+        // bedeutet der Klick auf „Sofort veröffentlichen“ Published (bzw. Scheduled bei Zukunftsdatum).
+        var scheduledUtc = ArticleValidator.NormalizeScheduledAtToUtc(Input.ScheduledAt);
+        var target = Input.Status == ArticleStatus.Draft
+            ? (scheduledUtc > DateTime.UtcNow ? ArticleStatus.Scheduled : ArticleStatus.Published)
+            : ArticleValidator.ResolveTargetStatus(Input.Status, Input.ScheduledAt);
+
+        return PostAsync(target);
     }
 
     public Task<IActionResult> OnPostSaveDraftAsync()
@@ -54,6 +60,11 @@ public class CreateModel : PageModel
 
     private async Task<IActionResult> PostAsync(ArticleStatus requestedStatus)
     {
+        if (!ModelState.IsValid)
+        {
+            return Page();
+        }
+
         var authorIdValue = _userManager.GetUserId(User);
         if (authorIdValue is null || !Guid.TryParse(authorIdValue, out var authorId))
         {

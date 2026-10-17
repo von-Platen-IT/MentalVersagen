@@ -47,6 +47,8 @@ public class DetailsModel : PageModel
 
     public Article? Article { get; private set; }
 
+    public bool IsPreview { get; private set; }
+
     public string ContentHtml { get; private set; } = string.Empty;
 
     public bool CanReadContent { get; private set; }
@@ -90,6 +92,11 @@ public class DetailsModel : PageModel
     /// <summary>Admins/moderators and the article author may moderate the comments of this article.</summary>
     public bool CanModerateComments => IsModerator || IsArticleAuthor;
 
+    public bool IsCommentEditable(Comment comment) =>
+        comment.DeletedAt is null &&
+        comment.UserId == CurrentUserId &&
+        DateTime.UtcNow <= comment.CreatedAt.AddMinutes(_comments.EditWindowMinutes);
+
     public string GetImageUrl(MediaAsset asset) => _media.GetUrl(asset);
 
     public async Task<IActionResult> OnGetAsync(string slug)
@@ -97,13 +104,25 @@ public class DetailsModel : PageModel
         var article = await _articles.GetPublishedBySlugAsync(slug);
         if (article is null)
         {
-            return NotFound();
+            var previewCandidate = await _articles.GetBySlugForPreviewAsync(slug);
+            if (previewCandidate is not null && (IsAdmin || (CurrentUserId != Guid.Empty && previewCandidate.AuthorId == CurrentUserId)))
+            {
+                article = previewCandidate;
+                IsPreview = true;
+            }
+            else
+            {
+                return NotFound();
+            }
         }
 
         Article = article;
 
-        // Unified activity log: record the view (IP + account if signed in).
-        await _activity.LogArticleViewAsync(article.Id, CurrentUserIdOrNull, HttpContext.GetClientIp());
+        // Unified activity log: record the view only for published articles, not author previews.
+        if (!IsPreview)
+        {
+            await _activity.LogArticleViewAsync(article.Id, CurrentUserIdOrNull, HttpContext.GetClientIp());
+        }
 
         TitleImageUrl = BlogCms.Web.Content.ArticleDisplay.ResolveTitleImage(article, _media);
 
@@ -111,7 +130,8 @@ public class DetailsModel : PageModel
         // (alt text + exclusion from the thumbnail gallery below the article).
         if (string.IsNullOrWhiteSpace(article.TitleImageUrl))
         {
-            var titleAsset = article.MediaAssets.OrderBy(m => m.CreatedAt).FirstOrDefault();
+            var titleAsset = article.MediaAssets.FirstOrDefault(m => m.IsCover)
+                             ?? article.MediaAssets.OrderBy(m => m.CreatedAt).FirstOrDefault();
             TitleImageAssetId = titleAsset?.Id;
             TitleImageAlt = titleAsset?.AltText;
         }
@@ -138,6 +158,12 @@ public class DetailsModel : PageModel
 
     private async Task EvaluateAccessAsync(Article article)
     {
+        if (IsAdmin || (CurrentUserId != Guid.Empty && article.AuthorId == CurrentUserId))
+        {
+            CanReadContent = true;
+            return;
+        }
+
         switch (article.AccessLevel)
         {
             case ArticleAccessLevel.Registered:
@@ -162,19 +188,33 @@ public class DetailsModel : PageModel
             return RedirectToPage("/Account/Login", new { returnUrl = Url.Page("/Articles/Details", new { slug }) });
         }
 
-        var articleId = await ResolveArticleIdAsync(slug);
-        var result = await _ratings.RateArticleAsync(articleId, CurrentUserId, value);
+        var article = await _articles.GetPublishedBySlugAsync(slug);
+        if (article is null)
+        {
+            return NotFound();
+        }
 
-        if (result.Succeeded && articleId != Guid.Empty)
+        await EvaluateAccessAsync(article);
+        if (!CanReadContent)
+        {
+            return Forbid();
+        }
+
+        var result = await _ratings.RateArticleAsync(article.Id, CurrentUserId, value);
+
+        // Nur abgegebene Bewertungen protokollieren, nicht das Zurücknehmen per Toggle.
+        if (result.Succeeded && result.Rating is not null)
         {
             await _activity.LogArticleRatedAsync(
-                articleId, value, CurrentUserIdOrNull, HttpContext.GetClientIp());
+                article.Id, value, CurrentUserIdOrNull, HttpContext.GetClientIp());
         }
 
         TempData[result.Succeeded ? "CommentMessage" : "CommentError"] =
-            result.Succeeded ? "Danke für deine Bewertung." : result.Error;
+            !result.Succeeded
+                ? result.Error
+                : result.Rating is null ? "Bewertung zurückgenommen." : "Danke für deine Bewertung.";
 
-        return RedirectToPage("/Articles/Details", new { slug });
+        return RedirectToPage("/Articles/Details", pageHandler: null, routeValues: new { slug }, fragment: "article-rating");
     }
 
     public async Task<IActionResult> OnPostRateCommentAsync(string slug, Guid commentId, RatingValue value)
@@ -188,7 +228,7 @@ public class DetailsModel : PageModel
         TempData[result.Succeeded ? "CommentMessage" : "CommentError"] =
             result.Succeeded ? "Danke für deine Bewertung." : result.Error;
 
-        return RedirectToPage("/Articles/Details", new { slug });
+        return RedirectToPage("/Articles/Details", pageHandler: null, routeValues: new { slug }, fragment: $"comment-{commentId}");
     }
 
     public async Task<IActionResult> OnPostHighlightCommentAsync(string slug, Guid commentId, bool highlighted)
@@ -205,7 +245,7 @@ public class DetailsModel : PageModel
                 ? (highlighted ? "Kommentar ausgezeichnet." : "Auszeichnung entfernt.")
                 : result.Error;
 
-        return RedirectToPage("/Articles/Details", new { slug });
+        return RedirectToPage("/Articles/Details", pageHandler: null, routeValues: new { slug }, fragment: $"comment-{commentId}");
     }
 
     public async Task<IActionResult> OnPostAddCommentAsync(
@@ -220,6 +260,12 @@ public class DetailsModel : PageModel
         if (User.Identity?.IsAuthenticated != true)
         {
             return RedirectToPage("/Account/Login", new { returnUrl = Url.Page("/Articles/Details", new { slug }) });
+        }
+
+        await EvaluateAccessAsync(article);
+        if (!CanReadContent)
+        {
+            return Forbid();
         }
 
         var userId = CurrentUserId;
@@ -250,13 +296,22 @@ public class DetailsModel : PageModel
         {
             TempData["CommentError"] = uploadError;
         }
+        else if (result.Succeeded && result.Comment is not null)
+        {
+            TempData["CommentMessage"] = result.Comment.Status == CommentStatus.Approved
+                ? "Kommentar gespeichert."
+                : "Dein Kommentar wurde gespeichert und wird vor der Veröffentlichung durch die Moderation geprüft.";
+        }
         else
         {
-            TempData[result.Succeeded ? "CommentMessage" : "CommentError"] =
-                result.Succeeded ? "Kommentar gespeichert." : result.Error;
+            TempData["CommentError"] = result.Error;
         }
 
-        return RedirectToPage("/Articles/Details", new { slug });
+        var fragment = result.Succeeded && result.Comment is { Status: CommentStatus.Approved }
+            ? $"comment-{result.Comment.Id}"
+            : "comments";
+
+        return RedirectToPage("/Articles/Details", pageHandler: null, routeValues: new { slug }, fragment: fragment);
     }
 
     public async Task<IActionResult> OnPostEditCommentAsync(string slug, Guid commentId, string content)
@@ -267,10 +322,18 @@ public class DetailsModel : PageModel
         }
 
         var result = await _comments.EditAsync(commentId, CurrentUserId, content);
-        TempData[result.Succeeded ? "CommentMessage" : "CommentError"] =
-            result.Succeeded ? "Kommentar aktualisiert." : result.Error;
+        if (result.Succeeded && result.Comment is not null)
+        {
+            TempData["CommentMessage"] = result.Comment.Status == CommentStatus.Approved
+                ? "Kommentar aktualisiert."
+                : "Dein bearbeiteter Kommentar wurde zur Prüfung an die Moderation übergeben.";
+        }
+        else
+        {
+            TempData["CommentError"] = result.Error;
+        }
 
-        return RedirectToPage("/Articles/Details", new { slug });
+        return RedirectToPage("/Articles/Details", pageHandler: null, routeValues: new { slug }, fragment: $"comment-{commentId}");
     }
 
     public async Task<IActionResult> OnPostDeleteCommentAsync(string slug, Guid commentId)
@@ -280,11 +343,12 @@ public class DetailsModel : PageModel
             return RedirectToPage("/Account/Login");
         }
 
-        var deleted = await _comments.SoftDeleteAsync(commentId, CurrentUserId, CanModerateComments);
+        // CommentService checks comment ownership, article ownership (BR-063) and moderator flag.
+        var deleted = await _comments.SoftDeleteAsync(commentId, CurrentUserId, IsModerator);
         TempData[deleted ? "CommentMessage" : "CommentError"] =
             deleted ? "Kommentar gelöscht." : "Löschen nicht möglich.";
 
-        return RedirectToPage("/Articles/Details", new { slug });
+        return RedirectToPage("/Articles/Details", pageHandler: null, routeValues: new { slug }, fragment: "comments");
     }
 
     public async Task<IActionResult> OnPostReportCommentAsync(string slug, Guid commentId, ReportReason reason, string? note)
@@ -298,7 +362,7 @@ public class DetailsModel : PageModel
         TempData[reported ? "CommentMessage" : "CommentError"] =
             reported ? "Danke, die Meldung wurde übermittelt." : "Meldung konnte nicht erstellt werden.";
 
-        return RedirectToPage("/Articles/Details", new { slug });
+        return RedirectToPage("/Articles/Details", pageHandler: null, routeValues: new { slug }, fragment: $"comment-{commentId}");
     }
 
     private async Task<Guid> ResolveArticleIdAsync(string slug)

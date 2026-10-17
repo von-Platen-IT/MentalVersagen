@@ -36,7 +36,6 @@ public class IndexModel : PageModel
     public async Task<IActionResult> OnPostRejectAsync(Guid commentId)
     {
         await _comments.ModerateAsync(commentId, approve: false);
-        await _comments.DismissReportsForCommentAsync(commentId);
         return RedirectToPage();
     }
 
