@@ -170,7 +170,7 @@ builder.Services.Configure<MediaOptions>(options =>
     }
 });
 
-builder.Services.AddSingleton<IImageProcessor, ImageSharpImageProcessor>();
+builder.Services.AddSingleton<IImageProcessor, MagickImageProcessor>();
 builder.Services.AddScoped<IMediaService, MediaService>();
 builder.Services.AddSingleton<IOEmbedService, OEmbedService>();
 builder.Services.AddHttpClient("oembed", client =>

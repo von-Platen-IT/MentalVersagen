@@ -22,6 +22,7 @@ Sie ergänzt die bestehenden Dokumente im Projekt-Root:
 | [`03-blog-nutzen.md`](03-blog-nutzen.md) | Rudimentäre Blog-Nutzung: Lesen, Kategorien/Tags, RSS, Kommentare, Newsletter, Mitgliedschaft |
 | [`04-mailversand.md`](04-mailversand.md) | Umsetzungsvorgabe für den echten SMTP-Versand (ersetzt den Dev-Platzhalter, der auf Produktion die Registrierung abbrechen lässt) |
 | [`05-management-api.md`](05-management-api.md) | Management-API: Artikel per API anlegen/bearbeiten/löschen (API-Key, Swagger/OpenAPI, Nutzung mit KI-Tools) |
+| [`06-lizenzen-und-pakete.md`](06-lizenzen-und-pakete.md) | Lizenz-Inventar und verbindliche Paketregeln (nur freie Lizenzen) |
 
 ## Schnellnavigation
 
