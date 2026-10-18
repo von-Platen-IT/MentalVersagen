@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 using BlogCms.Domain.Entities;
 using BlogCms.Domain.Enums;
 using BlogCms.Infrastructure.Activity;
@@ -13,9 +15,13 @@ using BlogCms.Infrastructure.Payments;
 using BlogCms.Infrastructure.Ratings;
 using BlogCms.Web.Authorization;
 using BlogCms.Web.Configuration;
+using BlogCms.Web.Models.Api;
 using BlogCms.Web.Security;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -28,8 +34,18 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    // Enums als Klartextwerte (z. B. "Published") — konsistent zur Persistenz und
+    // gut lesbar für automatisierte API-Clients.
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 builder.Services.AddMemoryCache();
+
+// Management-API: statischer API-Key, Autorzuordnung, Swagger-UI-Sichtbarkeit und
+// Anfragen-Drosselung (siehe plans/api-artikelverwaltung.md).
+builder.Services.Configure<ApiOptions>(
+    builder.Configuration.GetSection(ApiOptions.SectionName));
 
 // Feature flags: steuern die UI-Sichtbarkeit von Monetarisierung und Login
 // (Sektion "Features" bzw. z. B. Features__MonetizationEnabled / Features__LoginEnabled).
@@ -70,6 +86,39 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Account/AccessDenied";
     options.SlidingExpiration = true;
     options.ExpireTimeSpan = TimeSpan.FromDays(14);
+});
+
+// Management-API: eigener API-Key-Authentifizierungsweg neben der Cookie-Auth der
+// Razor Pages. Die Controller fordern das Schema explizit an
+// ([Authorize(AuthenticationSchemes = "ApiKey")]) — die Cookie-Auth bleibt unberührt.
+builder.Services
+    .AddAuthentication()
+    .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(
+        ApiKeyDefaults.AuthenticationScheme, _ => { });
+
+// ProblemDetails (RFC 7807) für die Fehlerausgabe der Management-API.
+builder.Services.AddProblemDetails();
+
+// OpenAPI-Dokumentation der Management-API: Spec-Generierung inkl. ApiKey-Schema,
+// XML-Kommentaren und KI-Kurzleitfaden (siehe SwaggerSetup).
+builder.Services.AddSwaggerGen(SwaggerSetup.ConfigureGen);
+
+// Auch automatische Model-Binding-Fehler antworten im einheitlichen API-Format
+// (ProblemDetails mit errors[] aus field/message).
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(entry => entry.Value?.Errors.Count > 0)
+            .SelectMany(entry => entry.Value!.Errors
+                .Select(error => new ApiFieldError(
+                    entry.Key,
+                    string.IsNullOrWhiteSpace(error.ErrorMessage)
+                        ? "Ungültiger Wert."
+                        : error.ErrorMessage)));
+        return new BadRequestObjectResult(ApiProblems.Validation(errors));
+    };
 });
 
 // Email: der Versand ist konfigurierbar. Ohne Zugangsdaten bleibt der
@@ -185,6 +234,33 @@ builder.Services.AddScoped<ICaptchaService, DataProtectionCaptchaService>();
 // Registrierungsversuche (POST) pro IP-Adresse — nicht die Seitenaufrufe.
 builder.Services.AddSingleton<IRegistrationThrottle, MemoryCacheRegistrationThrottle>();
 
+// Drosselung der Management-API: Fixed-Window pro Client-IP (Standard 60/min).
+var apiRateLimitPerMinute = Math.Max(
+    1, builder.Configuration.GetValue<int?>("Api:RateLimitPerMinute") ?? 60);
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy(ApiOptions.RateLimitPolicy, httpContext =>
+    {
+        var partitionKey = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(partitionKey, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = apiRateLimitPerMinute,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+            AutoReplenishment = true
+        });
+    });
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        if (context.HttpContext.Request.Path.StartsWithSegments("/api"))
+        {
+            await ApiProblems.WriteAsync(
+                context.HttpContext.Response, ApiProblems.RateLimitExceeded(), cancellationToken);
+        }
+    };
+});
+
 var app = builder.Build();
 
 // Welcher Mailversand tatsächlich aktiv ist, gehört ins Log: nur der Providername
@@ -208,10 +284,49 @@ var app = builder.Build();
     }
 }
 
+// Management-API: Start-Hinweise. Die API ist ohne konfigurierten Key bewusst
+// geschlossen (Fail-Closed); ein fehlender Autor blockiert nur das Anlegen.
+var apiOptions = app.Services.GetRequiredService<IOptions<ApiOptions>>().Value;
+if (!apiOptions.IsConfigured)
+{
+    app.Logger.LogWarning(
+        "Management-API: kein Api:Key konfiguriert — /api/v1 bleibt für jeden Zugriff " +
+        "geschlossen (Fail-Closed). Für die Nutzung Api__Key in .env setzen.");
+}
+else if (apiOptions.Key.Length < 32)
+{
+    app.Logger.LogWarning(
+        "Management-API: der konfigurierte Api:Key ist kürzer als 32 Zeichen — bitte " +
+        "einen längeren Zufallskey verwenden (z. B. openssl rand -hex 32).");
+}
+
+if (apiOptions.AuthorId is null)
+{
+    app.Logger.LogWarning(
+        "Management-API: Api:AuthorId ist nicht konfiguriert — das Anlegen von Artikeln " +
+        "über die API wird mit 503 abgelehnt.");
+}
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error");
+    // Fehlerbehandlung: API-Aufrufe erhalten JSON-ProblemDetails, die
+    // Razor-Pages-Oberfläche weiterhin die HTML-Fehlerseite /Error.
+    app.UseExceptionHandler(exceptionHandlerApp =>
+    {
+        exceptionHandlerApp.Run(async context =>
+        {
+            if (context.Request.Path.StartsWithSegments("/api"))
+            {
+                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                await ApiProblems.WriteAsync(context.Response, ApiProblems.Internal());
+            }
+            else
+            {
+                context.Response.Redirect("/Error");
+            }
+        });
+    });
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
@@ -223,8 +338,21 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+// Anfragen-Drosselung der Management-API (Policy "api", pro Client-IP).
+app.UseRateLimiter();
+
 app.UseAuthentication();
 app.UseAuthorization();
+
+// OpenAPI-Dokumentation der Management-API: Die maschinenlesbare Spec bleibt immer
+// erreichbar (Interface für KI-Clients); die interaktive UI ist zusätzlich in der
+// Entwicklung aktiv und in Produktion über Api:SwaggerUiEnabled zuschaltbar.
+app.UseSwagger();
+if (apiOptions.SwaggerUiEnabled || app.Environment.IsDevelopment())
+{
+    app.UseSwaggerUI(c =>
+        c.SwaggerEndpoint($"/swagger/{SwaggerSetup.DocumentName}/swagger.json", SwaggerSetup.Title));
+}
 
 app.MapStaticAssets();
 app.MapControllers();
@@ -260,3 +388,6 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+// Explizite Deklaration für Integrationstests (WebApplicationFactory).
+public partial class Program { }

@@ -39,6 +39,10 @@ public class IndexModel : PageModel
         Array.Empty<DailyActivity>(),
         Array.Empty<ActivityLogEntry>());
 
+    /// <summary>Per-article view history in the selected range ("how often and when").</summary>
+    public IReadOnlyList<ArticleViewHistory> ViewHistory { get; private set; } =
+        Array.Empty<ArticleViewHistory>();
+
     public async Task OnGetAsync()
     {
         var today = DateTime.UtcNow.Date;
@@ -51,7 +55,12 @@ public class IndexModel : PageModel
 
         // Half-open interval [from, to + 1 day).
         Overview = await _activity.GetOverviewAsync(FromDate, ToDate.AddDays(1));
+        ViewHistory = await _activity.GetArticleViewHistoryAsync(FromDate, ToDate.AddDays(1));
     }
+
+    /// <summary>Formats the per-day view counts for the history table.</summary>
+    public string FormatDaily(IReadOnlyList<DailyViewCount> daily) =>
+        string.Join(" · ", daily.Select(d => $"{d.Date:dd.MM.}: {d.Views}"));
 
     /// <summary>German label for an event type (used in the recent-entries table).</summary>
     public static string EventLabel(ActivityEventType type) => type switch

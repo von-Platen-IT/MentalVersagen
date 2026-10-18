@@ -1,3 +1,4 @@
+using BlogCms.Domain.Enums;
 using BlogCms.Infrastructure.Content;
 using BlogCms.Infrastructure.Media;
 using BlogCms.Web.Content;
@@ -66,7 +67,10 @@ public class ArticlesController : Controller
                 publishedAt = a.PublishedAt?.ToString("dd.MM.yyyy"),
                 author = a.Author?.DisplayName ?? "Archiv",
                 imageUrl = ArticleDisplay.ResolveTitleImage(a, _media),
-                accessLabel = ArticleDisplay.AccessLabel(a.AccessLevel)
+                accessLabel = ArticleDisplay.AccessLabel(a.AccessLevel),
+                views = a.ViewCount,
+                likes = a.Ratings.Count(r => r.Value == RatingValue.ThumbUp),
+                thumbsDown = a.Ratings.Count(r => r.Value == RatingValue.ThumbDown)
             })
         });
     }

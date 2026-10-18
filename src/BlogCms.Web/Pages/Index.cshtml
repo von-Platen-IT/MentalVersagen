@@ -52,7 +52,19 @@
         <div class="mv-sort">
             <label class="visually-hidden" for="sort-order">Sortierung</label>
             <select id="sort-order" class="mv-sort__select">
-                @foreach (var value in Enum.GetValues<ArticleSortOrder>())
+                @* Die acht Sortieroptionen in der Nutzervorgabe-Reihenfolge;
+                   Standard ist "Neueste zuerst". *@
+                @foreach (var value in new[]
+                {
+                    ArticleSortOrder.Newest,
+                    ArticleSortOrder.Oldest,
+                    ArticleSortOrder.MostViewed,
+                    ArticleSortOrder.LeastViewed,
+                    ArticleSortOrder.MostUpvoted,
+                    ArticleSortOrder.LeastUpvoted,
+                    ArticleSortOrder.MostDownvoted,
+                    ArticleSortOrder.LeastDownvoted
+                })
                 {
                     <option value="@value" selected="@(value == ArticleSortOrder.Newest)">@SortDisplay.Label(value)</option>
                 }

@@ -21,6 +21,7 @@ Sie ergänzt die bestehenden Dokumente im Projekt-Root:
 | [`02-admin-artikelverwaltung.md`](02-admin-artikelverwaltung.md) | Den Admin-Bereich verwenden: Artikel anlegen, bearbeiten, löschen, veröffentlichen |
 | [`03-blog-nutzen.md`](03-blog-nutzen.md) | Rudimentäre Blog-Nutzung: Lesen, Kategorien/Tags, RSS, Kommentare, Newsletter, Mitgliedschaft |
 | [`04-mailversand.md`](04-mailversand.md) | Umsetzungsvorgabe für den echten SMTP-Versand (ersetzt den Dev-Platzhalter, der auf Produktion die Registrierung abbrechen lässt) |
+| [`05-management-api.md`](05-management-api.md) | Management-API: Artikel per API anlegen/bearbeiten/löschen (API-Key, Swagger/OpenAPI, Nutzung mit KI-Tools) |
 
 ## Schnellnavigation
 
@@ -38,5 +39,8 @@ Sie ergänzt die bestehenden Dokumente im Projekt-Root:
 | Mitgliedschaft (Premium) | `/Membership` |
 | Spenden | `/Donate` |
 | Newsletter | `/Newsletter/Subscribe` |
+| **Management-API (Artikel per API)** | `/api/v1/articles` (Auth: Header `X-Api-Key`) |
+| OpenAPI-Spec (für KI-Tools) | `/swagger/v1/swagger.json` |
+| Swagger UI (interaktiv) | `/swagger` (in Development bzw. mit `Api__SwaggerUiEnabled=true`) |
 
 > Standard-URL in der lokalen Entwicklung: **http://localhost:5080** (siehe [`RUNNING.md`](../RUNNING.md)).

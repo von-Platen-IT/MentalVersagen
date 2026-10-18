@@ -275,13 +275,43 @@
         meta.appendChild(el('span', null, article.accessLabel || ''));
         meta.appendChild(el('span', null, article.publishedAt || ''));
         body.appendChild(meta);
+
+        // Kennzahlen wie im serverseitigen Partial _ArticleCard: Bewertungen als
+        // Zeile, die Aufrufe stehen mit stimmungsfarbigem Auge im Footer.
+        var stats = el('div', 'mv-case__stats');
+        stats.title = 'Positive und negative Bewertungen';
+        var stat = function (symbol, value, title) {
+            var span = el('span', null, symbol + ' ' + (value || 0));
+            span.title = title;
+            return span;
+        };
+        stats.appendChild(stat('\u25B2', article.likes, 'Positive Bewertungen'));
+        stats.appendChild(stat('\u25BC', article.thumbsDown, 'Negative Bewertungen'));
+        body.appendChild(stats);
+
         card.appendChild(body);
+
+        var likes = article.likes || 0;
+        var dislikes = article.thumbsDown || 0;
+        var viewsClass = likes > dislikes
+            ? 'mv-case__views--up'
+            : dislikes > likes ? 'mv-case__views--down' : '';
+        var viewsTitle = likes > dislikes
+            ? '\u00dcberwiegend positiv bewertet \u2014 Aufrufe dieses Beitrags'
+            : dislikes > likes
+                ? '\u00dcberwiegend negativ bewertet \u2014 Aufrufe dieses Beitrags'
+                : 'Aufrufe dieses Beitrags';
 
         var footer = el('div', 'mv-case__footer');
         footer.appendChild(el('span', null, article.author || 'Archiv'));
-        var next = el('a', 'mv-case__next', 'WEITER \u2192');
-        next.href = articleUrl(article.slug);
-        footer.appendChild(next);
+
+        // Ersetzt den "WEITER"-Link: die ganze Karte ist klickbar (Handler unten).
+        var views = el('span', 'mv-case__views' + (viewsClass ? ' ' + viewsClass : ''), '');
+        views.title = viewsTitle;
+        views.setAttribute('aria-label', viewsTitle);
+        views.innerHTML = '<svg class="mv-case__eye" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path><circle cx="12" cy="12" r="3"></circle></svg> ' + (article.views || 0);
+        footer.appendChild(views);
+
         card.appendChild(footer);
 
         return card;
@@ -615,3 +645,28 @@
         });
     });
 })();
+
+// Progressive Enhancement: Ein Klick auf eine Aktenkarte der Blogpost-Liste
+// öffnet den Beitrag — der frühere "WEITER"-Link war dafür redundant. Echte
+// Links und Bedienelemente bleiben unberührt; ohne JavaScript dienen die
+// Titel- und Bild-Links als Fallback.
+document.addEventListener('click', function (event) {
+    if (event.defaultPrevented || event.button !== 0) {
+        return;
+    }
+
+    var target = event.target;
+    if (!(target instanceof Element)) {
+        return;
+    }
+
+    var card = target.closest('.mv-case');
+    if (!card || target.closest('a, button, input, select, textarea, label')) {
+        return;
+    }
+
+    var link = card.querySelector('.mv-case__title a') || card.querySelector('a');
+    if (link) {
+        window.location.href = link.href;
+    }
+});

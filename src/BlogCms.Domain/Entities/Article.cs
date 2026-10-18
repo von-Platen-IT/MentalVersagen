@@ -53,6 +53,13 @@ public class Article : EntityBase
     /// <summary>Set once when the article transitions to Published, never overwritten.</summary>
     public DateTime? PublishedAt { get; set; }
 
+    /// <summary>
+    /// Number of times the article page was opened. Denormalized counter for the
+    /// landing-page sorting and badges; the detailed history stays in the activity
+    /// log (ArticleViewed events).
+    /// </summary>
+    public int ViewCount { get; set; }
+
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>Soft-delete marker.</summary>

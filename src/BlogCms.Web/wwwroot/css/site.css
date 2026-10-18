@@ -22,17 +22,76 @@
   --mv-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.12'/%3E%3C/svg%3E");
 
   /* Aktenlicht: Glow-, Licht- & Bewegungs-Tokens */
-  --mv-glow-red: 0 0 22px rgba(210, 31, 60, 0.30);
-  --mv-glow-red-soft: 0 0 14px rgba(210, 31, 60, 0.18);
-  --mv-glow-sepia: 0 0 18px rgba(199, 180, 139, 0.22);
-  --mv-glow-red-strong: 0 0 30px rgba(210, 31, 60, 0.55), 0 0 12px rgba(210, 31, 60, 0.7);
-  --mv-glow-sepia-strong: 0 0 26px rgba(199, 180, 139, 0.4), 0 0 10px rgba(199, 180, 139, 0.5);
+  --mv-glow-red: 0 0 22px rgba(var(--mv-red-rgb), 0.30);
+  --mv-glow-red-soft: 0 0 14px rgba(var(--mv-red-rgb), 0.18);
+  --mv-glow-sepia: 0 0 18px rgba(var(--mv-sepia-rgb), 0.22);
+  --mv-glow-red-strong: 0 0 30px rgba(var(--mv-red-rgb), 0.55), 0 0 12px rgba(var(--mv-red-rgb), 0.7);
+  --mv-glow-sepia-strong: 0 0 26px rgba(var(--mv-sepia-rgb), 0.4), 0 0 10px rgba(var(--mv-sepia-rgb), 0.5);
   --mv-shadow-lift: 0 14px 34px rgba(0, 0, 0, 0.55), 0 4px 12px rgba(0, 0, 0, 0.4);
   --mv-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
-  --mv-spot: radial-gradient(ellipse 60% 45% at 50% 0%, rgba(199, 180, 139, 0.14), transparent 70%);
-  --mv-scanlines: repeating-linear-gradient(180deg, rgba(7, 9, 13, 0.20) 0 1px, transparent 1px 3px);
+  --mv-spot: radial-gradient(ellipse 60% 45% at 50% 0%, rgba(var(--mv-sepia-rgb), 0.14), transparent 70%);
+  --mv-scanlines: repeating-linear-gradient(180deg, rgba(var(--mv-bg-deep-rgb), 0.20) 0 1px, transparent 1px 3px);
   --mv-font-stamp: "Special Elite", "Courier New", monospace;
+
+  /* Stimmungsfarbe der Aufruf-Anzeige (Daumen hoch/runter) */
+  --mv-green: #3fbf8f;
+  --mv-glow-green: 0 0 14px rgba(var(--mv-green-rgb), 0.35);
+
+  /* RGB-Tripletts für Alpha-Abstufungen: rgba(var(--mv-*-rgb), alpha) */
+  --mv-red-rgb: 210, 31, 60;
+  --mv-red-dim-rgb: 160, 21, 48;
+  --mv-red-shadow-rgb: 122, 15, 36;
+  --mv-sepia-rgb: 199, 180, 139;
+  --mv-bg-deep-rgb: 7, 9, 13;
+  --mv-bg-elev-rgb: 24, 41, 62;
+  --mv-green-rgb: 63, 191, 143;
+
+  /* Abgestufte Akzenttöne (Buttons, Hover-Verläufe, Text-Akzente) */
+  --mv-red-light: #ef3b52;
+  --mv-red-lighter: #f74d63;
+  --mv-red-deep: #e02341;
+  --mv-red-text: #f2657a;
+  --mv-red-text-border: #e0556a;
+
+  /* Textfarbe auf Akzentflächen (Buttons, Badges) */
+  --mv-on-accent: #ffffff;
+
+  /* Flächen der Navigation und Kästen */
+  --mv-bg-nav: #1c1f27;
+  --mv-bg-nav-hover: #242833;
+  --mv-bg-item: #23272f;
+  --mv-bg-scroll: #2a3344;
 }
+
+/* ---------- Bootstrap an das Akten-Farbschema koppeln ----------
+   Bootstrap bringt dunkle Standard-Texte mit (#212529 & Co). Die Anwendung ist
+   durchgehend dunkel — ohne Bindung landet dunkler Text auf dunklem Grund
+   (Tabellen, Dropdowns, Formular-Hilfetexte). Hier folgen alle Bootstrap-Farben
+   konsequent den --mv-*-Tokens; das Light-Farbschema erbt automatisch mit. */
+:root {
+  --bs-body-color: var(--mv-text);
+  --bs-body-bg: var(--mv-bg-deep);
+  --bs-emphasis-color: var(--mv-text);
+  --bs-secondary-color: var(--mv-text-dim);
+  --bs-tertiary-color: var(--mv-text-dim);
+  --bs-border-color: var(--mv-border);
+  --bs-link-color: var(--mv-sepia);
+  --bs-link-hover-color: var(--mv-red);
+  --bs-dropdown-link-color: var(--mv-text);
+  --bs-table-color: var(--mv-text);
+  --bs-table-bg: transparent;
+}
+
+/* Bootstrap-Textfarben sind hart auf helle/dunkle Grautöne gesetzt und folgen
+   dem Schema nicht — konsequent umbiegen (text-muted = #6c757d wäre auf dunklem
+   Grund nur ~2.3:1 Kontrast). */
+.text-muted { color: var(--mv-text-dim) !important; }
+.text-body,
+.text-body-emphasis,
+.text-dark,
+.text-black { color: var(--mv-text) !important; }
+.text-body-secondary,
+.text-body-tertiary { color: var(--mv-text-dim) !important; }
 
 /* ---------- Basis ---------- */
 html {
@@ -61,26 +120,26 @@ body::before {
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(42% 34% at 12% -6%, rgba(210, 31, 60, 0.10), transparent 70%),
-    radial-gradient(48% 40% at 92% 108%, rgba(24, 41, 62, 0.55), transparent 70%);
+    radial-gradient(42% 34% at 12% -6%, rgba(var(--mv-red-rgb), 0.10), transparent 70%),
+    radial-gradient(48% 40% at 92% 108%, rgba(var(--mv-bg-elev-rgb), 0.55), transparent 70%);
   pointer-events: none;
   z-index: -1;
 }
 
 /* Textauswahl in Signalrot */
 ::selection {
-  background: rgba(210, 31, 60, 0.55);
-  color: #fff;
+  background: rgba(var(--mv-red-rgb), 0.55);
+  color: var(--mv-on-accent);
 }
 
 /* Scrollbar (Standard + WebKit) */
 html {
-  scrollbar-color: #2a3344 var(--mv-bg-deep);
+  scrollbar-color: var(--mv-bg-scroll) var(--mv-bg-deep);
 }
 ::-webkit-scrollbar { width: 10px; }
 ::-webkit-scrollbar-track { background: var(--mv-bg-deep); }
 ::-webkit-scrollbar-thumb {
-  background: #2a3344;
+  background: var(--mv-bg-scroll);
   border: 2px solid var(--mv-bg-deep);
   border-radius: 6px;
 }
@@ -92,7 +151,7 @@ img {
 }
 
 a { color: var(--mv-text); }
-a:hover { color: #fff; }
+a:hover { color: var(--mv-on-accent); }
 
 /* Fokus sichtbar (Accessibility) */
 :focus-visible {
@@ -107,7 +166,7 @@ a:hover { color: #fff; }
   left: -9999px;
   top: 0;
   background: var(--mv-red);
-  color: #fff;
+  color: var(--mv-on-accent);
   padding: 0.5rem 0.75rem;
   font-family: var(--mv-font-mono);
   font-size: 0.85rem;
@@ -147,7 +206,7 @@ code { font-family: var(--mv-font-mono); }
   position: sticky;
   top: 0;
   z-index: 1030;
-  box-shadow: 0 1px 0 rgba(210, 31, 60, 0.25), 0 10px 26px rgba(0, 0, 0, 0.38);
+  box-shadow: 0 1px 0 rgba(var(--mv-red-rgb), 0.25), 0 10px 26px rgba(0, 0, 0, 0.38);
 }
 
 .mv-navbar .navbar-brand img {
@@ -198,7 +257,7 @@ code { font-family: var(--mv-font-mono); }
 .mv-navbar .navbar-nav .nav-link:hover::after,
 .mv-navbar .navbar-nav .nav-link.active::after {
   right: var(--mv-navlink-pad-x);
-  box-shadow: 0 0 10px rgba(210, 31, 60, 0.55);
+  box-shadow: 0 0 10px rgba(var(--mv-red-rgb), 0.55);
 }
 
 /* ---------- Mobiler Menü-Button (auffällig, mit waberndem Glow) ---------- */
@@ -214,7 +273,7 @@ code { font-family: var(--mv-font-mono); }
   justify-content: center;
   min-height: 44px;
   padding: 0.5rem 1.05rem;
-  background: linear-gradient(180deg, #ef3b52 0%, var(--mv-red) 100%);
+  background: linear-gradient(180deg, var(--mv-red-light) 0%, var(--mv-red) 100%);
   color: var(--mv-ink);
   border: 1px solid var(--mv-red);
   border-radius: 2px;
@@ -230,14 +289,14 @@ code { font-family: var(--mv-font-mono); }
 .mv-navtoggle__label { line-height: 1; }
 
 @keyframes mv-menu-pulse {
-  0%, 100% { box-shadow: 0 0 8px rgba(210, 31, 60, 0.5); }
-  45% { box-shadow: 0 0 22px rgba(210, 31, 60, 0.95), 0 0 36px rgba(210, 31, 60, 0.4); }
+  0%, 100% { box-shadow: 0 0 8px rgba(var(--mv-red-rgb), 0.5); }
+  45% { box-shadow: 0 0 22px rgba(var(--mv-red-rgb), 0.95), 0 0 36px rgba(var(--mv-red-rgb), 0.4); }
 }
 
 @media (hover: hover) {
   .mv-navtoggle:hover {
-    background: linear-gradient(180deg, #f74d63 0%, #e02341 100%);
-    box-shadow: 0 0 24px rgba(210, 31, 60, 1), 0 0 42px rgba(210, 31, 60, 0.5);
+    background: linear-gradient(180deg, var(--mv-red-lighter) 0%, var(--mv-red-deep) 100%);
+    box-shadow: 0 0 24px rgba(var(--mv-red-rgb), 1), 0 0 42px rgba(var(--mv-red-rgb), 0.5);
   }
 }
 
@@ -277,8 +336,8 @@ code { font-family: var(--mv-font-mono); }
     width: 100%;
     min-height: 44px;
     padding: 0.7rem 0.85rem;
-    background: #1c1f27;              /* dunkelgrauer Kasten */
-    border: 1px solid #000;           /* schwarzer Rand */
+    background: var(--mv-bg-nav);              /* dunkelgrauer Kasten */
+    border: 1px solid var(--mv-ink);           /* schwarzer Rand */
     border-radius: 2px;
     color: var(--mv-text);
   }
@@ -288,8 +347,8 @@ code { font-family: var(--mv-font-mono); }
 
   .mv-navbar .navbar-nav .nav-link:hover,
   .mv-navbar .navbar-nav .nav-link:focus-visible {
-    background: #242833;
-    color: #fff;
+    background: var(--mv-bg-nav-hover);
+    color: var(--mv-on-accent);
   }
 
   .mv-navbar .navbar-nav .nav-link.active,
@@ -308,7 +367,7 @@ code { font-family: var(--mv-font-mono); }
     min-width: 0;
     margin: 0.4rem 0 0 0.9rem;
     padding: 0.25rem;
-    background: #1c1f27;
+    background: var(--mv-bg-nav);
     border: 0;
     border-left: 3px solid var(--mv-red);
     border-radius: 0;
@@ -317,8 +376,8 @@ code { font-family: var(--mv-font-mono); }
 
   .mv-usermenu__menu .dropdown-item {
     margin-bottom: 0.35rem;
-    background: #23272f;
-    border: 1px solid #000;
+    background: var(--mv-bg-item);
+    border: 1px solid var(--mv-ink);
     border-radius: 2px;
   }
   .mv-usermenu__menu .dropdown-item:last-child { margin-bottom: 0; }
@@ -392,13 +451,13 @@ code { font-family: var(--mv-font-mono); }
 
 .mv-usermenu__menu .dropdown-item:hover,
 .mv-usermenu__menu .dropdown-item:focus {
-  background: rgba(210, 31, 60, 0.16);
-  color: #fff;
+  background: rgba(var(--mv-red-rgb), 0.16);
+  color: var(--mv-on-accent);
 }
 
 .mv-usermenu__menu .dropdown-item:active {
-  background: rgba(210, 31, 60, 0.28);
-  color: #fff;
+  background: rgba(var(--mv-red-rgb), 0.28);
+  color: var(--mv-on-accent);
 }
 
 .mv-usermenu__menu .dropdown-divider {
@@ -444,7 +503,7 @@ code { font-family: var(--mv-font-mono); }
    * Das Rot ist dafür leicht aufgehellt, damit der Kontrast ausreicht
    * (ca. 4,6:1 — AA-konform für normalen Text).
    */
-  background: linear-gradient(180deg, #ef3b52 0%, var(--mv-red) 100%);
+  background: linear-gradient(180deg, var(--mv-red-light) 0%, var(--mv-red) 100%);
   border-color: var(--mv-red);
   color: var(--mv-ink);
   /* Ruhendes Grundglühen */
@@ -459,15 +518,15 @@ code { font-family: var(--mv-font-mono); }
 
 .btn-outline-danger {
   /* Aufgehelltes Rot: auf dunklem Grund ~5,9:1 (AA) statt ~3,8:1. */
-  color: #f2657a;
-  border-color: #e0556a;
+  color: var(--mv-red-text);
+  border-color: var(--mv-red-text-border);
 }
 
 /* Tastatur-Fokus: gleiche Glow-Verstärkung wie beim Hover — immer
    sichtbar, unabhängig vom Eingabegerät. (Spezifität 0-2-0 schlägt
    die globale :focus-visible-Regel mit box-shadow: none.) */
 .btn-primary:focus-visible {
-  border-color: #e02341;
+  border-color: var(--mv-red-deep);
   box-shadow: var(--mv-glow-red-strong);
 }
 .btn-outline-secondary:focus-visible {
@@ -478,8 +537,8 @@ code { font-family: var(--mv-font-mono); }
 /* Hover nur auf Geräten mit echtem Zeiger (Maus, Stylus). */
 @media (hover: hover) {
   .btn-primary:hover {
-    background: linear-gradient(180deg, #f74d63 0%, #e02341 100%);
-    border-color: #e02341;
+    background: linear-gradient(180deg, var(--mv-red-lighter) 0%, var(--mv-red-deep) 100%);
+    border-color: var(--mv-red-deep);
     color: var(--mv-ink);
     box-shadow: var(--mv-glow-red-strong);
   }
@@ -493,7 +552,7 @@ code { font-family: var(--mv-font-mono); }
 
   .btn-outline-danger:hover {
     /* Konsistent zu .btn-primary: roter Grund mit schwarzer Schrift. */
-    background: #ef3b52;
+    background: var(--mv-red-light);
     color: var(--mv-ink);
     border-color: var(--mv-red);
     box-shadow: var(--mv-glow-red-soft);
@@ -527,7 +586,7 @@ code { font-family: var(--mv-font-mono); }
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(7, 9, 13, 0.28) 0%, rgba(7, 9, 13, 0.92) 100%),
+    linear-gradient(180deg, rgba(var(--mv-bg-deep-rgb), 0.28) 0%, rgba(var(--mv-bg-deep-rgb), 0.92) 100%),
     var(--mv-noise),
     var(--ph-img);
   background-size: cover;
@@ -542,7 +601,7 @@ code { font-family: var(--mv-font-mono); }
   inset: 0;
   background:
     var(--mv-spot),
-    radial-gradient(ellipse 80% 70% at 50% 45%, transparent 55%, rgba(7, 9, 13, 0.55) 100%),
+    radial-gradient(ellipse 80% 70% at 50% 45%, transparent 55%, rgba(var(--mv-bg-deep-rgb), 0.55) 100%),
     var(--mv-scanlines);
   z-index: 0;
   pointer-events: none;
@@ -566,7 +625,7 @@ code { font-family: var(--mv-font-mono); }
   margin: 0;
   font-size: clamp(1.6rem, 4vw, 2.6rem);
   color: var(--mv-text);
-  text-shadow: var(--mv-shadow-drop), 0 0 16px rgba(199, 180, 139, 0.18);
+  text-shadow: var(--mv-shadow-drop), 0 0 16px rgba(var(--mv-sepia-rgb), 0.18);
 }
 
 .page-header__sub {
@@ -618,8 +677,8 @@ code { font-family: var(--mv-font-mono); }
   letter-spacing: 0.05em;
   color: var(--mv-paper);
   text-shadow:
-    0 2px 5px rgba(122, 15, 36, 0.9),
-    0 0 14px rgba(160, 21, 48, 0.5);
+    0 2px 5px rgba(var(--mv-red-shadow-rgb), 0.9),
+    0 0 14px rgba(var(--mv-red-dim-rgb), 0.5);
 }
 
 /*
@@ -632,8 +691,8 @@ code { font-family: var(--mv-font-mono); }
   width: 100%;
   height: auto;
   filter:
-    drop-shadow(0 0 14px rgba(210, 31, 60, 0.65))
-    drop-shadow(0 0 36px rgba(210, 31, 60, 0.45))
+    drop-shadow(0 0 14px rgba(var(--mv-red-rgb), 0.65))
+    drop-shadow(0 0 36px rgba(var(--mv-red-rgb), 0.45))
     drop-shadow(var(--mv-shadow-drop));
 }
 
@@ -717,7 +776,7 @@ code { font-family: var(--mv-font-mono); }
 .mv-sort__select:focus {
   outline: none;
   border-color: var(--mv-red);
-  box-shadow: 0 0 0 3px rgba(210, 31, 60, 0.22), var(--mv-glow-red-soft);
+  box-shadow: 0 0 0 3px rgba(var(--mv-red-rgb), 0.22), var(--mv-glow-red-soft);
 }
 
 .mv-sort {
@@ -773,8 +832,8 @@ code { font-family: var(--mv-font-mono); }
 
 .mv-search__option[aria-selected="true"],
 .mv-search__option:hover {
-  background: rgba(210, 31, 60, 0.16);
-  color: #fff;
+  background: rgba(var(--mv-red-rgb), 0.16);
+  color: var(--mv-on-accent);
 }
 
 .mv-search__option-count {
@@ -880,17 +939,38 @@ code { font-family: var(--mv-font-mono); }
     opacity 0.55s var(--mv-ease);
 }
 
-/* Hover-Lift mit Kanten-Glow (nur Geräte mit echtem Hover) */
+/* Hover-Lift mit Kanten-Glow (nur Geräte mit echtem Hover).
+   Usability: derselbe Zustand gilt für die Tastatur-Navigation (:focus-within),
+   Bewegung bleibt reine Transition (global über prefers-reduced-motion
+   abschaltbar) und erzeugt keinen Layout-Sprung — Nachbarn zucken nicht. */
 @media (hover: hover) {
   .mv-case:hover,
   .mv-case:focus-within {
-    transform: rotate(var(--case-rot, 0deg)) translateY(-5px);
-    border-color: rgba(210, 31, 60, 0.45);
-    box-shadow: var(--mv-shadow-lift), var(--mv-glow-red-soft);
+    transform: rotate(var(--case-rot, 0deg)) translateY(-8px);
+    border-color: rgba(var(--mv-red-rgb), 0.7);
+    box-shadow: var(--mv-shadow-lift), var(--mv-glow-red), var(--mv-glow-sepia);
   }
+
+  /* Titelbox: leuchtet beim Hover sichtlich auf — Rahmen, Licht und Zoom
+     machen den gesamten Beitrag als klickbare Einheit erkennbar. */
   .mv-case:hover .mv-case__img img,
   .mv-case:focus-within .mv-case__img img {
-    transform: scale(1.04);
+    transform: scale(1.06);
+    filter: brightness(1.12) saturate(1.08);
+    box-shadow:
+      inset 0 0 0 1px var(--mv-sepia),
+      0 0 22px rgba(var(--mv-sepia-rgb), 0.38);
+    transition:
+      transform 0.45s var(--mv-ease),
+      filter 0.35s var(--mv-ease),
+      box-shadow 0.35s var(--mv-ease);
+  }
+
+  /* Titel-Link als klare Klick-Affordanz: warmer Akzent statt bloßem Weiß. */
+  .mv-case:hover .mv-case__title a,
+  .mv-case:focus-within .mv-case__title a {
+    color: var(--mv-sepia);
+    text-shadow: var(--mv-glow-sepia);
   }
 }
 
@@ -926,9 +1006,17 @@ code { font-family: var(--mv-font-mono); }
 .mv-case__img img {
   width: 100%;
   aspect-ratio: 16 / 9;
-  object-fit: cover;
+  /* Proportional und vollständig: Das Bild wird nie beschnitten. Die dabei
+     entstehenden Ränder (Letterbox) werden als eigene, fein gerahmte Fläche
+     dargestellt — nur sichtbar, wo das Seitenverhältnis es nötig macht. */
+  object-fit: contain;
+  background-color: var(--mv-bg-deep);
+  box-shadow: inset 0 0 0 1px var(--mv-border);
   display: block;
-  transition: transform 0.45s var(--mv-ease);
+  transition:
+    transform 0.45s var(--mv-ease),
+    filter 0.35s var(--mv-ease),
+    box-shadow 0.35s var(--mv-ease);
 }
 
 .mv-case__body {
@@ -945,7 +1033,7 @@ code { font-family: var(--mv-font-mono); }
   line-height: 1.2;
 }
 .mv-case__title a { color: var(--mv-text); text-decoration: none; }
-.mv-case__title a:hover { color: #fff; }
+.mv-case__title a:hover { color: var(--mv-on-accent); }
 
 .mv-case__excerpt {
   color: var(--mv-text-dim);
@@ -962,6 +1050,73 @@ code { font-family: var(--mv-font-mono); }
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
+}
+
+.mv-case__stats {
+  display: flex;
+  gap: 0.9rem;
+  margin-top: 0.55rem;
+  font-family: var(--mv-font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  opacity: 0.72;
+}
+
+.mv-case__stats span {
+  transition: opacity 0.15s ease, text-shadow 0.15s ease;
+}
+
+.mv-case__stats span:hover {
+  opacity: 1;
+  text-shadow: 0 0 8px currentColor;
+}
+
+/* Ganze Aktenkarte klickbar (Klick-Handler in site.js) — nur wenn ein
+   Titel-Link vorhanden ist, damit z. B. Admin-Kacheln unberührt bleiben. */
+.mv-case:has(.mv-case__title a) {
+  cursor: pointer;
+}
+
+/* Aufruf-Anzeige im Footer: einfarbiges Auge + Zahl, Stimmungsfarbe je
+   nach überwiegender Bewertung (grün = Daumen hoch, rot = Daumen runter). */
+.mv-case__views {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--mv-font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  color: var(--mv-text-dim);
+  transition: color 0.15s ease, text-shadow 0.15s ease;
+}
+
+.mv-case__views--up {
+  color: var(--mv-green);
+  text-shadow: var(--mv-glow-green);
+}
+
+.mv-case__views--down {
+  color: var(--mv-red);
+  text-shadow: var(--mv-glow-red-soft);
+}
+
+.mv-case__views:hover {
+  color: var(--mv-sepia);
+  text-shadow: var(--mv-glow-sepia);
+}
+
+.mv-case__views--up:hover {
+  color: var(--mv-green);
+  text-shadow: var(--mv-glow-green);
+}
+
+.mv-case__views--down:hover {
+  color: var(--mv-red);
+  text-shadow: var(--mv-glow-red);
+}
+
+.mv-case__eye {
+  flex: none;
 }
 
 .mv-case__footer {
@@ -1005,7 +1160,7 @@ code { font-family: var(--mv-font-mono); }
 .mv-badge--premium { color: var(--mv-sepia); }
 .mv-badge--registered { color: #7aa2d1; }
 /* Aufgehelltes Rot: auf dunklem Grund ~5,9:1 (AA) statt ~3,4:1. */
-.mv-badge--red { color: #f2657a; }
+.mv-badge--red { color: var(--mv-red-text); }
 
 /*
  * Auf der hellen Papierfläche (mv-doc) wären die hellen Grundfarben der
@@ -1026,8 +1181,8 @@ code { font-family: var(--mv-font-mono); }
     box-shadow: 0 0 10px rgba(231, 228, 219, 0.15);
   }
   .mv-pill:hover {
-    color: #fff;
-    border-color: rgba(199, 180, 139, 0.55);
+    color: var(--mv-on-accent);
+    border-color: rgba(var(--mv-sepia-rgb), 0.55);
     box-shadow: var(--mv-glow-sepia);
   }
 }
@@ -1060,7 +1215,7 @@ code { font-family: var(--mv-font-mono); }
   background: var(--mv-bg-card);
   color: var(--mv-text);
   border-color: var(--mv-red);
-  box-shadow: 0 0 0 3px rgba(210, 31, 60, 0.22), var(--mv-glow-red-soft);
+  box-shadow: 0 0 0 3px rgba(var(--mv-red-rgb), 0.22), var(--mv-glow-red-soft);
 }
 
 .form-control::placeholder { color: var(--mv-text-dim); }
@@ -1317,8 +1472,8 @@ code { font-family: var(--mv-font-mono); }
   text-transform: uppercase;
   padding: 0.35rem 0.9rem;
   transform: rotate(-1.5deg);
-  background: rgba(210, 31, 60, 0.08);
-  text-shadow: 0 0 10px rgba(210, 31, 60, 0.35);
+  background: rgba(var(--mv-red-rgb), 0.08);
+  text-shadow: 0 0 10px rgba(var(--mv-red-rgb), 0.35);
 }
 
 /* ---------- Kommentare ---------- */
@@ -1329,7 +1484,7 @@ code { font-family: var(--mv-font-mono); }
 }
 .mv-comment--highlight {
   border-color: var(--mv-red);
-  background: rgba(210, 31, 60, 0.07);
+  background: rgba(var(--mv-red-rgb), 0.07);
   box-shadow: var(--mv-glow-red-soft);
 }
 
@@ -1372,7 +1527,7 @@ code { font-family: var(--mv-font-mono); }
 .pagination .page-item.active .page-link {
   background: var(--mv-red);
   border-color: var(--mv-red);
-  color: #fff;
+  color: var(--mv-on-accent);
 }
 
 /* ---------- Scroll-Reveal (Klassen werden per JS ergänzt) ---------- */
@@ -1407,11 +1562,19 @@ code { font-family: var(--mv-font-mono); }
   margin: 1rem 0 0;
 }
 
+/*
+ * Titelbild: Das Bild wird VOLLSTÄNDIG angezeigt (object-fit: contain) und
+ * mittig zentriert. Weicht das Seitenverhältnis des Bildes vom 16:9-Rahmen ab,
+ * entstehen letterbox-artige Balken rechts/links bzw. oben/unten in einem
+ * dunklen, zum Design passenden Ton — das Bild bleibt dabei stets ganz sichtbar.
+ */
 .mv-title-backdrop img {
   display: block;
   width: 100%;
   aspect-ratio: 16 / 9;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
+  background: var(--mv-ink);
   border: 1px solid var(--mv-border);
   box-shadow: var(--mv-shadow-lift);
 }
@@ -1466,7 +1629,7 @@ code { font-family: var(--mv-font-mono); }
 @media (hover: hover) {
   .mv-gallery__item:hover,
   .mv-gallery__item:focus-visible {
-    border-color: rgba(210, 31, 60, 0.55);
+    border-color: rgba(var(--mv-red-rgb), 0.55);
     box-shadow: var(--mv-glow-red-soft);
   }
 }
@@ -1494,7 +1657,7 @@ code { font-family: var(--mv-font-mono); }
 @media (hover: hover) {
   .mv-thumb:hover,
   .mv-thumb:focus-visible {
-    border-color: rgba(210, 31, 60, 0.55);
+    border-color: rgba(var(--mv-red-rgb), 0.55);
     box-shadow: var(--mv-glow-red-soft);
   }
 }
@@ -1510,7 +1673,7 @@ code { font-family: var(--mv-font-mono); }
   justify-content: center;
   gap: 0.75rem;
   padding: 1.25rem;
-  background: rgba(7, 9, 13, 0.94);
+  background: rgba(var(--mv-bg-deep-rgb), 0.94);
   animation: mv-fade 0.25s var(--mv-ease);
 }
 .mv-lightbox__img {
@@ -1669,7 +1832,7 @@ code { font-family: var(--mv-font-mono); }
  * Papierfläche (mv-doc) nur ~3,2:1 erreicht. Hier zwei kontextabhängige,
  * AA-konforme Töne (≥ 4,5:1) statt eines ungeprüften Einzelwerts.
  */
-.mv-text-danger { color: #f2657a; }               /* auf dunklem Grund ~5,9:1 */
+.mv-text-danger { color: var(--mv-red-text); }               /* auf dunklem Grund ~5,9:1 */
 .mv-doc .mv-text-danger { color: #8e1728; }        /* auf Papier ~7,1:1 */
 
 /* ---------- Print: Akten-Dokument-Look ---------- */
@@ -1689,6 +1852,17 @@ code { font-family: var(--mv-font-mono); }
     --mv-paper: #ffffff;
     --mv-border: #999999;
     --mv-sepia: #777777;
+    --mv-green: #1c7a52;
+
+    /* Abgeleitete Töne folgen dem hellen Farbschema — dunkle Kastenflächen
+       würden sonst dunklen Text auf dunklem Grund erzeugen. */
+    --mv-green-rgb: 28, 122, 82;
+    --mv-bg-nav: #e6e6e6;
+    --mv-bg-nav-hover: #d4d4d4;
+    --mv-bg-item: #ececec;
+    --mv-bg-scroll: #cfcfcf;
+    --mv-red-text: #b3122e;
+    --mv-red-text-border: #c22338;
   }
 
   html { color-scheme: light; }
@@ -1712,7 +1886,7 @@ code { font-family: var(--mv-font-mono); }
   /* Header als schlichte Überschriftsleiste. */
   .page-header {
     min-height: 0;
-    border-bottom: 2px solid #000000;
+    border-bottom: 2px solid var(--mv-ink)000;
   }
   .page-header::before {
     background: none;
@@ -1730,7 +1904,7 @@ code { font-family: var(--mv-font-mono); }
   .mv-title-image img {
     box-shadow: none !important;
     transform: none !important;
-    border: 1px solid #000000;
+    border: 1px solid var(--mv-ink)000;
   }
 
   .mv-case::before,

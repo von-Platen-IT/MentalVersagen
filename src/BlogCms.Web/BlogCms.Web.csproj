@@ -11,12 +11,17 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Web.LibraryManager.Build" Version="3.0.114" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.3.0" />
   </ItemGroup>
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- XML-Dokumentation für die OpenAPI-Spec der Management-API (Swagger). -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Fehlende XML-Kommentare sind keine Fehler — nur die API-Dokumentation ist betroffen. -->
+    <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
 </Project>

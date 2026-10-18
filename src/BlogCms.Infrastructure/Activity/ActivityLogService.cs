@@ -17,9 +17,20 @@ public sealed class ActivityLogService : IActivityLogService
         _db = db;
     }
 
-    public Task LogArticleViewAsync(
+    public async Task LogArticleViewAsync(
         Guid articleId, Guid? userId, string? ipAddress, CancellationToken cancellationToken = default)
-        => AddAsync(ActivityEventType.ArticleViewed, articleId, null, null, userId, ipAddress, cancellationToken);
+    {
+        // Denormalisierter Zähler für Sortierung und Badges der Landing Page
+        // (Article.ViewCount). Der Zähler wird im selben SaveChanges wie das
+        // Event gespeichert — eine Transaktion, kein Auseinanderlaufen.
+        var article = await _db.Articles.FindAsync(new object[] { articleId }, cancellationToken);
+        if (article is not null)
+        {
+            article.ViewCount++;
+        }
+
+        await AddAsync(ActivityEventType.ArticleViewed, articleId, null, null, userId, ipAddress, cancellationToken);
+    }
 
     public Task LogArticleCreatedAsync(
         Guid articleId, Guid? userId, string? ipAddress, CancellationToken cancellationToken = default)
@@ -136,5 +147,45 @@ public sealed class ActivityLogService : IActivityLogService
         return new ActivityOverview(
             totalViews, totalArticles, totalComments, totalThumbUp, totalThumbDown,
             topViewed, articleRatings, daily, recent);
+    }
+
+    public async Task<IReadOnlyList<ArticleViewHistory>> GetArticleViewHistoryAsync(
+        DateTime fromUtc, DateTime toUtc, CancellationToken cancellationToken = default)
+    {
+        // Same aggregation style as GetOverviewAsync: pull the minimal rows and
+        // aggregate in memory — the volume is small and provider-agnostic.
+        var rows = await _db.ActivityLogEntries
+            .AsNoTracking()
+            .Where(e => e.EventType == ActivityEventType.ArticleViewed
+                        && e.ArticleId != null
+                        && e.CreatedAt >= fromUtc && e.CreatedAt < toUtc)
+            .Select(e => new { e.ArticleId, e.CreatedAt })
+            .ToListAsync(cancellationToken);
+
+        var ids = rows.Select(r => r.ArticleId!.Value).Distinct().ToList();
+        var articles = await _db.Articles
+            .AsNoTracking()
+            .Where(a => ids.Contains(a.Id))
+            .Select(a => new { a.Id, a.Title, a.ViewCount })
+            .ToListAsync(cancellationToken);
+
+        return articles
+            .Select(a =>
+            {
+                var mine = rows.Where(r => r.ArticleId == a.Id).ToList();
+                return new ArticleViewHistory(
+                    a.Id,
+                    a.Title,
+                    a.ViewCount,
+                    mine.Count,
+                    mine.Count == 0 ? null : mine.Max(r => r.CreatedAt),
+                    mine.GroupBy(r => r.CreatedAt.Date)
+                        .OrderBy(g => g.Key)
+                        .Select(g => new DailyViewCount(g.Key, g.Count()))
+                        .ToList());
+            })
+            .OrderByDescending(h => h.PeriodViews)
+            .ThenByDescending(h => h.OverallViews)
+            .ToList();
     }
 }

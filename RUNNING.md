@@ -67,6 +67,7 @@ lokalen PostgreSQL auf 5432). Über die Umgebungsvariable `POSTGRES_PORT` änder
 - Zahlungen: `Stripe`-Sektion (`SecretKey`, `WebhookSecret`, Plan-IDs).
 - Newsletter: `Newsletter`-Sektion (`UnconfirmedRetentionDays`).
 - Feature-Flags: `Features`-Sektion (`MonetizationEnabled`, `LoginEnabled`).
+- Management-API: `Api`-Sektion (`Key`, `AuthorId`, `SwaggerUiEnabled`, `RateLimitPerMinute`) — siehe [`docs/05-management-api.md`](docs/05-management-api.md).
 
 #### Feature-Flags (`.env`)
 
@@ -90,6 +91,18 @@ Vorrang. Vorlage: [`.env.example`](.env.example) — einfach nach `.env` kopiere
 ```bash
 cp .env.example .env
 ```
+
+#### Management-API (`.env`)
+
+Die Management-API (`/api/v1/articles`) pflegt Artikel per HTTP — für Skripte
+und KI-Tools. Details: [`docs/05-management-api.md`](docs/05-management-api.md).
+
+| Parameter (`.env`) | Standard | Wirkung |
+|---|---|---|
+| `Api__Key` | *(leer)* | Statischer API-Key für `/api/v1`. **Ohne Key bleibt die API geschlossen** (Fail-Closed, 401). Erzeugung: `openssl rand -hex 32` |
+| `Api__AuthorId` | *(leer)* | UUID eines Users mit Rolle `Author`/`Admin` — API-Angelegte Artikel werden diesem Autor zugeordnet. Ohne Wert antwortet nur das Anlegen mit 503 |
+| `Api__SwaggerUiEnabled` | `false` | Interaktive Swagger-Oberfläche unter `/swagger`; die maschinenlesbare Spec `/swagger/v1/swagger.json` bleibt immer erreichbar |
+| `Api__RateLimitPerMinute` | `60` | Anfragen-Limit pro Minute und Client-IP |
 
 ### Entwicklungs-Fakes (keine Credentials nötig)
 

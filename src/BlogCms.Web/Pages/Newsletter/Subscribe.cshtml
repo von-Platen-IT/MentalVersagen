@@ -6,8 +6,10 @@
     {
         Slide = 2,
         Title = "Archivpost",
-        Sub = "Neue Akten bequem per E-Mail – Double-Opt-in."
+        Sub = "Neue Beiträge per E-Mail oder RSS-Feed – du entscheidest, wie sie zu dir kommen."
     };
+
+    var feedUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}/feed";
 }
 
 <partial name="_PageHeader" model="header" />
@@ -18,7 +20,56 @@
         <div class="mv-teaser mb-3">@Model.Message</div>
     }
 
-    <form method="post" class="mv-form--narrow">
+    <h2 class="h4">Per E-Mail abonnieren</h2>
+
+    <p>
+        Mit dem <strong>Archivpost</strong> bekommst du eine Nachricht, sobald im Blog
+        ein neuer Beitrag erscheint. Du musst nicht selbst vorbeischauen – die
+        Neuigkeiten kommen zu dir.
+    </p>
+
+    <h3 class="h6 mt-3">Was genau kommt per E-Mail?</h3>
+    <p>
+        Immer dann, wenn etwas Neues veröffentlicht wird, erhältst du eine kurze
+        Nachricht mit dem Titel, einer Kurzbeschreibung und einem direkten Link zum
+        Beitrag. Weiter nichts: keine Werbung, keine Nachrichten von Dritten, und
+        deine Adresse wird ausschließlich für diesen Versand verwendet.
+    </p>
+
+    <h3 class="h6 mt-3">Wie oft?</h3>
+    <p>
+        Es gibt keinen festen Rhythmus – die E-Mail kommt nur, wenn wirklich etwas
+        Neues vorliegt. Mal seltener, mal häufiger, je nachdem, wie viel im Blog
+        passiert.
+    </p>
+
+    <h3 class="h6 mt-3">So funktioniert die Anmeldung (zwei Schritte)</h3>
+    <ol>
+        <li>
+            Du trägst unten deine E-Mail-Adresse ein und klickst auf
+            <strong>„Abonnieren"</strong>.
+        </li>
+        <li>
+            Daraufhin erhältst du eine <strong>Bestätigungs-E-Mail</strong> mit einem
+            Link. Erst wenn du diesen Link anklickst, wird das Abo aktiv.
+        </li>
+    </ol>
+    <p>
+        Dieses zweistufige Verfahren – oft „Double-Opt-in" genannt – stellt sicher,
+        dass sich niemand ohne dein Wissen mit deiner Adresse anmelden kann und dass
+        keine fremden Adressen missbraucht werden. Solange du die Anmeldung nicht
+        bestätigst, passiert gar nichts.
+    </p>
+
+    <h3 class="h6 mt-3">Abmelden</h3>
+    <p>
+        Jederzeit und ohne Konto: Am Ende jeder E-Mail findest du einen
+        Abmelde-Link – ein Klick genügt, und es ist sofort vorbei. Ebenso kannst du
+        dich hier mit derselben Adresse erneut anmelden, wenn du irgendwann wieder
+        dabeisein möchtest.
+    </p>
+
+    <form method="post" class="mv-form--narrow mt-3">
         <div class="mb-3">
             <label asp-for="Email" class="form-label"></label>
             <input asp-for="Email" class="form-control" autocomplete="email" />
@@ -26,6 +77,62 @@
         </div>
         <button type="submit" class="btn btn-primary">Abonnieren</button>
     </form>
+
+    <hr class="my-4" />
+
+    <h2 class="h4">Per RSS-Feed folgen – ganz ohne E-Mail</h2>
+
+    <p>
+        <strong>RSS</strong> ist ein einfacher Nachrichtenkanal, den sogenannte
+        <em>Newsreader</em> auslesen können – Programme oder Apps, die Beiträge
+        vieler Seiten an einem Ort sammeln. Anstatt eine E-Mail zu bekommen, siehst
+        du neue Beiträge dann direkt in diesem Programm, ähnlich wie Nachrichten in
+        einem Posteingang.
+    </p>
+
+    <h3 class="h6 mt-3">Warum RSS?</h3>
+    <ul>
+        <li>
+            <strong>Ohne Anmeldung:</strong> Du brauchst weder ein Konto noch eine
+            E-Mail-Adresse – der Feed ist öffentlich einsehbar.
+        </li>
+        <li>
+            <strong>Alles an einem Ort:</strong> Du kannst die Feeds vieler Seiten in
+            einem einzigen Reader sammeln und musst nicht jede Seite einzeln
+            besuchen.
+        </li>
+        <li>
+            <strong>Sofort und unaufdringlich:</strong> Neue Beiträge erscheinen
+            automatisch – ganz ohne E-Mail-Versand.
+        </li>
+        <li>
+            <strong>Datensparsam:</strong> Der Feed enthält nur die Beiträge selbst –
+            kein Tracking, keine Werbung, keine Weitergabe deiner Daten.
+        </li>
+    </ul>
+
+    <h3 class="h6 mt-3">So einfach geht's</h3>
+    <ol>
+        <li>
+            Öffne einen Newsreader – zum Beispiel <em>Feedly</em>, <em>Inoreader</em>,
+            <em>NetNewsWire</em> oder die Reader-Funktion in <em>Thunderbird</em>.
+            Auch manche Browser und E-Mail-Programme können Feeds anzeigen.
+        </li>
+        <li>
+            Füge dort die Adresse des Feeds ein (am einfachsten per Kopieren der
+            Adresse unten) – oder klicke direkt auf <strong>„RSS-Feed öffnen"</strong>.
+        </li>
+        <li>
+            Der Reader meldet sich von selbst regelmäßig an und zeigt dir jede
+            Neuigkeit – du musst dich um nichts kümmern.
+        </li>
+    </ol>
+
+    <div class="mv-teaser mt-3">
+        <div class="form-label mb-1">Feed-Adresse</div>
+        <code class="d-block mb-2" style="word-break: break-all;">@feedUrl</code>
+        <a class="btn btn-primary" href="@feedUrl">RSS-Feed öffnen</a>
+    </div>
 </div>
 
 @section Scripts {

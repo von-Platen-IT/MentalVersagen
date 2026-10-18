@@ -73,6 +73,40 @@
         </div>
     </div>
 
+    <h2 class="h5">Aufrufe je Artikel &mdash; wie oft und wann</h2>
+    @if (Model.ViewHistory.Count == 0)
+    {
+        <p class="text-muted">Keine Aufrufe im gewählten Zeitraum.</p>
+    }
+    else
+    {
+        <div class="table-responsive mb-4">
+            <table class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th>Beitrag</th>
+                        <th class="text-end">Aufrufe gesamt</th>
+                        <th class="text-end">Im Zeitraum</th>
+                        <th>Letzter Aufruf</th>
+                        <th>Verlauf (Datum: Aufrufe)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var history in Model.ViewHistory)
+                    {
+                        <tr>
+                            <td>@history.Title</td>
+                            <td class="text-end">@history.OverallViews</td>
+                            <td class="text-end">@history.PeriodViews</td>
+                            <td>@(history.LastViewedAt?.ToString("dd.MM.yyyy HH:mm") ?? "—")</td>
+                            <td class="small text-muted">@Model.FormatDaily(history.Daily)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
     <div class="row g-4">
         <div class="col-lg-6">
             <h2 class="h5">Top-Beiträge nach Aufrufen</h2>

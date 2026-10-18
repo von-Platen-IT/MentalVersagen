@@ -24,7 +24,19 @@ public enum ArticleSortOrder
     MostUpvoted,
 
     /// <summary>Most thumbs-down first.</summary>
-    MostDownvoted
+    MostDownvoted,
+
+    /// <summary>Most page views first (Article.ViewCount).</summary>
+    MostViewed,
+
+    /// <summary>Fewest page views first (Article.ViewCount).</summary>
+    LeastViewed,
+
+    /// <summary>Fewest thumbs-up first.</summary>
+    LeastUpvoted,
+
+    /// <summary>Fewest thumbs-down first.</summary>
+    LeastDownvoted
 }
 
 /// <summary>A hashtag together with the number of published articles using it.</summary>
@@ -169,12 +181,24 @@ public sealed class ArticleService : IArticleService
 
         if (!string.IsNullOrWhiteSpace(query.TagSlug))
         {
-            articles = articles.Where(a => a.ArticleTags.Any(at => at.Tag!.Slug == query.TagSlug));
+            // Normalize the incoming slug through the same SlugGenerator used at
+            // write time so URL params match regardless of casing, umlauts ("WÄHLEN")
+            // or a leading '#' ("#waehlen"). The .ToLower() on the column side
+            // additionally tolerates historical rows with mixed-case slugs.
+            var tagSlug = _slugGenerator.Generate(query.TagSlug);
+            if (!string.IsNullOrEmpty(tagSlug))
+            {
+                articles = articles.Where(a => a.ArticleTags.Any(at => at.Tag!.Slug.ToLower() == tagSlug));
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(query.HashtagSlug))
         {
-            articles = articles.Where(a => a.ArticleHashtags.Any(ah => ah.Hashtag!.Slug == query.HashtagSlug));
+            var hashtagSlug = _slugGenerator.Generate(query.HashtagSlug);
+            if (!string.IsNullOrEmpty(hashtagSlug))
+            {
+                articles = articles.Where(a => a.ArticleHashtags.Any(ah => ah.Hashtag!.Slug.ToLower() == hashtagSlug));
+            }
         }
 
         if (query.AuthorId is not null)
@@ -235,6 +259,22 @@ public sealed class ArticleService : IArticleService
                 .OrderByDescending(a => a.Ratings.Count(r => r.Value == RatingValue.ThumbDown))
                 .ThenByDescending(a => a.PublishedAt)
                 .ThenByDescending(a => a.CreatedAt),
+            ArticleSortOrder.MostViewed => articles
+                .OrderByDescending(a => a.ViewCount)
+                .ThenByDescending(a => a.PublishedAt)
+                .ThenByDescending(a => a.CreatedAt),
+            ArticleSortOrder.LeastViewed => articles
+                .OrderBy(a => a.ViewCount)
+                .ThenByDescending(a => a.PublishedAt)
+                .ThenByDescending(a => a.CreatedAt),
+            ArticleSortOrder.LeastUpvoted => articles
+                .OrderBy(a => a.Ratings.Count(r => r.Value == RatingValue.ThumbUp))
+                .ThenByDescending(a => a.PublishedAt)
+                .ThenByDescending(a => a.CreatedAt),
+            ArticleSortOrder.LeastDownvoted => articles
+                .OrderBy(a => a.Ratings.Count(r => r.Value == RatingValue.ThumbDown))
+                .ThenByDescending(a => a.PublishedAt)
+                .ThenByDescending(a => a.CreatedAt),
             ArticleSortOrder.MostCommented => articles
                 .OrderByDescending(a => a.Comments.Count)
                 .ThenByDescending(a => a.PublishedAt)
@@ -254,6 +294,7 @@ public sealed class ArticleService : IArticleService
             .Include(a => a.ArticleTags).ThenInclude(at => at.Tag)
             .Include(a => a.ArticleHashtags).ThenInclude(ah => ah.Hashtag)
             .Include(a => a.MediaAssets)
+            .Include(a => a.Ratings)
             .AsSplitQuery()
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -367,16 +408,23 @@ public sealed class ArticleService : IArticleService
     public async Task<IReadOnlyList<HashtagUsage>> GetPublishedHashtagsAsync(
         CancellationToken cancellationToken = default)
     {
+        // Group by normalized slug so transliteration variants (e.g. "Wählen" vs.
+        // "waehlen") collapse into a single entry instead of appearing twice.
         var rows = await _db.ArticleHashtags
             .AsNoTracking()
             .Where(ah => ah.Article!.Status == ArticleStatus.Published && ah.Article.PublishedAt != null)
-            .GroupBy(ah => new { ah.Hashtag!.Name, ah.Hashtag.Slug })
-            .Select(g => new { g.Key.Name, g.Key.Slug, Count = g.Count() })
+            .GroupBy(ah => ah.Hashtag!.Slug.ToLower())
+            .Select(g => new
+            {
+                Slug = g.Key,
+                Count = g.Count(),
+                Name = g.Min(ah => ah.Hashtag!.Name)
+            })
             .OrderByDescending(x => x.Count)
             .ThenBy(x => x.Name)
             .ToListAsync(cancellationToken);
 
-        return rows.Select(r => new HashtagUsage(r.Name, r.Slug, r.Count)).ToList();
+        return rows.Select(r => new HashtagUsage(r.Name ?? string.Empty, r.Slug, r.Count)).ToList();
     }
 
     public async Task<IReadOnlyList<User>> GetPublishedAuthorsAsync(
@@ -580,7 +628,7 @@ public sealed class ArticleService : IArticleService
     private async Task SyncTagsAsync(
         Article article, IEnumerable<string> tagNames, CancellationToken cancellationToken)
     {
-        var requested = Normalize(tagNames);
+        var requested = NormalizeBySlug(tagNames, stripHash: false);
 
         var existingLinks = await _db.ArticleTags
             .Where(at => at.ArticleId == article.Id)
@@ -588,15 +636,20 @@ public sealed class ArticleService : IArticleService
 
         _db.ArticleTags.RemoveRange(existingLinks);
 
-        foreach (var name in requested)
+        // Track resolved tags per slug within this batch so transliteration
+        // variants collapse onto one row even before SaveChanges materialises
+        // the just-added entity (EF's query pipeline won't see Added entries).
+        var resolvedBySlug = new Dictionary<string, Tag>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var (name, slug) in requested)
         {
-            var slug = _slugGenerator.Generate(name);
-            if (string.IsNullOrEmpty(slug))
+            if (resolvedBySlug.TryGetValue(slug, out var tag))
             {
+                _db.ArticleTags.Add(new ArticleTag { ArticleId = article.Id, TagId = tag.Id });
                 continue;
             }
 
-            var tag = await _db.Tags.FirstOrDefaultAsync(t => t.Slug == slug, cancellationToken);
+            tag = await _db.Tags.FirstOrDefaultAsync(t => t.Slug.ToLower() == slug, cancellationToken);
             if (tag is null)
             {
                 // GUID primary keys are assigned client-side on Add, so the join
@@ -605,6 +658,7 @@ public sealed class ArticleService : IArticleService
                 _db.Tags.Add(tag);
             }
 
+            resolvedBySlug[slug] = tag;
             _db.ArticleTags.Add(new ArticleTag { ArticleId = article.Id, TagId = tag.Id });
         }
     }
@@ -612,7 +666,7 @@ public sealed class ArticleService : IArticleService
     private async Task SyncHashtagsAsync(
         Article article, IEnumerable<string> hashtagNames, CancellationToken cancellationToken)
     {
-        var requested = Normalize(hashtagNames.Select(n => n.TrimStart('#')));
+        var requested = NormalizeBySlug(hashtagNames, stripHash: true);
 
         var existingLinks = await _db.ArticleHashtags
             .Where(ah => ah.ArticleId == article.Id)
@@ -620,31 +674,63 @@ public sealed class ArticleService : IArticleService
 
         _db.ArticleHashtags.RemoveRange(existingLinks);
 
-        foreach (var name in requested)
+        // See SyncTagsAsync for why the in-batch slug map is needed.
+        var resolvedBySlug = new Dictionary<string, Hashtag>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var (name, slug) in requested)
         {
-            var slug = _slugGenerator.Generate(name);
-            if (string.IsNullOrEmpty(slug))
+            if (resolvedBySlug.TryGetValue(slug, out var hashtag))
             {
+                _db.ArticleHashtags.Add(new ArticleHashtag { ArticleId = article.Id, HashtagId = hashtag.Id });
                 continue;
             }
 
-            var hashtag = await _db.Hashtags.FirstOrDefaultAsync(h => h.Slug == slug, cancellationToken);
+            hashtag = await _db.Hashtags.FirstOrDefaultAsync(h => h.Slug.ToLower() == slug, cancellationToken);
             if (hashtag is null)
             {
                 hashtag = new Hashtag { Name = name, Slug = slug };
                 _db.Hashtags.Add(hashtag);
             }
 
+            resolvedBySlug[slug] = hashtag;
             _db.ArticleHashtags.Add(new ArticleHashtag { ArticleId = article.Id, HashtagId = hashtag.Id });
         }
     }
 
-    private static List<string> Normalize(IEnumerable<string> values)
+    /// <summary>
+    /// Cleans raw user input into unique (Name, Slug) pairs. Uniqueness is decided
+    /// by the <em>slug</em> (not the display name), so transliteration variants
+    /// such as "Wählen" / "waehlen" / "WAEHLEN" collapse onto one entry. The
+    /// first spelling encountered wins as the canonical display name.
+    /// </summary>
+    private List<(string Name, string Slug)> NormalizeBySlug(
+        IEnumerable<string> values, bool stripHash)
     {
-        return values
-            .Where(v => !string.IsNullOrWhiteSpace(v))
-            .Select(v => v.Trim())
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        var result = new List<(string, string)>();
+        var seenSlugs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var raw in values)
+        {
+            var cleaned = stripHash ? raw.TrimStart('#').Trim() : raw.Trim();
+            if (string.IsNullOrWhiteSpace(cleaned))
+            {
+                continue;
+            }
+
+            var slug = _slugGenerator.Generate(cleaned);
+            if (string.IsNullOrEmpty(slug))
+            {
+                continue;
+            }
+
+            if (!seenSlugs.Add(slug))
+            {
+                continue;
+            }
+
+            result.Add((cleaned, slug));
+        }
+
+        return result;
     }
 }

@@ -178,12 +178,18 @@ public class RegisterModel : PageModel
         CaptchaQuestion = challenge.Question;
         CaptchaToken = challenge.Token;
 
+        // Die Aufgabe ist neu — die bisherige Antwort passt nicht mehr dazu und
+        // würde als falsch gewertet. Deshalb wird das Eingabefeld geleert: die
+        // Property leeren (der Tag Helper rendert sonst ihren alten Wert) und
+        // den ModelState-Eintrag entfernen.
+        CaptchaAnswer = null;
+
         // Wichtig: Die alten POST-Werte aus dem ModelState entfernen. Die
         // Tag-Helper rendern gebundene Werte bevorzugt aus dem ModelState —
         // bliebe dort der alte Token stehen, würde das Formular nach einem
         // fehlgeschlagenen POST (z. B. verletzte Passwortregeln) die NEUE
-        // Frage zusammen mit dem ALTEN Token senden und jede korrekte Antwort
-        // würde als falsch gewertet.
+        // Frage zusammen mit dem ALTEN Token senden — jede dann noch korrekte
+        // Antwort würde als falsch gewertet.
         ModelState.Remove(nameof(CaptchaToken));
         ModelState.Remove(nameof(CaptchaAnswer));
     }

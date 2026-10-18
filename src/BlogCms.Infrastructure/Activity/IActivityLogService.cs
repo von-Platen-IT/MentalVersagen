@@ -12,6 +12,21 @@ public sealed record ArticleRatingActivity(Guid ArticleId, string Title, int Thu
 /// <summary>Per-day activity counts for the admin evaluation.</summary>
 public sealed record DailyActivity(DateTime Date, int Views, int Comments, int ArticlesCreated);
 
+/// <summary>Views of a single article on a single day.</summary>
+public sealed record DailyViewCount(DateTime Date, int Views);
+
+/// <summary>
+/// View history of a single article for the admin evaluation: overall counter,
+/// period count, last view and the per-day counts.
+/// </summary>
+public sealed record ArticleViewHistory(
+    Guid ArticleId,
+    string Title,
+    int OverallViews,
+    int PeriodViews,
+    DateTime? LastViewedAt,
+    IReadOnlyList<DailyViewCount> Daily);
+
 /// <summary>Aggregated activity data for the admin evaluation page.</summary>
 public sealed record ActivityOverview(
     int TotalViews,
@@ -50,5 +65,14 @@ public interface IActivityLogService
     /// <paramref name="toUtc"/>).
     /// </summary>
     Task<ActivityOverview> GetOverviewAsync(
+        DateTime fromUtc, DateTime toUtc, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Per-article view history for the half-open interval
+    /// [<paramref name="fromUtc"/>, <paramref name="toUtc"/>): overall counter,
+    /// period count, last view and per-day counts ("how often and when was an
+    /// article page opened").
+    /// </summary>
+    Task<IReadOnlyList<ArticleViewHistory>> GetArticleViewHistoryAsync(
         DateTime fromUtc, DateTime toUtc, CancellationToken cancellationToken = default);
 }

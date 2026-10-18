@@ -2,6 +2,19 @@
 @using BlogCms.Web.Content
 @{
     var article = Model.Article;
+    var likes = article.Ratings.Count(r => r.Value == BlogCms.Domain.Enums.RatingValue.ThumbUp);
+    var dislikes = article.Ratings.Count(r => r.Value == BlogCms.Domain.Enums.RatingValue.ThumbDown);
+
+    // Stimmung des Beitrags: das Auge färbt sich grün bei überwiegendem
+    // Daumen hoch, rot bei überwiegendem Daumen runter, sonst neutral.
+    var viewsClass = likes > dislikes
+        ? "mv-case__views--up"
+        : dislikes > likes ? "mv-case__views--down" : "";
+    var viewsTitle = likes > dislikes
+        ? "Überwiegend positiv bewertet — Aufrufe dieses Beitrags"
+        : dislikes > likes
+            ? "Überwiegend negativ bewertet — Aufrufe dieses Beitrags"
+            : "Aufrufe dieses Beitrags";
 }
 @*
     Einheitliche Rechercheakte-Karte. Wird von Startseite und Suche genutzt,
@@ -32,9 +45,19 @@
             <span>@ArticleDisplay.AccessLabel(article.AccessLevel)</span>
             <span>@article.PublishedAt?.ToString("dd.MM.yyyy")</span>
         </div>
+        <div class="mv-case__stats" title="Positive und negative Bewertungen">
+            <span title="Positive Bewertungen">&#9650; @likes</span>
+            <span title="Negative Bewertungen">&#9660; @dislikes</span>
+        </div>
     </div>
     <div class="mv-case__footer">
         <span>@(article.Author?.DisplayName ?? "Archiv")</span>
-        <a class="mv-case__next" asp-page="/Articles/Details" asp-route-slug="@article.Slug">WEITER &rarr;</a>
+        @* Ersetzt den "WEITER"-Link: die ganze Karte ist klickbar (siehe site.js),
+           hier steht die Aufruf-Anzeige mit stimmungsabhängigem Auge. *@
+        <span class="mv-case__views @viewsClass" title="@viewsTitle" aria-label="@viewsTitle">
+            <svg class="mv-case__eye" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" focusable="false"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            @article.ViewCount
+        </span>
     </div>
 </article>
