@@ -411,6 +411,11 @@ hochgeladen werden; auf MentalVersagen gilt ausschließlich
 - E-Mail-Vorlagen aus Dateien laden, mehrsprachige Betreffzeilen, Anhangsversand.
 - HTTP-API-Provider (Brevo, Mailjet, Resend). Falls später gewünscht: eigene
   `IAppEmailSender`-Implementierung plus `Provider`-Wert, die Aufrufenden bleiben unberührt.
-- Passwort-Zurücksetzen / E-Mail-Änderung. Beides nutzt `IAppEmailSender` und funktioniert
-  dann automatisch mit — aber die zugehörigen Pages existieren noch nicht.
+- E-Mail-Änderung über den Account.
 - SPF/DKIM/DMARC im IONOS-Postfach einrichten. Organisatorisch, nicht Code.
+
+> **Nachtrag:** Das Passwort-Zurücksetzen ist inzwischen umgesetzt
+> (`/Account/ForgotPassword` → `/Account/ResetPassword`). Die Reset-Mail nutzt
+> dieselbe `IAppEmailSender`-Infrastruktur und funktioniert damit automatisch
+> sowohl im Dev-Modus als auch über SMTP. Details siehe
+> [`03-blog-nutzen.md`](03-blog-nutzen.md#passwort-zurücksetzen).

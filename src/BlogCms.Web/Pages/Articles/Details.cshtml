@@ -53,8 +53,8 @@
     <article class="@(!string.IsNullOrWhiteSpace(Model.TitleImageUrl) ? "mv-title-article" : "")">
     @if (disclaimer is not null)
     {
-        <div class="mv-teaser mb-3" role="note">
-            <strong>Hinweis:</strong> @disclaimer
+        <div class="mv-teaser mv-disclaimer mb-3" role="note">
+            @disclaimer
         </div>
     }
 

@@ -88,6 +88,7 @@ offene Meldungen sowie ausstehende/geflaggte Kommentare können dort
 |---|---|
 | Registrieren | `/Account/Register` |
 | Anmelden / Abmelden | `/Account/Login`, `/Account/Logout` |
+| Passwort vergessen | `/Account/ForgotPassword` |
 | Eigener Account | `/Account/Manage` |
 | E-Mail bestätigen | Link aus der Dev-E-Mail unter `bin/…/App_Data/emails/` |
 
@@ -96,6 +97,20 @@ bevor sie kommentieren, bewerten oder ein Abo abschließen können. Autor-Rechte
 (`Author`) sowie `Moderator`/`Admin` werden — wie in
 [`01-rollen-und-admin.md`](01-rollen-und-admin.md) beschrieben — per Rollenzuweisung
 vergeben.
+
+### Passwort zurücksetzen
+
+1. Auf `/Account/Login` den Link **„Passwort vergessen?“** wählen.
+2. Die E-Mail-Adresse des Kontos eingeben und **„Link anfordern“** klicken.
+3. Die E-Mail mit dem Rücksetzungslink öffnen (im Dev-Modus als HTML-Datei unter
+   `bin/…/App_Data/emails/`).
+4. Über den Link ein neues Passwort vergeben. Der Link ist **24 Stunden gültig**
+   und kann nur **einmal** verwendet werden.
+
+Aus Sicherheitsgründen zeigt die Bestätigungsseite immer dieselbe neutrale
+Meldung — unabhängig davon, ob die eingegebene Adresse registriert ist. So lassen
+sich keine Konten über das Formular ausspähen. Anfragen sind pro IP-Adresse
+gedrosselt (5 pro Minute).
 
 ## Mitgliedschaft & Premium
 

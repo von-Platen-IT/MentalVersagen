@@ -234,6 +234,10 @@ builder.Services.AddScoped<ICaptchaService, DataProtectionCaptchaService>();
 // Registrierungsversuche (POST) pro IP-Adresse — nicht die Seitenaufrufe.
 builder.Services.AddSingleton<IRegistrationThrottle, MemoryCacheRegistrationThrottle>();
 
+// Drosselung der Passwort-Reset-Anfragen: verhindert Mail-Flooding und das
+// schnelle Durchprobieren von E-Mail-Adressen über das Formular.
+builder.Services.AddSingleton<IPasswordResetThrottle, MemoryCachePasswordResetThrottle>();
+
 // Drosselung der Management-API: Fixed-Window pro Client-IP (Standard 60/min).
 var apiRateLimitPerMinute = Math.Max(
     1, builder.Configuration.GetValue<int?>("Api:RateLimitPerMinute") ?? 60);

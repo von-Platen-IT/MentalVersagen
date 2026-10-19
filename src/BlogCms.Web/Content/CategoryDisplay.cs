@@ -29,7 +29,8 @@ public static class CategoryDisplay
     public static string? Disclaimer(ArticleCategory category) => category switch
     {
         ArticleCategory.Satire =>
-            "Dieser Beitrag ist Satire. Inhalt und Aussagen sind überspitzt und nicht wörtlich zu nehmen.",
+            "Dieser Beitrag kann satirische Inhalte enthalten und unter Zuhilfenahme von KI erstellt " +
+            "worden sein. Es handelt sich um ein Kunstwerk!",
         ArticleCategory.Verschwoerungstheorien =>
             "Dieser Beitrag behandelt verschwörungstheoretische Inhalte zur kritischen Auseinandersetzung " +
             "und dient nicht der Verbreitung von Falschinformationen.",

@@ -33,6 +33,7 @@ Sie ergänzt die bestehenden Dokumente im Projekt-Root:
 | Linkliste (redaktionell) | `/LinkLists/{slug}` |
 | RSS-Feed | `/feed` |
 | Registrieren / Anmelden | `/Account/Register`, `/Account/Login` |
+| Passwort vergessen / zurücksetzen | `/Account/ForgotPassword` |
 | Eigener Account | `/Account/Manage` |
 | **Artikelverwaltung (Author/Admin)** | `/Admin/Articles` |
 | **Linklisten (Admin)** | `/Admin/LinkLists` |

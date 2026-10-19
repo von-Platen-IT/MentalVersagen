@@ -26,6 +26,9 @@
             <label asp-for="Input.Password" class="form-label"></label>
             <input asp-for="Input.Password" class="form-control" autocomplete="current-password" />
             <span asp-validation-for="Input.Password" class="mv-text-danger"></span>
+            <p class="meta-mono mt-2 mb-0">
+                <a asp-page="/Account/ForgotPassword">Passwort vergessen?</a>
+            </p>
         </div>
 
         <div class="form-check mb-3">

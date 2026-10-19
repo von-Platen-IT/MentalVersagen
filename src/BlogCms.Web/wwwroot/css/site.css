@@ -1516,6 +1516,17 @@ code { font-family: var(--mv-font-mono); }
   padding: 1rem;
 }
 
+/* Dezenter Pflicht-Hinweis: klein, blass und unaufdringlich, aber lesbar. */
+.mv-disclaimer {
+  padding: 0.4rem 0.6rem;
+  border-color: rgba(11, 12, 14, 0.15);
+  color: rgba(11, 12, 14, 0.5);
+  font-family: var(--mv-font-mono);
+  font-size: 0.66rem;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+
 /* ---------- Pagination ---------- */
 .pagination .page-link {
   background: var(--mv-bg-card);
