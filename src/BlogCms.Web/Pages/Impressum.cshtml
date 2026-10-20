@@ -1,7 +1,11 @@
 @page
 @model ImpressumModel
+@using BlogCms.Web.Seo
 @{
     ViewData["Title"] = "Impressum";
+    ViewData[SeoMeta.DescriptionKey] =
+        "Impressum und Anbieterkennzeichnung von Mentalversagen — verantwortlich "
+        + "für den Inhalt und die Kontaktdaten.";
     var header = new BlogCms.Web.Models.PageHeaderModel
     {
         Title = "Impressum",

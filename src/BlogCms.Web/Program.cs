@@ -18,6 +18,7 @@ using BlogCms.Web.Authorization;
 using BlogCms.Web.Configuration;
 using BlogCms.Web.Models.Api;
 using BlogCms.Web.Security;
+using BlogCms.Web.Seo;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -60,6 +61,10 @@ builder.Services.Configure<FeatureOptions>(
 // über Site__PublicBaseUrl (fest) oder über X-Forwarded-Proto/Host.
 builder.Services.Configure<SiteOptions>(
     builder.Configuration.GetSection(SiteOptions.SectionName));
+
+// SEO: Sitemap-Erzeugung und Zugriff auf den HttpContext fuer die URLs.
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<SitemapBuilder>();
 
 // Database: PostgreSQL via EF Core. The connection string is supplied through
 // configuration (appsettings.Development.json, environment variables such as
@@ -414,6 +419,51 @@ app.MapRazorPages()
 // Weiterleitung mit Erhalt aller Filter-Parameter (die Namen sind identisch).
 app.MapGet("/Articles", (HttpRequest request) =>
     Results.Redirect($"/Suche{request.QueryString.Value}", permanent: true));
+
+// ---------------------------------------------------------------------------
+// SEO: Sitemap und robots.txt
+// ---------------------------------------------------------------------------
+
+// Sitemap der öffentlich sichtbaren Inhalte (statische Seiten, veröffentlichte
+// Artikel, Linklisten). Wird bei jeder Anfrage frisch aus der Datenbank
+// erzeugt, damit neue Beiträge ohne Neustart sofort auffindbar sind.
+app.MapGet("/sitemap.xml", async (
+    HttpContext context,
+    SitemapBuilder sitemap,
+    IOptions<SiteOptions> siteOptions,
+    CancellationToken ct) =>
+{
+    var site = siteOptions.Value;
+    var baseUrl = site.HasPublicBaseUrl
+        ? site.NormalizedPublicBaseUrl
+        : $"{context.Request.Scheme}://{context.Request.Host}".TrimEnd('/');
+
+    var xml = await sitemap.BuildAsync(baseUrl, ct);
+    return Results.Content(xml, "application/xml; charset=utf-8");
+});
+
+// robots.txt: Sitemap verweisen, verwaltete Bereiche und Suchen ausschliessen.
+app.MapGet("/robots.txt", (HttpContext context, IOptions<SiteOptions> siteOptions) =>
+{
+    var site = siteOptions.Value;
+    var baseUrl = site.HasPublicBaseUrl
+        ? site.NormalizedPublicBaseUrl
+        : $"{context.Request.Scheme}://{context.Request.Host}".TrimEnd('/');
+
+    var sb = new System.Text.StringBuilder();
+    sb.AppendLine("User-agent: *");
+    sb.AppendLine("Allow: /");
+    sb.AppendLine("Disallow: /Account/");
+    sb.AppendLine("Disallow: /Admin/");
+    sb.AppendLine("Disallow: /Membership/");
+    sb.AppendLine("Disallow: /Moderation/");
+    sb.AppendLine("Disallow: /Donate/");
+    sb.AppendLine("Disallow: /Suche");
+    sb.AppendLine();
+    sb.AppendLine($"Sitemap: {baseUrl}/sitemap.xml");
+
+    return Results.Content(sb.ToString(), "text/plain; charset=utf-8");
+});
 
 // Ensure database is created/migrated, roles exist, and standard categories are seeded (idempotent).
 using (var scope = app.Services.CreateScope())

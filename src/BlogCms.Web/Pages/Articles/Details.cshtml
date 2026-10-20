@@ -1,9 +1,38 @@
 @page
 @using BlogCms.Domain.Enums
 @using BlogCms.Web.Content
+@using BlogCms.Web.Extensions
+@using BlogCms.Web.Seo
 @model BlogCms.Web.Pages.Articles.DetailsModel
 @{
     ViewData["Title"] = Model.Article?.Title ?? "Aktenstück";
+
+    // SEO-Metadaten: Beschreibung aus dem Excerpt, Titelbild als Vorschaubild,
+    // Veroeffentlichungsdatum fuer Article-JSON-LD.
+    if (Model.Article is not null)
+    {
+        var seoArticle = Model.Article;
+        var seoBase = ViewContext.HttpContext.GetPublicBaseUrl();
+        ViewData[SeoMeta.TypeKey] = "article";
+
+        var seoText = !string.IsNullOrWhiteSpace(seoArticle.Excerpt)
+            ? seoArticle.Excerpt
+            : seoArticle.Title;
+        ViewData[SeoMeta.DescriptionKey] = SeoMeta.Truncate(seoText, 300);
+
+        if (!string.IsNullOrWhiteSpace(Model.TitleImageUrl))
+        {
+            ViewData[SeoMeta.ImageKey] = Model.TitleImageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                ? Model.TitleImageUrl
+                : $"{seoBase}{Model.TitleImageUrl}";
+        }
+
+        if (seoArticle.PublishedAt is not null)
+        {
+            ViewData[SeoMeta.PublishedKey] =
+                seoArticle.PublishedAt.Value.ToUniversalTime().ToString("o");
+        }
+    }
 
     if (Model.Article is null)
     {

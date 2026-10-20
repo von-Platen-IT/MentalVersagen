@@ -1,7 +1,14 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @using BlogCms.Domain.Entities
+@using BlogCms.Web.Extensions
+@using BlogCms.Web.Seo
 @inject SignInManager<User> SignInManager
 @inject UserManager<User> UserManager
+@{
+    // Öffentlicher Ursprung für absolute URLs (Canonical, Open Graph, Sitemap).
+    var siteUrl = Context.GetPublicBaseUrl();
+    var seoTitle = ViewData["Title"] as string;
+}
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -9,6 +16,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark light" />
     <title>@ViewData["Title"] — Mentalversagen</title>
+    @* SEO-Metadaten: description, canonical, Open Graph, Twitter Card, JSON-LD *@
+    @SeoMeta.RenderHead(ViewData, Context, seoTitle, siteUrl)
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Oswald:wght@500;600;700&family=Special+Elite&display=swap" rel="stylesheet" />

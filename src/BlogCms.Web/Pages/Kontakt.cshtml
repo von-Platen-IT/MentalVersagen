@@ -1,7 +1,11 @@
 @page
 @model BlogCms.Web.Pages.KontaktModel
+@using BlogCms.Web.Seo
 @{
     ViewData["Title"] = "Kontakt";
+    ViewData[SeoMeta.DescriptionKey] =
+        "Fragen, Hinweise oder Feedback zu Mentalversagen — schreib mir direkt. "
+        + "Das Kontaktformular und die Antwortzeiten im Überblick.";
     var header = new BlogCms.Web.Models.PageHeaderModel
     {
         Title = "Kontakt",

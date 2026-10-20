@@ -1,7 +1,11 @@
 @page
 @model DatenschutzModel
+@using BlogCms.Web.Seo
 @{
     ViewData["Title"] = "Datenschutzerklärung";
+    ViewData[SeoMeta.DescriptionKey] =
+        "Datenschutzerklärung von Mentalversagen: welche Daten beim Besuch der Seite "
+        + "verarbeitet werden, welche nicht, und welche Rechte Betroffene haben.";
     var header = new BlogCms.Web.Models.PageHeaderModel
     {
         Title = "Datenschutzerklärung",
