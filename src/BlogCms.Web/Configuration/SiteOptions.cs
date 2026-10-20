@@ -41,7 +41,7 @@ public class SiteOptions
     public string[] KnownProxies { get; set; } = Array.Empty<string>();
 
     /// <summary>
-    /// Normalisierte öffentliche Basis-URL ohne Trailing-Slash, z. B.
+    /// Normalisierte öffentliche Basis-URL ohne Trailing-Slash, z.B.
     /// "https://mentalversagen.de". Leer, wenn keine (gültige) URL
     /// konfiguriert ist — dann wird der Request ausgewertet.
     /// </summary>
@@ -73,4 +73,38 @@ public class SiteOptions
 
     /// <summary>True, wenn eine gültige öffentliche Basis-URL konfiguriert ist.</summary>
     public bool HasPublicBaseUrl => NormalizedPublicBaseUrl.Length > 0;
+
+    /// <summary>
+    /// Der kanonische Host der Website: der Host OHNE "www."-Präfix.
+    ///
+    /// <para>Hintergrund: Die Site ist über "mentalversagen.de" und
+    /// "www.mentalversagen.de" erreichbar, beide liefern HTTP 200 mit
+    /// identischem Inhalt. Für Suchmaschinen ist das Doppel-Inhalt — sie
+    /// splitten die Linkkraft auf beide Varianten. Deshalb wird überall die
+    /// www-lose Variante als kanonisch ausgegeben (Canonical, og:url,
+    /// Sitemap). Der Host wird NICHT umgeschrieben — die Umleitung selbst
+    /// macht der Reverse Proxy; die Anwendung markiert nur die richtige
+    /// Variante als kanonisch.</para>
+    /// </summary>
+    public const string WwwPrefix = "www.";
+
+    /// <summary>
+    /// Entfernt ein "www."-Präfix vom Host. Wird auf den Host eines
+    /// Requests angewendet, um die kanonische Variante zu bestimmen.
+    /// </summary>
+    public static string StripWww(string host)
+    {
+        if (string.IsNullOrWhiteSpace(host))
+        {
+            return host;
+        }
+
+        var trimmed = host.Trim();
+        if (trimmed.StartsWith(WwwPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return trimmed[WwwPrefix.Length..];
+        }
+
+        return trimmed;
+    }
 }

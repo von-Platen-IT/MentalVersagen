@@ -1,8 +1,11 @@
 using System.Xml.Linq;
 using BlogCms.Domain.Entities;
 using BlogCms.Domain.Enums;
+using BlogCms.Web.Configuration;
+using BlogCms.Web.Extensions;
 using BlogCms.Web.Seo;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace BlogCms.Tests;
@@ -22,6 +25,13 @@ public class SeoTests
     private static HttpContext CreateContext(string path = "/", string? query = null)
     {
         var context = new DefaultHttpContext();
+
+        // Der Context braucht einen ServiceProvider, damit
+        // GetPublicBaseUrl die konfigurierten SiteOptions lesen kann.
+        var services = new ServiceCollection();
+        services.Configure<SiteOptions>(_ => { });
+        context.RequestServices = services.BuildServiceProvider();
+
         context.Request.Scheme = "https";
         context.Request.Host = new HostString("mentalversagen.de");
         context.Request.Path = path;
@@ -274,5 +284,38 @@ public class SeoTests
 
         Assert.True(result.Length <= 101);
         Assert.EndsWith("…", result);
+    }
+
+    // ------------------------------------------------------------------
+    // Kanonischer Host (www-Doppel-Inhalt)
+    // ------------------------------------------------------------------
+
+    [Theory]
+    [InlineData("www.mentalversagen.de", "mentalversagen.de")]
+    [InlineData("mentalversagen.de", "mentalversagen.de")]
+    [InlineData("WWW.mentalversagen.de", "mentalversagen.de")]
+    [InlineData("", "")]
+    public void StripWww_RemovesTheWwwPrefix(string host, string expected)
+    {
+        Assert.Equal(expected, SiteOptions.StripWww(host));
+    }
+
+    [Fact]
+    public void GetPublicBaseUrl_UsesTheHostWithoutWww()
+    {
+        // Regression: beide Hosts liefern HTTP 200. Ohne Normalisierung
+        // entstuende Doppel-Inhalt (Canonical zeigt auf die falsche Variante).
+        var context = CreateContext();
+        context.Request.Host = new HostString("www.mentalversagen.de");
+
+        Assert.Equal("https://mentalversagen.de", context.GetPublicBaseUrl());
+    }
+
+    [Fact]
+    public void GetPublicBaseUrl_KeepsThePlainHostUnchanged()
+    {
+        var context = CreateContext();
+
+        Assert.Equal("https://mentalversagen.de", context.GetPublicBaseUrl());
     }
 }

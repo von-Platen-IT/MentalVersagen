@@ -26,6 +26,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
 // Load local .env (KEY=VALUE) into process environment variables BEFORE the
@@ -427,18 +428,34 @@ app.MapGet("/Articles", (HttpRequest request) =>
 // Sitemap der öffentlich sichtbaren Inhalte (statische Seiten, veröffentlichte
 // Artikel, Linklisten). Wird bei jeder Anfrage frisch aus der Datenbank
 // erzeugt, damit neue Beiträge ohne Neustart sofort auffindbar sind.
+//
+// Gecacht wird das Ergebnis kurz (5 Minuten): Suchmaschinen-Crawler fragen
+// die Sitemap mehrfach ab, und jeder Abruf wäre sonst eine Datenbankabfrage.
+// Der Cache ist im Arbeitsspeicher — nach einem Neustart ist er leer, was
+// unkritisch ist, weil dann ohnehin neu aufgebaut wird.
+const string SitemapCacheKeyPrefix = "seo:sitemap:";
+
 app.MapGet("/sitemap.xml", async (
     HttpContext context,
     SitemapBuilder sitemap,
+    IMemoryCache cache,
     IOptions<SiteOptions> siteOptions,
     CancellationToken ct) =>
 {
     var site = siteOptions.Value;
     var baseUrl = site.HasPublicBaseUrl
         ? site.NormalizedPublicBaseUrl
-        : $"{context.Request.Scheme}://{context.Request.Host}".TrimEnd('/');
+        : $"{context.Request.Scheme}://{SiteOptions.StripWww(context.Request.Host.Value ?? string.Empty)}".TrimEnd('/');
+
+    var cacheKey = SitemapCacheKeyPrefix + baseUrl;
+    if (cache.TryGetValue<string>(cacheKey, out var cached) && cached is not null)
+    {
+        return Results.Content(cached, "application/xml; charset=utf-8");
+    }
 
     var xml = await sitemap.BuildAsync(baseUrl, ct);
+    cache.Set(cacheKey, xml, TimeSpan.FromMinutes(5));
+
     return Results.Content(xml, "application/xml; charset=utf-8");
 });
 
@@ -448,7 +465,7 @@ app.MapGet("/robots.txt", (HttpContext context, IOptions<SiteOptions> siteOption
     var site = siteOptions.Value;
     var baseUrl = site.HasPublicBaseUrl
         ? site.NormalizedPublicBaseUrl
-        : $"{context.Request.Scheme}://{context.Request.Host}".TrimEnd('/');
+        : $"{context.Request.Scheme}://{SiteOptions.StripWww(context.Request.Host.Value ?? string.Empty)}".TrimEnd('/');
 
     var sb = new System.Text.StringBuilder();
     sb.AppendLine("User-agent: *");

@@ -5,7 +5,9 @@
 @using BlogCms.Web.Seo
 @model IndexModel
 @{
-    ViewData["Title"] = "Mentalversagen";
+    // Titel der Seite. Das Layout haengt den Seitennamen an - "Mentalversagen"
+    // als Seitentitel wuerde sonst "Mentalversagen — Mentalversagen" entstehen.
+    ViewData["Title"] = "Verschwörungen & Geheimnisse";
     ViewData[SeoMeta.TypeKey] = "website";
     ViewData[SeoMeta.DescriptionKey] =
         "Aufzeichnungen eines Verschwörungstheoretikers: unabhängige Recherche zu " +

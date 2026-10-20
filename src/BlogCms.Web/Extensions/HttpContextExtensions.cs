@@ -32,14 +32,20 @@ public static class HttpContextExtensions
     /// <summary>
     /// Öffentliche Basis-URL der Anwendung ohne Trailing-Slash, z. B.
     /// "https://mentalversagen.de". Basis aller absoluten URLs, die nach außen
-    /// gehen (RSS-Feed, Bestätigungs- und Abmelde-Links in E-Mails).
+    /// gehen (RSS-Feed, Bestätigungs- und Abmelde-Links in E-Mails, Canonical,
+    /// Open Graph und die Sitemap).
     ///
-    /// Reihenfolge:
+    /// <para>Reihenfolge:
     /// 1. <see cref="SiteOptions.PublicBaseUrl"/>, wenn konfiguriert — die
     ///    zuverlässigste Variante, unabhängig von Proxy und Host-Header.
     /// 2. sonst Schema + Host des Requests. Hinter einem Reverse Proxy ist das
     ///    nur korrekt, wenn die Forwarded-Header ausgewertet werden
-    ///    (<c>app.UseForwardedHeaders()</c>, siehe <see cref="SiteOptions"/>).
+    ///    (<c>app.UseForwardedHeaders()</c>, siehe <see cref="SiteOptions"/>).</para>
+    ///
+    /// <para><b>Kanonische Host-Variante:</b> Ein "www."-Präfix wird
+    /// entfernt. Die Site ist über beide Varianten erreichbar; für
+    /// Suchmaschinen muss aber genau eine als kanonisch gelten, sonst
+    /// entsteht Doppel-Inhalt.</para>
     /// </summary>
     public static string GetPublicBaseUrl(this HttpContext context)
     {
@@ -50,6 +56,7 @@ public static class HttpContextExtensions
             return options.NormalizedPublicBaseUrl;
         }
 
-        return $"{context.Request.Scheme}://{context.Request.Host}".TrimEnd('/');
+        var host = SiteOptions.StripWww(context.Request.Host.Value ?? string.Empty);
+        return $"{context.Request.Scheme}://{host}".TrimEnd('/');
     }
 }
