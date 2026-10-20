@@ -1,0 +1,104 @@
+@page
+@model BlogCms.Web.Pages.KontaktModel
+@{
+    ViewData["Title"] = "Kontakt";
+    var header = new BlogCms.Web.Models.PageHeaderModel
+    {
+        Slide = 1,
+        Title = "Kontakt",
+        Sub = "Fragen, Hinweise oder Feedback — schreib mir direkt."
+    };
+}
+
+<partial name="_PageHeader" model="header" />
+
+<div class="mv-doc mt-4">
+    <p>
+        Du erreichst mich per E-Mail an
+        <a href="mailto:@Model.ToAddress">@Model.ToAddress</a>.
+        Alternativ kannst du das folgende Formular nutzen — die Nachricht landet
+        direkt in meinem Postfach, und ich kann dir antworten.
+    </p>
+
+    @if (Model.Message is not null)
+    {
+        <div class="mv-teaser mb-3 @(Model.MessageIsError ? "mv-text-danger" : null)">
+            @Model.Message
+        </div>
+    }
+
+    <div asp-validation-summary="ModelOnly" class="mv-text-danger"></div>
+
+    <form method="post" class="mv-form--narrow mt-3">
+        <div class="mb-3">
+            <label asp-for="Input.Name" class="form-label"></label>
+            <input asp-for="Input.Name" class="form-control" autocomplete="name" />
+            <span asp-validation-for="Input.Name" class="mv-text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Input.Email" class="form-label"></label>
+            <input asp-for="Input.Email" class="form-control" autocomplete="email" />
+            <span asp-validation-for="Input.Email" class="mv-text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Input.Subject" class="form-label"></label>
+            <input asp-for="Input.Subject" class="form-control" autocomplete="off" />
+            <span asp-validation-for="Input.Subject" class="mv-text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Input.Message" class="form-label"></label>
+            <textarea asp-for="Input.Message" class="form-control" rows="6"></textarea>
+            <span asp-validation-for="Input.Message" class="mv-text-danger"></span>
+        </div>
+
+        <div class="form-check mb-3">
+            <input asp-for="Input.PrivacyAccepted" class="form-check-input" />
+            <label asp-for="Input.PrivacyAccepted" class="form-check-label">
+                Ich habe die <a asp-page="/Datenschutz">Datenschutzerklärung</a> gelesen
+                und stimme der Verarbeitung meiner Angaben zur Bearbeitung der Anfrage zu.
+            </label>
+            <span asp-validation-for="Input.PrivacyAccepted" class="mv-text-danger d-block"></span>
+        </div>
+
+        @*
+            Sicherheitsabfrage: Die Aufgabe kommt vom Server, die erwartete Antwort
+            steckt ausschließlich im signierten Token und wird immer serverseitig
+            geprüft. Das JavaScript verbessert nur die Bedienung.
+        *@
+        <div class="mv-captcha mb-3"
+             data-captcha
+             data-captcha-endpoint="@Url.Page("/Kontakt", "Captcha")">
+            <label class="form-label" for="CaptchaAnswer">Sicherheitsabfrage</label>
+            <p class="mv-captcha__question" id="captcha-question" aria-live="polite">
+                Wie viel ist <strong data-captcha-question>@Model.CaptchaQuestion</strong>?
+            </p>
+            <div class="mv-captcha__row">
+                <input asp-for="CaptchaAnswer" class="form-control" inputmode="numeric"
+                       autocomplete="off" aria-describedby="captcha-hint" />
+                <button type="button" class="btn btn-outline-secondary" data-captcha-refresh>
+                    Neue Aufgabe
+                </button>
+            </div>
+            <input asp-for="CaptchaToken" type="hidden" />
+            <p class="form-text" id="captcha-hint" data-captcha-hint>
+                Bitte das Ergebnis eintragen — das schützt vor automatischen Nachrichten.
+            </p>
+            <span asp-validation-for="CaptchaAnswer" class="mv-text-danger"></span>
+        </div>
+
+        @* Honeypot: für Menschen unsichtbar, Bots füllen es aus. *@
+        <div class="mv-honeypot" aria-hidden="true">
+            <label for="ExtraField">Bitte nicht ausfüllen</label>
+            <input asp-for="ExtraField" id="ExtraField" type="text" tabindex="-1" autocomplete="off" />
+        </div>
+
+        <button type="submit" class="btn btn-primary" data-captcha-submit>Nachricht senden</button>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

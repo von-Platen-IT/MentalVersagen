@@ -23,6 +23,7 @@ Sie ergänzt die bestehenden Dokumente im Projekt-Root:
 | [`04-mailversand.md`](04-mailversand.md) | Umsetzungsvorgabe für den echten SMTP-Versand (ersetzt den Dev-Platzhalter, der auf Produktion die Registrierung abbrechen lässt) |
 | [`05-management-api.md`](05-management-api.md) | Management-API: Artikel per API anlegen/bearbeiten/löschen (API-Key, Swagger/OpenAPI, Nutzung mit KI-Tools) |
 | [`06-lizenzen-und-pakete.md`](06-lizenzen-und-pakete.md) | Lizenz-Inventar und verbindliche Paketregeln (nur freie Lizenzen) |
+| [`07-kontaktformular.md`](07-kontaktformular.md) | Kontaktformular: Konfiguration, Spam-Schutz und Mailversand |
 
 ## Schnellnavigation
 
@@ -41,6 +42,7 @@ Sie ergänzt die bestehenden Dokumente im Projekt-Root:
 | Mitgliedschaft (Premium) | `/Membership` |
 | Spenden | `/Donate` |
 | Newsletter | `/Newsletter/Subscribe` |
+| Kontakt | `/Kontakt` |
 | **Management-API (Artikel per API)** | `/api/v1/articles` (Auth: Header `X-Api-Key`) |
 | OpenAPI-Spec (für KI-Tools) | `/swagger/v1/swagger.json` |
 | Swagger UI (interaktiv) | `/swagger` (in Development bzw. mit `Api__SwaggerUiEnabled=true`) |

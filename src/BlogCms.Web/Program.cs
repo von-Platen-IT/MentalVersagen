@@ -5,6 +5,7 @@ using BlogCms.Domain.Enums;
 using BlogCms.Infrastructure.Activity;
 using BlogCms.Infrastructure.Captcha;
 using BlogCms.Infrastructure.Comments;
+using BlogCms.Infrastructure.Contact;
 using BlogCms.Infrastructure.Content;
 using BlogCms.Infrastructure.Data;
 using BlogCms.Infrastructure.Email;
@@ -233,6 +234,12 @@ builder.Services.AddScoped<ICaptchaService, DataProtectionCaptchaService>();
 // Drosselung gegen Massenregistrierungen: zählt nur die tatsächlichen
 // Registrierungsversuche (POST) pro IP-Adresse — nicht die Seitenaufrufe.
 builder.Services.AddSingleton<IRegistrationThrottle, MemoryCacheRegistrationThrottle>();
+
+// Kontaktformular: Zieladresse und Drosselung sind konfigurierbar. Die
+// Drosselung zählt nur tatsächliche Sendeversuche pro IP-Adresse.
+builder.Services.Configure<ContactOptions>(
+    builder.Configuration.GetSection(ContactOptions.SectionName));
+builder.Services.AddSingleton<IContactThrottle, MemoryCacheContactThrottle>();
 
 // Drosselung der Passwort-Reset-Anfragen: verhindert Mail-Flooding und das
 // schnelle Durchprobieren von E-Mail-Adressen über das Formular.

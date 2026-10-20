@@ -30,7 +30,8 @@ public sealed class DevEmailSender : IAppEmailSender
         string toEmail,
         string subject,
         string htmlBody,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string? replyTo = null)
     {
         try
         {
@@ -39,11 +40,15 @@ public sealed class DevEmailSender : IAppEmailSender
             var fileName = $"{DateTime.UtcNow:yyyyMMdd_HHmmss_fff}_{Guid.NewGuid():N}.html";
             var filePath = Path.Combine(_outputDirectory, fileName);
 
+            var replyToComment = string.IsNullOrWhiteSpace(replyTo)
+                ? string.Empty
+                : $"<!-- Reply-To: {replyTo} -->\n                ";
+
             var document =
                 $"""
                 <!-- DEV EMAIL - not actually sent -->
                 <!-- To: {toEmail} -->
-                <!-- Subject: {subject} -->
+                {replyToComment}<!-- Subject: {subject} -->
                 <!DOCTYPE html>
                 <html lang="en">
                 <head><meta charset="utf-8" /><title>{System.Net.WebUtility.HtmlEncode(subject)}</title></head>

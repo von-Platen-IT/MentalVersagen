@@ -8,9 +8,15 @@ namespace BlogCms.Infrastructure.Email;
 /// </summary>
 public interface IAppEmailSender
 {
+    /// <summary>
+    /// Sends an HTML e-mail. <paramref name="replyTo"/> is optional and lets
+    /// forms (e.g. the contact form) route replies to the visitor's address
+    /// while the technical sender stays the configured From address.
+    /// </summary>
     Task SendAsync(
         string toEmail,
         string subject,
         string htmlBody,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        string? replyTo = null);
 }

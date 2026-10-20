@@ -33,13 +33,22 @@ public sealed class SmtpEmailSender : IAppEmailSender
         string toEmail,
         string subject,
         string htmlBody,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string? replyTo = null)
     {
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress(
             _options.FromDisplayName,
             _options.FromAddress));
         message.To.Add(MailboxAddress.Parse(toEmail));
+
+        // Kontaktanfragen sollen direkt an den Absender beantwortet werden
+        // können, ohne die technische From-Adresse zu verändern.
+        if (!string.IsNullOrWhiteSpace(replyTo))
+        {
+            message.ReplyTo.Add(MailboxAddress.Parse(replyTo));
+        }
+
         message.Subject = subject;
         message.Body = new BodyBuilder { HtmlBody = htmlBody }.ToMessageBody();
 
