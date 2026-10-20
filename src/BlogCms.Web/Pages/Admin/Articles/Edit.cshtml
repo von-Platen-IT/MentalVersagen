@@ -4,7 +4,6 @@
     ViewData["Title"] = "Akte bearbeiten";
     var header = new BlogCms.Web.Models.PageHeaderModel
     {
-        Slide = 2,
         Title = "Akte bearbeiten",
         Sub = Model.Input.Title,
         Meta = "ARCHIV EDITION"
@@ -51,7 +50,7 @@
                         </form>
 
                         <div class="mv-admin-media__snippet">
-                            <input type="text" readonly value="@markdown" aria-label="Markdown-Snippet" onclick="this.select()" />
+                            <input type="text" readonly value="@markdown" aria-label="Markdown-Snippet" onclick="this.select()" class="form-control form-control-sm" />
                             <button type="button" class="btn btn-sm btn-outline-secondary" data-copy>Markdown kopieren</button>
                         </div>
 

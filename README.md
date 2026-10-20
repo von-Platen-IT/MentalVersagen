@@ -16,6 +16,7 @@ Dieses Verzeichnis enthält das Pflichtenheft für das selbst programmierte CMS 
 | `04-Monetarisierung.md` | Membership/Paywall, Zugriffsstufen, Stripe, Spenden, Newsletter |
 | `05-Benutzerverwaltung-Auth.md` | Rollen (Reader/Author/Premium/Moderator/Admin), Auth, Rechte |
 | `docs/` | Praxisnahe Anleitungen (Rollen/Admin, Admin-Bereich, Blog-Nutzung) — siehe [`docs/README.md`](docs/README.md) |
+| `API_Funktion_Mentalversagen.md` | **Ausführliche Anleitung zur Management-API** — Zweck, Server-Konfiguration, Client-Tools, Skripte (Python/PowerShell), KI-Agenten (Hermes, MCP) |
 
 ## Arbeitsweise für Coding Agents
 

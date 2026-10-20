@@ -1,5 +1,6 @@
 using BlogCms.Domain.Entities;
 using BlogCms.Infrastructure.Payments;
+using BlogCms.Web.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -43,8 +44,11 @@ public class CheckoutModel : PageModel
             ? _options.PlanIdYearly
             : _options.PlanIdMonthly;
 
-        var successUrl = Url.Page("/Membership/CheckoutComplete", null, null, Request.Scheme)!;
-        var cancelUrl = Url.Page("/Unterstuetzer/Index", null, null, Request.Scheme)!;
+        // Return-URLs für den Zahlungsanbieter: öffentliche Basis-URL
+        // (Site__PublicBaseUrl oder Schema/Host inkl. X-Forwarded-Proto/Host).
+        var baseUrl = HttpContext.GetPublicBaseUrl();
+        var successUrl = baseUrl + Url.Page("/Membership/CheckoutComplete", null, null);
+        var cancelUrl = baseUrl + Url.Page("/Unterstuetzer/Index", null, null);
 
         var session = await _stripeService.CreateSubscriptionCheckoutAsync(
             user.Id, user.Email, planId, successUrl, cancelUrl, cancellationToken);

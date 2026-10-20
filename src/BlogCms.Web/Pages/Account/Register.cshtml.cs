@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using BlogCms.Web.Extensions;
 using BlogCms.Domain.Entities;
 using BlogCms.Domain.Enums;
 using BlogCms.Infrastructure.Captcha;
@@ -144,11 +145,12 @@ public class RegisterModel : PageModel
         // Send the double-opt-in style confirmation link. The account cannot be
         // used for commenting/subscribing until EmailConfirmed is true.
         var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-        var callbackUrl = Url.Page(
+        // Absolute URL für die E-Mail: öffentliche Basis-URL (Site__PublicBaseUrl
+        // oder Schema/Host inkl. X-Forwarded-Proto/Host) + relativer Seitenpfad.
+        var callbackUrl = HttpContext.GetPublicBaseUrl() + Url.Page(
             "/Account/ConfirmEmail",
             pageHandler: null,
-            values: new { userId = user.Id, code },
-            protocol: Request.Scheme)!;
+            values: new { userId = user.Id, code });
 
         var html =
             $"""

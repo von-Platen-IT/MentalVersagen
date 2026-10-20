@@ -1219,6 +1219,41 @@ code { font-family: var(--mv-font-mono); }
 }
 
 .form-control::placeholder { color: var(--mv-text-dim); }
+
+/* ---------- Eingabefelder: helle Schrift statt geerbter Papier-Schrift ----------
+ * Native Bedienelemente erben in den hellen Papierflächen (.mv-doc) die
+ * schwarze Papier-Schrift (--mv-ink). Der Browser zeichnet sie wegen
+ * `color-scheme: dark` (html) aber mit dunkelgrauem Feldgrund — Ergebnis:
+ * schwarzer Text auf dunkelgrauem Grund, unlesbar.
+ *
+ * Diese Grundregel setzt daher für alle Text-Felder eine helle Schrift.
+ * Die Spezifität (0,1,1) bleibt absichtlich niedrig: Die hellen Papierfelder
+ * der Akte-Verwaltung (.mv-create .form-control in article-create.css, 0,2,0)
+ * müssen weiterhin gewinnen — dort bleibt die Schrift dunkel auf weißem Feld.
+ */
+input:not([type="hidden"]),
+select,
+textarea {
+  color: var(--mv-text);
+}
+
+/* Datei-Auswahl: dunkelgrauer Feldgrund, helle Schrift, lesbarer Auswahl-Knopf. */
+input[type="file"] {
+  background-color: var(--mv-bg-card);
+  color: var(--mv-text);
+  border: 1px solid var(--mv-border);
+}
+
+input[type="file"]::file-selector-button {
+  background: var(--mv-bg-elev);
+  color: var(--mv-text);
+  border: 1px solid var(--mv-border);
+  border-radius: 2px;
+  margin-right: 0.75rem;
+  padding: 0.35rem 0.7rem;
+  font-family: var(--mv-font-body);
+  font-size: 0.85rem;
+}
 .form-label {
   font-family: var(--mv-font-mono);
   font-size: 0.72rem;
@@ -1283,6 +1318,9 @@ code { font-family: var(--mv-font-mono); }
   width: 1px;
   height: 1px;
   overflow: hidden;
+  /* Auch dieses Feld darf die schwarze Papier-Schrift nicht erben. */
+  color: var(--mv-text);
+  background: var(--mv-bg-card);
 }
 
 /* ---------- Filter-Panel (Akten) ---------- */
@@ -1448,6 +1486,45 @@ code { font-family: var(--mv-font-mono); }
 .mv-teaser button.btn-outline-secondary {
   color: var(--mv-ink);
   border-color: rgba(11, 12, 14, 0.5);
+}
+/*
+ * Dunkle Kästen auf Papierflächen — Aktenkarten (.mv-case), Sicherheitsabfrage
+ * (Captcha) und Bilderverwaltung der Akte-Bearbeitung (.mv-admin-media) —
+ * würden von den Papier-Regeln oben die schwarze Papier-Schrift erben und
+ * stünden damit schwarz auf dunkelgrauem Grund (unlesbar). In diesen Kästen
+ * gilt helle Schrift, die Ränder und Buttonfarben werden entsprechend
+ * aufgehellt.
+ */
+.mv-doc .mv-case,
+.mv-doc .mv-case h1,
+.mv-doc .mv-case h2,
+.mv-doc .mv-case h3,
+.mv-doc .mv-case h4,
+.mv-doc .mv-case p,
+.mv-doc .mv-case li,
+.mv-doc .mv-case .meta-mono {
+  color: var(--mv-text);
+}
+.mv-doc .mv-case a { color: var(--mv-red-text); }
+
+.mv-doc .mv-captcha button.btn-outline-secondary,
+.mv-doc .mv-admin-media button.btn-outline-secondary,
+.mv-doc .mv-case button.btn-outline-secondary {
+  color: var(--mv-text);
+  border-color: var(--mv-text-dim);
+}
+.mv-doc .mv-captcha button.btn-outline-secondary:hover,
+.mv-doc .mv-admin-media button.btn-outline-secondary:hover,
+.mv-doc .mv-case button.btn-outline-secondary:hover {
+  background: var(--mv-text);
+  color: var(--mv-ink);
+  border-color: var(--mv-text);
+}
+.mv-doc .mv-captcha button.btn-outline-danger,
+.mv-doc .mv-admin-media button.btn-outline-danger,
+.mv-doc .mv-case button.btn-outline-danger {
+  color: var(--mv-red-text);
+  border-color: var(--mv-red-text);
 }
 /*
  * Danger-Outline auf Papier: dunkelroter Ton (≥ 4,5:1), damit die Buttons

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using BlogCms.Web.Extensions;
 using BlogCms.Domain.Entities;
 using BlogCms.Infrastructure.Email;
 using BlogCms.Infrastructure.Newsletter;
@@ -58,8 +59,11 @@ public class SubscribeModel : PageModel
             return Page();
         }
 
-        var confirmUrl = Url.Page("/Newsletter/Confirm", null, new { token = result.Token }, Request.Scheme)!;
-        var unsubscribeUrl = Url.Page("/Newsletter/Unsubscribe", null, new { token = result.Token }, Request.Scheme)!;
+        // Absolute Links für die E-Mail: öffentliche Basis-URL (Site__PublicBaseUrl
+        // oder Schema/Host inkl. X-Forwarded-Proto/Host) + relativer Seitenpfad.
+        var baseUrl = HttpContext.GetPublicBaseUrl();
+        var confirmUrl = baseUrl + Url.Page("/Newsletter/Confirm", null, new { token = result.Token });
+        var unsubscribeUrl = baseUrl + Url.Page("/Newsletter/Unsubscribe", null, new { token = result.Token });
 
         var html =
             $"""

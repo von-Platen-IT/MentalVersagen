@@ -13,8 +13,16 @@
 }
 
 /* ---------- Eingabefelder ---------- */
+/*
+ * Die Grundregel in site.css setzt für alle Eingabefelder eine helle Schrift
+ * (damit auf dunklem Grund kein schwarzer Text steht). Auf der hellen
+ * Papierfläche der Akte-Verwaltung gilt ausdrücklich das Gegenteil:
+ * dunkle Schrift auf weißem Feld. Die Datei-Auswahl wird hier gesondert
+ * genannt, damit sie trotz der dunkleren Grundregel hell bleibt.
+ */
 .mv-create .form-control,
-.mv-create .form-select {
+.mv-create .form-select,
+.mv-create .form-control[type="file"] {
   background: #fff;
   color: var(--mv-ink);
   border: 1px solid rgba(11, 12, 14, 0.25);

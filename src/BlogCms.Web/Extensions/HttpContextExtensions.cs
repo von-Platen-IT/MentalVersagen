@@ -1,3 +1,6 @@
+using BlogCms.Web.Configuration;
+using Microsoft.Extensions.Options;
+
 namespace BlogCms.Web.Extensions;
 
 /// <summary>
@@ -24,5 +27,29 @@ public static class HttpContextExtensions
         }
 
         return context.Connection.RemoteIpAddress?.ToString();
+    }
+
+    /// <summary>
+    /// Öffentliche Basis-URL der Anwendung ohne Trailing-Slash, z. B.
+    /// "https://mentalversagen.de". Basis aller absoluten URLs, die nach außen
+    /// gehen (RSS-Feed, Bestätigungs- und Abmelde-Links in E-Mails).
+    ///
+    /// Reihenfolge:
+    /// 1. <see cref="SiteOptions.PublicBaseUrl"/>, wenn konfiguriert — die
+    ///    zuverlässigste Variante, unabhängig von Proxy und Host-Header.
+    /// 2. sonst Schema + Host des Requests. Hinter einem Reverse Proxy ist das
+    ///    nur korrekt, wenn die Forwarded-Header ausgewertet werden
+    ///    (<c>app.UseForwardedHeaders()</c>, siehe <see cref="SiteOptions"/>).
+    /// </summary>
+    public static string GetPublicBaseUrl(this HttpContext context)
+    {
+        var options = context.RequestServices.GetService<IOptions<SiteOptions>>()?.Value;
+
+        if (options is not null && options.HasPublicBaseUrl)
+        {
+            return options.NormalizedPublicBaseUrl;
+        }
+
+        return $"{context.Request.Scheme}://{context.Request.Host}".TrimEnd('/');
     }
 }

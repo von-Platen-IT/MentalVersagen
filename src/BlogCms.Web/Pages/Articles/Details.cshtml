@@ -17,7 +17,6 @@
     var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
     var header = new BlogCms.Web.Models.PageHeaderModel
     {
-        Slide = 3,
         Title = article.Title,
         Meta = $"ARCHIV {article.Category.ToString().ToUpperInvariant()} · {article.PublishedAt?.ToString("dd.MM.yyyy") ?? "–"}"
     };

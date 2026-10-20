@@ -3,6 +3,7 @@ using System.Xml.Linq;
 using BlogCms.Infrastructure.Content;
 using BlogCms.Infrastructure.Media;
 using BlogCms.Web.Content;
+using BlogCms.Web.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BlogCms.Web.Controllers;
@@ -29,7 +30,10 @@ public class FeedController : Controller
     {
         var (items, _) = await _articles.GetPublishedAsync(1, MaxItems, cancellationToken: cancellationToken);
 
-        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+        // Öffentliche Basis-URL: feste Konfiguration (Site__PublicBaseUrl) oder
+        // Schema/Host des Requests inkl. X-Forwarded-Proto/Host. So zeigen die
+        // Item-Links auch hinter einem Reverse-Proxy auf die echte Adresse.
+        var baseUrl = HttpContext.GetPublicBaseUrl();
         XNamespace atom = "http://www.w3.org/2005/Atom";
 
         var channel = new XElement("channel",

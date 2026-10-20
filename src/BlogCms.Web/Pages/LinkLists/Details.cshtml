@@ -6,7 +6,6 @@
         ViewData["Title"] = "Linkliste nicht gefunden";
         var notFoundHeader = new BlogCms.Web.Models.PageHeaderModel
         {
-            Slide = 1,
             Title = "Linkliste nicht gefunden"
         };
         <partial name="_PageHeader" model="notFoundHeader" />
@@ -17,7 +16,6 @@
 
     var header = new BlogCms.Web.Models.PageHeaderModel
     {
-        Slide = 1,
         Title = Model.LinkList.Title,
         Sub = Model.LinkList.Description,
         Meta = $"KURATEN {Model.Articles.Count} AKTE(N)"

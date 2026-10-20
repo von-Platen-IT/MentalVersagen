@@ -44,6 +44,12 @@ services:
       # Feature-Flags aus der .env (UI-Sichtbarkeit von Monetarisierung/Login).
       Features__MonetizationEnabled: ${Features__MonetizationEnabled:-true}
       Features__LoginEnabled: ${Features__LoginEnabled:-true}
+      # Öffentliche Adresse der Anwendung: leere Angabe = aus dem Request
+      # ableiten (inkl. X-Forwarded-Proto/Host des Reverse Proxys). Für eine
+      # feste Adresse in der .env setzen, z. B.
+      # Site__PublicBaseUrl=https://mentalversagen.de
+      Site__PublicBaseUrl: ${Site__PublicBaseUrl:-}
+      Site__UseForwardedHeaders: ${Site__UseForwardedHeaders:-true}
     ports:
       - "${APP_PORT:-5080}:8080"
     volumes:

@@ -1,15 +1,17 @@
 @page
 @model BlogCms.Web.Pages.Newsletter.SubscribeModel
+@using BlogCms.Web.Extensions
 @{
     ViewData["Title"] = "Archivpost";
     var header = new BlogCms.Web.Models.PageHeaderModel
     {
-        Slide = 2,
         Title = "Archivpost",
         Sub = "Neue Beiträge per E-Mail oder RSS-Feed – du entscheidest, wie sie zu dir kommen."
     };
 
-    var feedUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}/feed";
+    // Öffentliche Feed-Adresse: feste Konfiguration (Site__PublicBaseUrl) oder
+    // Schema/Host des Requests inkl. X-Forwarded-Proto/Host.
+    var feedUrl = $"{HttpContext.GetPublicBaseUrl()}/feed";
 }
 
 <partial name="_PageHeader" model="header" />

@@ -1,0 +1,98 @@
+[
+  {
+    "quelle": "01_S1_1_r07_c08_bg.jpg",
+    "original_groesse": "3136 x 1344",
+    "neu_groesse": "2560 x 1097",
+    "original_kb": 998,
+    "jpeg_kb": 311,
+    "webp_kb": 181
+  },
+  {
+    "quelle": "02_S1_1_r02_c05_bg.jpg",
+    "original_groesse": "3136 x 1344",
+    "neu_groesse": "2560 x 1097",
+    "original_kb": 1444,
+    "jpeg_kb": 437,
+    "webp_kb": 391
+  },
+  {
+    "quelle": "03_S1_1_r03_c03_bg.jpg",
+    "original_groesse": "3136 x 1344",
+    "neu_groesse": "2560 x 1097",
+    "original_kb": 1161,
+    "jpeg_kb": 441,
+    "webp_kb": 361
+  },
+  {
+    "quelle": "04_S1_1_r04_c01_bg.jpg",
+    "original_groesse": "3136 x 1344",
+    "neu_groesse": "2560 x 1097",
+    "original_kb": 1311,
+    "jpeg_kb": 378,
+    "webp_kb": 306
+  },
+  {
+    "quelle": "05_S1_1_r07_c09_bg.jpg",
+    "original_groesse": "3136 x 1344",
+    "neu_groesse": "2560 x 1097",
+    "original_kb": 1313,
+    "jpeg_kb": 457,
+    "webp_kb": 329
+  },
+  {
+    "quelle": "06_S2_2_r03_c01_bg.jpg",
+    "original_groesse": "3136 x 1344",
+    "neu_groesse": "2560 x 1097",
+    "original_kb": 1047,
+    "jpeg_kb": 297,
+    "webp_kb": 173
+  },
+  {
+    "quelle": "07_S2_2_r03_c02_bg.jpg",
+    "original_groesse": "3136 x 1344",
+    "neu_groesse": "2560 x 1097",
+    "original_kb": 1019,
+    "jpeg_kb": 314,
+    "webp_kb": 198
+  },
+  {
+    "quelle": "08_S2_2_r04_c02_bg.jpg",
+    "original_groesse": "3136 x 1344",
+    "neu_groesse": "2560 x 1097",
+    "original_kb": 1389,
+    "jpeg_kb": 424,
+    "webp_kb": 333
+  },
+  {
+    "quelle": "13_S1_1_r02_c04_bg.jpg",
+    "original_groesse": "3136 x 1344",
+    "neu_groesse": "2560 x 1097",
+    "original_kb": 1450,
+    "jpeg_kb": 438,
+    "webp_kb": 388
+  },
+  {
+    "quelle": "15_S1_1_r03_c05_bg.jpg",
+    "original_groesse": "3136 x 1344",
+    "neu_groesse": "2560 x 1097",
+    "original_kb": 779,
+    "jpeg_kb": 307,
+    "webp_kb": 209
+  },
+  {
+    "quelle": "18_S1_1_r05_c08_bg.jpg",
+    "original_groesse": "3136 x 1344",
+    "neu_groesse": "2560 x 1097",
+    "original_kb": 1523,
+    "jpeg_kb": 489,
+    "webp_kb": 414
+  },
+  {
+    "quelle": "20_S1_1_r05_c11_bg.jpg",
+    "original_groesse": "3136 x 1344",
+    "neu_groesse": "2560 x 1097",
+    "original_kb": 746,
+    "jpeg_kb": 305,
+    "webp_kb": 171
+  }
+]

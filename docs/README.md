@@ -24,6 +24,8 @@ Sie ergänzt die bestehenden Dokumente im Projekt-Root:
 | [`05-management-api.md`](05-management-api.md) | Management-API: Artikel per API anlegen/bearbeiten/löschen (API-Key, Swagger/OpenAPI, Nutzung mit KI-Tools) |
 | [`06-lizenzen-und-pakete.md`](06-lizenzen-und-pakete.md) | Lizenz-Inventar und verbindliche Paketregeln (nur freie Lizenzen) |
 | [`07-kontaktformular.md`](07-kontaktformular.md) | Kontaktformular: Konfiguration, Spam-Schutz und Mailversand |
+| [`08-oeffentliche-basis-url.md`](08-oeffentliche-basis-url.md) | Öffentliche Adresse der Anwendung: RSS-Feed und E-Mail-Links korrekt hinter Reverse Proxy und in Produktion |
+| [`../API_Funktion_Mentalversagen.md`](../API_Funktion_Mentalversagen.md) | **Ausführliche Anleitung zur Management-API** — Zweck, Webserver-Konfiguration, Client-Tools, Skripte (Python/PowerShell), KI-Agenten (Hermes & MCP) |
 
 ## Schnellnavigation
 

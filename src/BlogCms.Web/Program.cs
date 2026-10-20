@@ -20,6 +20,7 @@ using BlogCms.Web.Models.Api;
 using BlogCms.Web.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -52,6 +53,13 @@ builder.Services.Configure<ApiOptions>(
 // (Sektion "Features" bzw. z. B. Features__MonetizationEnabled / Features__LoginEnabled).
 builder.Services.Configure<FeatureOptions>(
     builder.Configuration.GetSection(FeatureOptions.SectionName));
+
+// Öffentliche Adresse der Anwendung: Basis aller absoluten URLs, die nach außen
+// gehen (RSS-Feed, Bestätigungs-/Abmelde-Links in E-Mails). Hinter einem
+// Reverse-Proxy liefert der Request sonst nur den internen Host — entweder
+// über Site__PublicBaseUrl (fest) oder über X-Forwarded-Proto/Host.
+builder.Services.Configure<SiteOptions>(
+    builder.Configuration.GetSection(SiteOptions.SectionName));
 
 // Database: PostgreSQL via EF Core. The connection string is supplied through
 // configuration (appsettings.Development.json, environment variables such as
@@ -319,6 +327,38 @@ if (apiOptions.AuthorId is null)
 }
 
 // Configure the HTTP request pipeline.
+//
+// Forwarded-Header zuerst: Hinter einem Reverse-Proxy (nginx, Traefik, Caddy)
+// teilt der Proxy über X-Forwarded-Proto/Host mit, unter welcher öffentlichen
+// Adresse die Anfrage eigentlich lief. Ohne diese Auswertung wäre Request.Host
+// der interne Containername und Request.Scheme "http" — RSS-Feed und alle
+// E-Mail-Links zeigten dann ins Leere.
+var siteOptions = app.Services.GetRequiredService<IOptions<SiteOptions>>().Value;
+if (siteOptions.UseForwardedHeaders)
+{
+    var forwardedOptions = new ForwardedHeadersOptions
+    {
+        ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost
+    };
+
+    // Standardmäßig vertraut ASP.NET Core nur Loopback-Adressen. Im
+    // Container-Netz ist der Proxy aber der Host-Gateway bzw. eine dynamische
+    // IP — daher werden die Listen geleert, sofern nicht ausdrücklich
+    // vertrauenswürdige Proxies konfiguriert sind.
+    forwardedOptions.KnownNetworks.Clear();
+    forwardedOptions.KnownProxies.Clear();
+
+    foreach (var proxy in siteOptions.KnownProxies)
+    {
+        if (System.Net.IPAddress.TryParse(proxy?.Trim(), out var address))
+        {
+            forwardedOptions.KnownProxies.Add(address);
+        }
+    }
+
+    app.UseForwardedHeaders(forwardedOptions);
+}
+
 if (!app.Environment.IsDevelopment())
 {
     // Fehlerbehandlung: API-Aufrufe erhalten JSON-ProblemDetails, die
