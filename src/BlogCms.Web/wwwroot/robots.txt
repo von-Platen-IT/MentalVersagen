@@ -1,0 +1,8 @@
+# MentalVersagen
+User-agent: *
+Allow: /
+Disallow: /Admin
+Disallow: /Account
+Disallow: /api/v1
+
+Sitemap: https://mentalversagen.de/sitemap.xml
