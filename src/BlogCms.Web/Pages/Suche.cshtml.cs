@@ -1,5 +1,6 @@
 using BlogCms.Domain.Entities;
 using BlogCms.Domain.Enums;
+using BlogCms.Infrastructure.Categories;
 using BlogCms.Infrastructure.Content;
 using BlogCms.Infrastructure.Media;
 using BlogCms.Web.Content;
@@ -18,11 +19,14 @@ public class SucheModel : PageModel
 
     private readonly IArticleService _articles;
     private readonly IMediaService _media;
+    private readonly ICategoryService _categories;
 
-    public SucheModel(IArticleService articles, IMediaService media)
+    public SucheModel(
+        IArticleService articles, IMediaService media, ICategoryService categories)
     {
         _articles = articles;
         _media = media;
+        _categories = categories;
     }
 
     public IReadOnlyList<Article> Articles { get; private set; } = [];
@@ -31,9 +35,11 @@ public class SucheModel : PageModel
 
     public IReadOnlyList<Tag> AllTags { get; private set; } = [];
 
+    public IReadOnlyList<Category> AllCategories { get; private set; } = [];
+
     public string? Query { get; private set; }
 
-    public ArticleCategory? Category { get; private set; }
+    public string? CategorySlug { get; private set; }
 
     public string? TagSlug { get; private set; }
 
@@ -54,7 +60,7 @@ public class SucheModel : PageModel
     /// <summary>True when at least one filter is active (for the result heading).</summary>
     public bool HasFilter =>
         !string.IsNullOrWhiteSpace(Query) ||
-        Category is not null ||
+        !string.IsNullOrWhiteSpace(CategorySlug) ||
         !string.IsNullOrWhiteSpace(TagSlug) ||
         !string.IsNullOrWhiteSpace(HashtagSlug) ||
         DateFrom is not null ||
@@ -64,7 +70,7 @@ public class SucheModel : PageModel
 
     public async Task OnGetAsync(
         string? query = null,
-        ArticleCategory? category = null,
+        string? category = null,
         string? tag = null,
         string? hashtag = null,
         DateTime? dateFrom = null,
@@ -73,7 +79,7 @@ public class SucheModel : PageModel
         int pageNumber = 1)
     {
         Query = query;
-        Category = category;
+        CategorySlug = string.IsNullOrWhiteSpace(category) ? null : category;
         TagSlug = tag;
         HashtagSlug = hashtag;
         DateFrom = dateFrom;
@@ -81,10 +87,19 @@ public class SucheModel : PageModel
         Sort = sort;
         PageNumber = Math.Max(1, pageNumber);
 
+        AllCategories = await _categories.GetAllAsync();
+
+        Guid? categoryId = null;
+        if (CategorySlug is not null)
+        {
+            var match = await _categories.GetBySlugAsync(CategorySlug);
+            categoryId = match?.Id;
+        }
+
         var articleQuery = new ArticleQuery(
             Page: PageNumber,
             PageSize: PageSize,
-            Category: category,
+            CategoryId: categoryId,
             TagSlug: string.IsNullOrWhiteSpace(tag) ? null : tag,
             HashtagSlug: string.IsNullOrWhiteSpace(hashtag) ? null : hashtag,
             Search: string.IsNullOrWhiteSpace(query) ? null : query,

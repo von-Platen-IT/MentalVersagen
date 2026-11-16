@@ -45,7 +45,7 @@ Zentrale Konto-Entität, Basis: ASP.NET Core Identity (`IdentityUser<Guid>` erwe
 | TitleImageUrl | string? | Titelbild: externe URL; Fallback ist das erste verwaltete `MediaAsset` des Artikels (BR-022) |
 | ContentMarkdown | text | Artikeltext im Markdown-Format |
 | Excerpt | string? | Kurzbeschreibung/Teaser; **fachlich Pflicht** validiert (BR-023) |
-| Category | enum: `Politik`, `Satire`, `Verschwoerungstheorien` | Pflichtfeld — steuert u. a. Kennzeichnung/Disclaimer-Logik |
+| CategoryId | Guid (FK → Category) | Redaktionelle Kategorie; Default ist die Systemkategorie `undefined` |
 | AccessLevel | enum: `Public`, `Registered`, `Premium` | Zugriffsstufe (BR-110/113); ersetzt die alleinige `IsPremium`-Logik |
 | IsPremium | bool | **abgeleitet** (nicht persistiert): `AccessLevel == Premium`, Abwärtskompatibilität |
 | Status | enum: `Draft`, `Scheduled`, `Published`, `Archived` | Lebenszyklus inkl. geplanter Veröffentlichung (BR-032) |
@@ -55,11 +55,28 @@ Zentrale Konto-Entität, Basis: ASP.NET Core Identity (`IdentityUser<Guid>` erwe
 | UpdatedAt | DateTime | |
 | DeletedAt | DateTime? | |
 
-**Beziehungen:** n:m zu `Tag` (über `ArticleTag`), n:m zu `Hashtag` (über `ArticleHashtag`), 1:n zu `Comment`, 1:n zu `MediaAsset`, 1:n zu `VideoEmbed`, 1:n zu `Rating`, 1:n zu `LinkListItem`.
+**Beziehungen:** n:1 zu `Category`, n:m zu `Tag` (über `ArticleTag`), n:m zu `Hashtag` (über `ArticleHashtag`), 1:n zu `Comment`, 1:n zu `MediaAsset`, 1:n zu `VideoEmbed`, 1:n zu `Rating`, 1:n zu `LinkListItem`.
 
-> Hinweis: `Category` ist bewusst ein festes Enum (statt freier Tags), da hierüber später ggf. unterschiedliche rechtliche/redaktionelle Kennzeichnungen (z. B. Satire-Disclaimer) automatisiert gesteuert werden. Siehe `01-Content-Verwaltung.md`. FeatureFix1 erlaubt mehrere Kategorien (BR-025) — diese Anwendung nutzt bewusst genau eine.
+> Hinweis: Kategorien sind seit v1.4 **dynamisch** und werden vom Admin gepflegt. Jeder Artikel verweist über `CategoryId` auf genau eine Kategorie. Die Systemkategorie `undefined` (`IsSystem = true`) ist der Default für Beiträge ohne ausdrückliche Zuordnung und kann weder gelöscht noch umbenannt werden. Beim Löschen einer anderen Kategorie werden ihre Artikel transaktional auf `undefined` umgehängt. Ein optionaler `Disclaimer` pro Kategorie ersetzt die früher hartcodierten Hinweistexte. FeatureFix1 erlaubt mehrere Kategorien (BR-025) — diese Anwendung nutzt bewusst genau eine.
 
 > Hinweis Titelbild (BR-022): Ein Beitrag besitzt ein Titelbild entweder als externe `TitleImageUrl` oder als erstes verwaltetes `MediaAsset`. Die „Pflicht" wird in der Formular-/Service-Validierung durchgesetzt, nicht per DB-Constraint (zwei zulässige Quellen).
+
+---
+
+## 2a. Category
+
+| Feld | Typ | Beschreibung |
+|---|---|---|
+| Id | Guid | PK; feste GUIDs für `undefined`, `Politik`, `Satire`, `Verschwörungstheorien` |
+| Name | string, eindeutig | Anzeigename, max. 100 |
+| Slug | string, eindeutig | URL-/Filter-Segment, max. 100; bleibt bei Umbenennung stabil |
+| Description | string? | optionale interne Beschreibung, max. 500 |
+| Disclaimer | string? | optionaler Hinweistext auf der Artikelseite, max. 1000 |
+| DisplayOrder | int | Sortierung in Auswahllisten |
+| IsSystem | bool | `true` nur für `undefined`; schützt vor Löschen und Umbenennen |
+| CreatedAt | DateTime | |
+
+**Beziehungen:** 1:n zu `Article`.
 
 ---
 
@@ -331,3 +348,4 @@ Comment 1---n ActivityLogEntry
 | v1.1 | FeatureFix1 | Neue Rolle `Author`; `Article.TitleImageUrl`, `AccessLevel`, `ScheduledAt`, `ArticleStatus.Scheduled`; `Comment.IsHighlighted`; neue Entitäten `Hashtag`/`ArticleHashtag`, `Rating`, `LinkList`/`LinkListItem` |
 | v1.2 | Aktivitätslog | Neue Entität `ActivityLogEntry` (einheitliches Aktivitätslog für Artikelaufrufe, Artikel-Erstellung, Kommentar-Erstellung und Beitrags-Bewertungen) |
 | v1.3 | Backend-Refactoring | `MediaAsset.IsCover` für explizite Titelbild-Kennzeichnung aufgenommen; redundante `Category`-Tabelle zugunsten des `ArticleCategory`-Enums entfernt |
+| v1.4 | Dynamische Kategorien | `ArticleCategory`-Enum durch die administrierbare `Category`-Entität ersetzt; `Article.CategoryId` mit Default `undefined`; Migration übernimmt die drei bisherigen Enum-Werte; Disclaimer pro Kategorie |

@@ -1,5 +1,6 @@
 using BlogCms.Domain.Entities;
 using BlogCms.Domain.Enums;
+using BlogCms.Infrastructure.Categories;
 using BlogCms.Infrastructure.Content;
 using BlogCms.Infrastructure.Media;
 using BlogCms.Web.Authorization;
@@ -15,16 +16,24 @@ public class IndexModel : PageModel
 {
     private readonly IArticleService _articles;
     private readonly IMediaService _media;
+    private readonly ICategoryService _categories;
     private readonly UserManager<User> _userManager;
 
-    public IndexModel(IArticleService articles, IMediaService media, UserManager<User> userManager)
+    public IndexModel(
+        IArticleService articles,
+        IMediaService media,
+        ICategoryService categories,
+        UserManager<User> userManager)
     {
         _articles = articles;
         _media = media;
+        _categories = categories;
         _userManager = userManager;
     }
 
     public IReadOnlyList<Article> Articles { get; private set; } = [];
+
+    public IReadOnlyList<Category> Categories { get; private set; } = [];
 
     [BindProperty(SupportsGet = true)]
     public string? Filter { get; set; }
@@ -47,6 +56,22 @@ public class IndexModel : PageModel
 
         Guid? authorFilter = IsAdmin ? null : CurrentUserId;
         Articles = await _articles.GetForManagementAsync(authorFilter, statusFilter, Search);
+        Categories = await _categories.GetAllAsync();
+    }
+
+    public async Task<IActionResult> OnPostChangeCategoryAsync(Guid id, Guid categoryId)
+    {
+        if (!IsAdmin)
+        {
+            return Forbid();
+        }
+
+        var result = await _categories.AssignArticleAsync(id, categoryId);
+        TempData[result.Succeeded ? "Message" : "Error"] = result.Succeeded
+            ? "Die Kategorie des Beitrags wurde geändert."
+            : result.Error;
+
+        return RedirectToPage(new { Filter, Search });
     }
 
     public async Task<IActionResult> OnPostChangeStatusAsync(Guid id, ArticleStatus targetStatus)

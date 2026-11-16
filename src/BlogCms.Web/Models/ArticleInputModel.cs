@@ -1,7 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using BlogCms.Domain.Entities;
 using BlogCms.Domain.Enums;
 using BlogCms.Infrastructure.Content;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace BlogCms.Web.Models;
 
@@ -26,9 +28,19 @@ public class ArticleInputModel
     [Display(Name = "Kurzbeschreibung / Teaser")]
     public string? Excerpt { get; set; }
 
-    [Required(ErrorMessage = "Kategorie ist Pflichtfeld.")]
-    [Display(Name = "Kategorie")]
-    public ArticleCategory Category { get; set; }
+    /// <summary>
+    /// Optional category selection. Empty means the article is grouped under the
+    /// system category <c>undefined</c>.
+    /// </summary>
+    [Display(Name = "Kategorie (optional)")]
+    public Guid? CategoryId { get; set; }
+
+    /// <summary>
+    /// Options for the category dropdown. Populated by the page model; bind-never
+    /// prevents a manipulated form post from injecting arbitrary options.
+    /// </summary>
+    [BindNever]
+    public IReadOnlyList<Category> Categories { get; set; } = [];
 
     [Display(Name = "Zugriffsstufe")]
     public ArticleAccessLevel AccessLevel { get; set; } = ArticleAccessLevel.Public;
@@ -85,7 +97,7 @@ public class ArticleInputModel
             TitleImageUrl,
             Excerpt ?? string.Empty,
             ContentMarkdown ?? string.Empty,
-            Category,
+            CategoryId ?? Guid.Empty,
             AccessLevel,
             requestedStatus,
             ScheduledAt,

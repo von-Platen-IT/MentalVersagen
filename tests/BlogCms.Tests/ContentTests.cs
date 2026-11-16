@@ -1,3 +1,4 @@
+using BlogCms.Domain.Categories;
 using BlogCms.Domain.Entities;
 using BlogCms.Domain.Enums;
 using BlogCms.Infrastructure.Content;
@@ -76,7 +77,7 @@ public class ArticleServiceTests
         {
             Title = "Doppelter Titel",
             ContentMarkdown = "Inhalt",
-            Category = ArticleCategory.Politik,
+            CategoryId = CategoryIds.Politik,
             Status = ArticleStatus.Published,
             AuthorId = Guid.NewGuid()
         }, ["Politik"]);
@@ -85,7 +86,7 @@ public class ArticleServiceTests
         {
             Title = "Doppelter Titel",
             ContentMarkdown = "Inhalt",
-            Category = ArticleCategory.Politik,
+            CategoryId = CategoryIds.Politik,
             Status = ArticleStatus.Published,
             AuthorId = Guid.NewGuid()
         }, []);
@@ -105,7 +106,7 @@ public class ArticleServiceTests
         {
             Title = "Einmal veröffentlicht",
             ContentMarkdown = "Inhalt",
-            Category = ArticleCategory.Satire,
+            CategoryId = CategoryIds.Satire,
             Status = ArticleStatus.Published,
             AuthorId = Guid.NewGuid()
         }, []);
@@ -127,7 +128,7 @@ public class ArticleServiceTests
         {
             Title = "Draft",
             ContentMarkdown = "x",
-            Category = ArticleCategory.Politik,
+            CategoryId = CategoryIds.Politik,
             Status = ArticleStatus.Draft,
             AuthorId = Guid.NewGuid()
         }, []);
@@ -136,7 +137,7 @@ public class ArticleServiceTests
         {
             Title = "Live",
             ContentMarkdown = "x",
-            Category = ArticleCategory.Politik,
+            CategoryId = CategoryIds.Politik,
             Status = ArticleStatus.Published,
             AuthorId = Guid.NewGuid()
         }, []);
@@ -168,7 +169,7 @@ public class ArticleServiceTests
         {
             Title = "Older Article",
             ContentMarkdown = "x",
-            Category = ArticleCategory.Politik,
+            CategoryId = CategoryIds.Politik,
             Status = ArticleStatus.Published,
             AuthorId = authorId,
             PublishedAt = DateTime.UtcNow.AddHours(-2)
@@ -178,7 +179,7 @@ public class ArticleServiceTests
         {
             Title = "Newer Article 1",
             ContentMarkdown = "x",
-            Category = ArticleCategory.Satire,
+            CategoryId = CategoryIds.Satire,
             Status = ArticleStatus.Published,
             AuthorId = authorId,
             PublishedAt = DateTime.UtcNow
@@ -188,7 +189,7 @@ public class ArticleServiceTests
         {
             Title = "Newer Article 2",
             ContentMarkdown = "x",
-            Category = ArticleCategory.Verschwoerungstheorien,
+            CategoryId = CategoryIds.Verschwoerungstheorien,
             Status = ArticleStatus.Published,
             AuthorId = authorId,
             PublishedAt = DateTime.UtcNow
@@ -218,7 +219,7 @@ public class ArticleServiceTests
     {
         var request = new BlogCms.Infrastructure.Content.ArticlePostRequest(
             "Titel", null, null, "Teaser", "Inhalt",
-            ArticleCategory.Politik, ArticleAccessLevel.Public, ArticleStatus.Draft,
+            CategoryIds.Politik, ArticleAccessLevel.Public, ArticleStatus.Draft,
             null, [], [], null, null, [], [Guid.NewGuid()]);
 
         Assert.True(request.HasTitleImageSource(hasExistingImage: false));
@@ -243,7 +244,7 @@ public class ArticleServiceTests
             Title = "Neuer Artikel mit Bild",
             ContentMarkdown = "Spannender Inhalt",
             Excerpt = "Kurzer Teaser",
-            Category = ArticleCategory.Politik,
+            CategoryId = CategoryIds.Politik,
             Status = ArticleStatus.Published,
             AuthorId = user.Id
         };

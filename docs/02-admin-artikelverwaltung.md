@@ -33,7 +33,7 @@ Spalten:
 | Spalte | Bedeutung |
 |---|---|
 | Titel | Artikeltitel |
-| Kategorie | Politik / Satire / Verschwörungstheorien (als farbiger Badge) |
+| Kategorie | Dynamische Kategorie aus der Admin-Verwaltung (als Pille); `undefined` für nicht zugeordnete Beiträge |
 | Status | `Draft`, `Published` oder `Archived` |
 | Premium | `Ja`/`Nein` — ob der Artikel hinter der Paywall liegt |
 | Veröffentlicht | Zeitpunkt der ersten Veröffentlichung (oder `–`) |
@@ -52,7 +52,7 @@ Folgende Felder stehen zur Verfügung:
 | **Slug** | nein | URL-Segment; wird sonst automatisch aus dem Titel erzeugt und bei Kollision mit `-2`, `-3` … eindeutig gemacht. Bereits veröffentlichte URLs bleiben bei Titeländerung stabil. |
 | **Titelbild-URL** | ja* | externe Bild-URL; Alternative/Fallback ist der Bild-Upload (*genau eine der beiden Quellen ist Pflicht) |
 | **Kurzbeschreibung / Excerpt** | ja | max. 500 Zeichen; dient als Vorschau (Artikelliste, Paywall-Teaser, RSS-Beschreibung) |
-| **Kategorie** | ja | `Politik`, `Satire`, `Verschwoerungstheorien` |
+| **Kategorie** | nein | Dropdown aus den vom Admin gepflegten Kategorien; ohne Auswahl wird der Beitrag unter `undefined` einsortiert |
 | **Zugriffsstufe** | ja | `Public`, `Registered` (nur angemeldet), `Premium` (aktive Berechtigung) |
 | **Status** | ja | `Draft` (Standard), `Scheduled`, `Published`, `Archived` |
 | **Geplante Veröffentlichung** | nein | Zeitpunkt (`ScheduledAt`); erforderlich bei `Status = Scheduled` — der Beitrag wird dann automatisch veröffentlicht |
@@ -112,10 +112,15 @@ vorhandenen Inhalt automatisch.
 
 ## Artikeltags & Kategorien
 
-- **Kategorien** sind fest definiert und dienen auch der inhaltlichen
-  Kennzeichnung: `Politik`, `Satire`, `Verschwoerungstheorien`.
-  Für `Satire` und `Verschwoerungstheorien` wird automatisch ein
-  Hinweistext (Disclaimer) angezeigt.
+- **Kategorien** werden im Admin-Bereich unter **Kategorien** gepflegt
+  (anlegen, umbenennen, löschen). Jeder Beitrag verweist auf genau eine
+  Kategorie; ohne Auswahl landet er unter der geschützten Systemkategorie
+  `undefined`.
+- Beim Löschen einer Kategorie werden ihre Beiträge automatisch zu
+  `undefined` verschoben. `undefined` selbst kann weder gelöscht noch
+  umbenannt werden.
+- Ein optionaler **Disclaimer** pro Kategorie wird auf der Artikelseite
+  eingeblendet.
 - **Tags** sind frei und werden bei Bedarf neu erzeugt. Sie dienen als
   Filter auf der öffentlichen Artikelliste (`/Articles?tag={slug}`).
 

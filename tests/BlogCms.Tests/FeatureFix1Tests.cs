@@ -1,3 +1,4 @@
+using BlogCms.Domain.Categories;
 using BlogCms.Domain.Entities;
 using BlogCms.Domain.Enums;
 using BlogCms.Infrastructure.Comments;
@@ -18,7 +19,7 @@ public class RatingServiceTests
     {
         // Acceptance criterion: a user holds at most one rating per target; it can change.
         var db = TestDb.Create();
-        var article = new Article { Title = "A", ContentMarkdown = "x", Category = ArticleCategory.Politik, Status = ArticleStatus.Published, PublishedAt = DateTime.UtcNow, AuthorId = Guid.NewGuid() };
+        var article = new Article { Title = "A", ContentMarkdown = "x", CategoryId = CategoryIds.Politik, Status = ArticleStatus.Published, PublishedAt = DateTime.UtcNow, AuthorId = Guid.NewGuid() };
         db.Articles.Add(article);
         await db.SaveChangesAsync();
 
@@ -40,7 +41,7 @@ public class RatingServiceTests
     {
         // Toggle: a repeated click on the same thumb removes the rating again.
         var db = TestDb.Create();
-        var article = new Article { Title = "A", ContentMarkdown = "x", Category = ArticleCategory.Politik, Status = ArticleStatus.Published, PublishedAt = DateTime.UtcNow, AuthorId = Guid.NewGuid() };
+        var article = new Article { Title = "A", ContentMarkdown = "x", CategoryId = CategoryIds.Politik, Status = ArticleStatus.Published, PublishedAt = DateTime.UtcNow, AuthorId = Guid.NewGuid() };
         db.Articles.Add(article);
         await db.SaveChangesAsync();
 
@@ -64,7 +65,7 @@ public class RatingServiceTests
     {
         // Acceptance criterion: anonymous visitors must not rate.
         var db = TestDb.Create();
-        var article = new Article { Title = "A", ContentMarkdown = "x", Category = ArticleCategory.Politik, Status = ArticleStatus.Published, PublishedAt = DateTime.UtcNow, AuthorId = Guid.NewGuid() };
+        var article = new Article { Title = "A", ContentMarkdown = "x", CategoryId = CategoryIds.Politik, Status = ArticleStatus.Published, PublishedAt = DateTime.UtcNow, AuthorId = Guid.NewGuid() };
         db.Articles.Add(article);
         await db.SaveChangesAsync();
 
@@ -117,7 +118,7 @@ public class ArticleFeatureTests
         Title = title,
         ContentMarkdown = "Inhalt",
         Excerpt = "Kurz",
-        Category = ArticleCategory.Politik,
+        CategoryId = CategoryIds.Politik,
         Status = status,
         AccessLevel = access,
         PublishedAt = status == ArticleStatus.Published ? DateTime.UtcNow : null,
@@ -173,7 +174,7 @@ public class ArticleFeatureTests
             Title = "Geplant",
             ContentMarkdown = "x",
             Excerpt = "Kurz",
-            Category = ArticleCategory.Satire,
+            CategoryId = CategoryIds.Satire,
             Status = ArticleStatus.Scheduled,
             ScheduledAt = DateTime.UtcNow.AddMinutes(-1),
             AuthorId = authorId
@@ -184,7 +185,7 @@ public class ArticleFeatureTests
             Title = "Später",
             ContentMarkdown = "x",
             Excerpt = "Kurz",
-            Category = ArticleCategory.Satire,
+            CategoryId = CategoryIds.Satire,
             Status = ArticleStatus.Scheduled,
             ScheduledAt = DateTime.UtcNow.AddDays(1),
             AuthorId = authorId
@@ -225,8 +226,8 @@ public class LinkListServiceTests
         var db = TestDb.Create();
         var service = new LinkListService(db, new SlugGenerator());
 
-        var a = new Article { Title = "A", ContentMarkdown = "x", Category = ArticleCategory.Politik, Status = ArticleStatus.Published, PublishedAt = DateTime.UtcNow, AuthorId = Guid.NewGuid() };
-        var b = new Article { Title = "B", ContentMarkdown = "x", Category = ArticleCategory.Politik, Status = ArticleStatus.Published, PublishedAt = DateTime.UtcNow, AuthorId = Guid.NewGuid() };
+        var a = new Article { Title = "A", ContentMarkdown = "x", CategoryId = CategoryIds.Politik, Status = ArticleStatus.Published, PublishedAt = DateTime.UtcNow, AuthorId = Guid.NewGuid() };
+        var b = new Article { Title = "B", ContentMarkdown = "x", CategoryId = CategoryIds.Politik, Status = ArticleStatus.Published, PublishedAt = DateTime.UtcNow, AuthorId = Guid.NewGuid() };
         db.Articles.AddRange(a, b);
         await db.SaveChangesAsync();
 
@@ -268,7 +269,7 @@ public class CommentHighlightTests
         var articleAuthor = Guid.NewGuid();
         var article = new Article
         {
-            Title = "A", ContentMarkdown = "x", Excerpt = "k", Category = ArticleCategory.Politik,
+            Title = "A", ContentMarkdown = "x", Excerpt = "k", CategoryId = CategoryIds.Politik,
             Status = ArticleStatus.Published, PublishedAt = DateTime.UtcNow, AuthorId = articleAuthor
         };
         db.Articles.Add(article);

@@ -89,7 +89,23 @@
                         <td>@(article.Author?.DisplayName ?? "Archiv")</td>
                     }
                     <td>
-                        <span class="mv-pill">@CategoryDisplay.Label(article.Category)</span>
+                        @if (Model.IsAdmin)
+                        {
+                            <form method="post" asp-page-handler="ChangeCategory" asp-route-id="@article.Id" class="d-flex align-items-center gap-1">
+                                <select name="categoryId" class="form-select form-select-sm mv-admin-category-select"
+                                        onchange="this.form.submit()" aria-label="Kategorie ändern">
+                                    @foreach (var category in Model.Categories)
+                                    {
+                                        <option value="@category.Id" selected="@(category.Id == article.CategoryId)">@category.Name</option>
+                                    }
+                                </select>
+                                <noscript><button type="submit" class="btn btn-sm btn-outline-secondary">OK</button></noscript>
+                            </form>
+                        }
+                        else
+                        {
+                            <span class="mv-pill">@CategoryDisplay.Name(article.Category)</span>
+                        }
                     </td>
                     <td>
                         <span class="meta-mono">@ArticleDisplay.AccessLabel(article.AccessLevel)</span>

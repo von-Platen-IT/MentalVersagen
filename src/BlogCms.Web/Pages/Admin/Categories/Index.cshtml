@@ -1,0 +1,134 @@
+@page
+@model BlogCms.Web.Pages.Admin.Categories.IndexModel
+@{
+    ViewData["Title"] = "Kategorien";
+    var header = new BlogCms.Web.Models.PageHeaderModel
+    {
+        Title = "Kategorien",
+        Sub = "Themengebiete und redaktionelle Kennzeichnung pflegen."
+    };
+}
+
+<partial name="_PageHeader" model="header" />
+
+<div class="mv-doc mt-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h2 class="h4 mb-0">Kategorien (@Model.Categories.Count)</h2>
+        <a class="btn btn-outline-secondary" asp-page="/Admin/Articles/Index">Zur Aktenverwaltung</a>
+    </div>
+
+    @if (TempData["Message"] is string message)
+    {
+        <div class="mv-teaser mb-3" role="status">@message</div>
+    }
+    @if (TempData["Error"] is string error)
+    {
+        <div class="mv-teaser mb-3 mv-text-danger" role="alert">@error</div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Slug</th>
+                            <th class="text-end">Artikel</th>
+                            <th class="text-end">Reihenfolge</th>
+                            <th>Disclaimer</th>
+                            <th class="text-end">Aktionen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model.Categories)
+                    {
+                        <tr class="@(item.Category.IsSystem ? "mv-category-system" : null)">
+                            <td>
+                                <div class="d-flex flex-wrap align-items-center gap-2">
+                                    <strong>@item.Category.Name</strong>
+                                    @if (item.Category.IsSystem)
+                                    {
+                                        <span class="mv-pill">SYSTEM</span>
+                                    }
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(item.Category.Description))
+                                {
+                                    <div class="small text-muted">@item.Category.Description</div>
+                                }
+                            </td>
+                            <td><code>@item.Category.Slug</code></td>
+                            <td class="text-end">@item.ArticleCount</td>
+                            <td class="text-end">@item.Category.DisplayOrder</td>
+                            <td>
+                                @if (string.IsNullOrWhiteSpace(item.Category.Disclaimer))
+                                {
+                                    <span class="text-muted">–</span>
+                                }
+                                else
+                                {
+                                    <span class="mv-pill" title="@item.Category.Disclaimer">Ja</span>
+                                }
+                            </td>
+                            <td class="text-end text-nowrap">
+                                @if (item.Category.IsSystem)
+                                {
+                                    <span class="text-muted small">Nicht löschbar</span>
+                                }
+                                else
+                                {
+                                    <a class="btn btn-sm btn-outline-secondary me-1"
+                                       asp-page="Edit" asp-route-id="@item.Category.Id">Bearbeiten</a>
+                                    <form method="post" asp-page-handler="Delete" asp-route-id="@item.Category.Id"
+                                          class="d-inline"
+                                          onsubmit="return confirm('Kategorie wirklich löschen? Die zugehörigen Artikel werden zu „undefined“ verschoben.');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Löschen</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="mv-case">
+                <div class="mv-case__head">
+                    <span>NEUE KATEGORIE</span>
+                </div>
+                <div class="mv-case__body">
+                    <form method="post" asp-page-handler="Create">
+                        <div class="mb-2">
+                            <label class="form-label" asp-for="Name">Name</label>
+                            <input class="form-control" asp-for="Name" required maxlength="100"
+                                   placeholder="z. B. Wissenschaft" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label" asp-for="Slug">Slug (optional)</label>
+                            <input class="form-control" asp-for="Slug" maxlength="100"
+                                   placeholder="automatisch aus dem Namen" />
+                            <div class="form-text">Bleibt bei späterer Umbenennung stabil.</div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label" asp-for="Description">Beschreibung (optional)</label>
+                            <textarea class="form-control" asp-for="Description" rows="2" maxlength="500"></textarea>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label" asp-for="Disclaimer">Disclaimer (optional)</label>
+                            <textarea class="form-control" asp-for="Disclaimer" rows="3" maxlength="1000"
+                                      placeholder="Hinweistext, der auf der Artikelseite erscheint."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" asp-for="DisplayOrder">Reihenfolge (optional)</label>
+                            <input class="form-control" asp-for="DisplayOrder" type="number" min="0" />
+                            <div class="form-text">Leer bzw. 0 bedeutet: ans Ende sortieren.</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Anlegen</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

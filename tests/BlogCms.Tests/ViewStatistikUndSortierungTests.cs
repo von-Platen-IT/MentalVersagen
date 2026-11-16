@@ -1,3 +1,4 @@
+using BlogCms.Domain.Categories;
 using BlogCms.Domain.Entities;
 using BlogCms.Domain.Enums;
 using BlogCms.Infrastructure.Activity;
@@ -43,7 +44,7 @@ public class ViewStatistikUndSortierungTests
             Title = title,
             Slug = $"slug-{Guid.NewGuid():N}",
             ContentMarkdown = "Inhalt",
-            Category = ArticleCategory.Politik,
+            CategoryId = CategoryIds.Politik,
             AccessLevel = ArticleAccessLevel.Public,
             Status = ArticleStatus.Published,
             PublishedAt = DateTime.UtcNow.AddMinutes(-5),

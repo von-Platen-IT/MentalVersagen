@@ -1,3 +1,4 @@
+using BlogCms.Domain.Categories;
 using BlogCms.Domain.Entities;
 using BlogCms.Domain.Enums;
 using BlogCms.Infrastructure.Content;
@@ -39,7 +40,7 @@ public class HashtagNormalizationTests
             Slug = "diagnose-artikel",
             Excerpt = "Kurz",
             ContentMarkdown = "Inhalt",
-            Category = ArticleCategory.Politik,
+            CategoryId = CategoryIds.Politik,
             AccessLevel = ArticleAccessLevel.Public,
             Status = ArticleStatus.Published,
             PublishedAt = DateTime.UtcNow.AddMinutes(-5),
@@ -157,7 +158,7 @@ public class HashtagNormalizationTests
             Slug = "tag-diagnose",
             Excerpt = "Kurz",
             ContentMarkdown = "Inhalt",
-            Category = ArticleCategory.Politik,
+            CategoryId = CategoryIds.Politik,
             AccessLevel = ArticleAccessLevel.Public,
             Status = ArticleStatus.Published,
             PublishedAt = DateTime.UtcNow.AddMinutes(-5),

@@ -1,6 +1,8 @@
+using BlogCms.Domain.Categories;
 using BlogCms.Domain.Entities;
 using BlogCms.Domain.Enums;
 using BlogCms.Infrastructure.Activity;
+using BlogCms.Infrastructure.Categories;
 using BlogCms.Infrastructure.Content;
 using BlogCms.Infrastructure.Data;
 using BlogCms.Infrastructure.Media;
@@ -41,13 +43,14 @@ public class ManagementArticlesControllerTests
     private static ManagementArticlesController BuildController(AppDbContext db, Guid? authorId)
     {
         var articles = new ArticleService(db, new SlugGenerator());
+        var categories = new CategoryService(db, new SlugGenerator());
         var media = new MediaService(db, new NullImageProcessor(), new NullStorageService(),
             Options.Create(new MediaOptions()));
         var posting = new ArticlePostingService(
             db, articles, media, new StubOEmbedService(), new ActivityLogService(db));
 
         return new ManagementArticlesController(
-            posting, articles,
+            posting, articles, categories,
             Options.Create(new ApiOptions { Key = "test-key", AuthorId = authorId }),
             NullLogger<ManagementArticlesController>.Instance)
         {
@@ -77,7 +80,7 @@ public class ManagementArticlesControllerTests
             Title = "API-Testbeitrag",
             Excerpt = "Kurzer Teaser",
             ContentMarkdown = "Inhalt in Markdown",
-            Category = ArticleCategory.Politik,
+            Category = CategoryIds.PolitikSlug,
             AccessLevel = ArticleAccessLevel.Public,
             Status = status,
             TitleImageUrl = titleImageUrl,

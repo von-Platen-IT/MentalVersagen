@@ -1,3 +1,4 @@
+using BlogCms.Domain.Categories;
 using BlogCms.Domain.Entities;
 using BlogCms.Domain.Enums;
 using BlogCms.Infrastructure.Activity;
@@ -65,6 +66,13 @@ public sealed class ArticlePostingService : IArticlePostingService
             return PostResult.Fail(errors.ToArray());
         }
 
+        var categoryId = await ResolveCategoryIdAsync(request.CategoryId, cancellationToken);
+        if (categoryId is null)
+        {
+            return PostResult.Fail(new PostError(
+                PostError.GenericField, "Die gewählte Kategorie existiert nicht."));
+        }
+
         var status = ArticleValidator.ResolveTargetStatus(request.Status, request.ScheduledAt);
         var scheduledUtc = ArticleValidator.NormalizeScheduledAtToUtc(request.ScheduledAt);
         var article = new Article
@@ -74,7 +82,7 @@ public sealed class ArticlePostingService : IArticlePostingService
             TitleImageUrl = string.IsNullOrWhiteSpace(request.TitleImageUrl) ? null : request.TitleImageUrl.Trim(),
             ContentMarkdown = request.ContentMarkdown,
             Excerpt = string.IsNullOrWhiteSpace(request.Excerpt) ? null : request.Excerpt.Trim(),
-            Category = request.Category,
+            CategoryId = categoryId.Value,
             AccessLevel = request.AccessLevel,
             Status = status,
             ScheduledAt = status == ArticleStatus.Scheduled ? scheduledUtc : null,
@@ -130,6 +138,13 @@ public sealed class ArticlePostingService : IArticlePostingService
             return PostResult.Fail(errors.ToArray());
         }
 
+        var categoryId = await ResolveCategoryIdAsync(request.CategoryId, cancellationToken);
+        if (categoryId is null)
+        {
+            return PostResult.Fail(new PostError(
+                PostError.GenericField, "Die gewählte Kategorie existiert nicht."));
+        }
+
         var status = ArticleValidator.ResolveTargetStatus(request.Status, request.ScheduledAt);
         var scheduledUtc = ArticleValidator.NormalizeScheduledAtToUtc(request.ScheduledAt);
         var originalSlug = article.Slug;
@@ -139,7 +154,7 @@ public sealed class ArticlePostingService : IArticlePostingService
         article.TitleImageUrl = string.IsNullOrWhiteSpace(request.TitleImageUrl) ? null : request.TitleImageUrl.Trim();
         article.ContentMarkdown = request.ContentMarkdown;
         article.Excerpt = string.IsNullOrWhiteSpace(request.Excerpt) ? null : request.Excerpt.Trim();
-        article.Category = request.Category;
+        article.CategoryId = categoryId.Value;
         article.AccessLevel = request.AccessLevel;
         article.Status = status;
         article.ScheduledAt = status == ArticleStatus.Scheduled ? scheduledUtc : null;
@@ -237,6 +252,21 @@ public sealed class ArticlePostingService : IArticlePostingService
         }
 
         return errors;
+    }
+
+    /// <summary>
+    /// Maps an empty category id to the system category <c>undefined</c> and
+    /// verifies that the requested category still exists. Returns <c>null</c> when
+    /// the category was deleted while the form was open.
+    /// </summary>
+    private async Task<Guid?> ResolveCategoryIdAsync(
+        Guid requestedId, CancellationToken cancellationToken)
+    {
+        var categoryId = requestedId == Guid.Empty ? CategoryIds.Undefined : requestedId;
+        var exists = await _db.Categories
+            .AnyAsync(c => c.Id == categoryId, cancellationToken);
+
+        return exists ? categoryId : null;
     }
 
     private readonly struct UploadScope(ArticlePostRequest request) : IAsyncDisposable

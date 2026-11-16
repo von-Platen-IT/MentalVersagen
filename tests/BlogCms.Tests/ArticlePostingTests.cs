@@ -1,3 +1,4 @@
+using BlogCms.Domain.Categories;
 using BlogCms.Domain.Entities;
 using BlogCms.Domain.Enums;
 using BlogCms.Infrastructure.Activity;
@@ -57,7 +58,7 @@ public class ArticlePostingServiceTests
         string? tags = null) =>
         new(
             title, slug, titleImageUrl, "Kurzer Teaser", "Inhalt in Markdown",
-            ArticleCategory.Politik, ArticleAccessLevel.Public, status, scheduledAt,
+            CategoryIds.Politik, ArticleAccessLevel.Public, status, scheduledAt,
             ArticlePostRequest.ParseTags(tags), ArticlePostRequest.ParseHashtags(null),
             videoUrl, coverUpload, [], []);
 
@@ -90,7 +91,7 @@ public class ArticlePostingServiceTests
         var (service, _) = CreateService();
         var request = new ArticlePostRequest(
             "Nur eine Idee", null, null, "", "",
-            ArticleCategory.Politik, ArticleAccessLevel.Public, ArticleStatus.Draft,
+            CategoryIds.Politik, ArticleAccessLevel.Public, ArticleStatus.Draft,
             null, [], [], null, null, [], []);
 
         Assert.Empty(service.Validate(request, hasExistingImage: false));
@@ -102,7 +103,7 @@ public class ArticlePostingServiceTests
         var (service, _) = CreateService();
         var request = new ArticlePostRequest(
             "Titel", null, "https://example.com/cover.jpg", "", "",
-            ArticleCategory.Politik, ArticleAccessLevel.Public, ArticleStatus.Published,
+            CategoryIds.Politik, ArticleAccessLevel.Public, ArticleStatus.Published,
             null, [], [], null, null, [], []);
 
         var errors = service.Validate(request, hasExistingImage: false);

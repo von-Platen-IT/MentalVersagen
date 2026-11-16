@@ -62,7 +62,13 @@ Basis-URL: `https://<domain>/api/v1` — Authentifizierung über den Header **`X
 | `Scheduled` | Zeitgesteuert veröffentlichen — zusätzlich `scheduledAt` in der Zukunft (ISO-8601, UTC) |
 | `Archived` | Archiviert |
 
-Weitere Enums: `category` (`Politik`, `Satire`, `Verschwoerungstheorien`), `accessLevel` (`Public`, `Registered`, `Premium`).
+`category` ist kein Enum mehr, sondern der **Slug** einer dynamischen Kategorie
+(z. B. `politik`, `satire`, `verschwoerungstheorien` oder `undefined`). Aus
+Kompatibilitätsgründen werden auch die früheren Enum-Namen akzeptiert. Leer/null
+gruppiert den Beitrag unter `undefined`. In Antworten stehen zusätzlich
+`categoryId` und `categoryName` zur Verfügung.
+
+`accessLevel` ist weiterhin ein Enum: `Public`, `Registered`, `Premium`.
 
 ---
 
@@ -78,7 +84,7 @@ curl -X POST https://<domain>/api/v1/articles \
     "title": "Mein erster API-Beitrag",
     "excerpt": "Ein kurzer Teaser.",
     "contentMarkdown": "# Überschrift\n\nDer Artikeltext in **Markdown**.",
-    "category": "Politik",
+    "category": "politik",
     "accessLevel": "Public",
     "status": "Published",
     "titleImageUrl": "https://example.com/titelbild.jpg",
@@ -99,7 +105,7 @@ curl -X PUT https://<domain>/api/v1/articles/<ID> \
     "title": "Mein erster API-Beitrag",
     "excerpt": "Ein kurzer Teaser.",
     "contentMarkdown": "# Überschrift\n\nAktualisierter Text.",
-    "category": "Politik",
+    "category": "politik",
     "accessLevel": "Public",
     "status": "Published",
     "titleImageUrl": "https://example.com/titelbild.jpg"

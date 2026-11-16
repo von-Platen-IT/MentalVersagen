@@ -1,3 +1,4 @@
+using BlogCms.Domain.Categories;
 using BlogCms.Domain.Entities;
 using BlogCms.Domain.Enums;
 
@@ -39,11 +40,13 @@ public sealed class ArticleWriteModel
     public string ContentMarkdown { get; set; } = string.Empty;
 
     /// <summary>
-    /// Redaktionelle Kategorie. Erlaubte Werte: <c>Politik</c>, <c>Satire</c>,
-    /// <c>Verschwoerungstheorien</c>.
+    /// Redaktionelle Kategorie als Slug. Leer/null gruppiert den Beitrag unter
+    /// <c>undefined</c>. Aus Kompatibilitätsgründen werden auch die früheren
+    /// Enum-Namen <c>Politik</c>, <c>Satire</c> und <c>Verschwoerungstheorien</c>
+    /// akzeptiert.
     /// </summary>
-    /// <example>Politik</example>
-    public ArticleCategory Category { get; set; }
+    /// <example>politik</example>
+    public string? Category { get; set; }
 
     /// <summary>
     /// Zugriffsstufe. Erlaubte Werte: <c>Public</c>, <c>Registered</c>, <c>Premium</c>.
@@ -114,7 +117,15 @@ public sealed class ArticleReadModel
     /// <summary>Artikelinhalt in Markdown (Quelltext, nicht gerendert).</summary>
     public string ContentMarkdown { get; set; } = string.Empty;
 
-    public ArticleCategory Category { get; set; }
+    /// <summary>Stabile UUID der Kategorie.</summary>
+    public Guid CategoryId { get; set; }
+
+    /// <summary>Kategorie-Slug für Filter und URLs.</summary>
+    public string Category { get; set; } = CategoryIds.UndefinedSlug;
+
+    /// <summary>Anzeigename der Kategorie.</summary>
+    public string CategoryName { get; set; } = "undefined";
+
     public ArticleAccessLevel AccessLevel { get; set; }
     public ArticleStatus Status { get; set; }
 
@@ -149,7 +160,9 @@ public sealed class ArticleReadModel
         Slug = article.Slug,
         Excerpt = article.Excerpt,
         ContentMarkdown = article.ContentMarkdown,
-        Category = article.Category,
+        CategoryId = article.CategoryId,
+        Category = article.Category?.Slug ?? CategoryIds.UndefinedSlug,
+        CategoryName = article.Category?.Name ?? "undefined",
         AccessLevel = article.AccessLevel,
         Status = article.Status,
         ScheduledAt = article.ScheduledAt,

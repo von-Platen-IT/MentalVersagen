@@ -243,7 +243,8 @@
         var card = el('article', 'mv-case');
 
         var head = el('div', 'mv-case__head');
-        head.appendChild(el('span', null, 'ARCHIV ' + String(article.category || '').toUpperCase()));
+        head.appendChild(el('span', null,
+            'ARCHIV ' + String(article.categoryLabel || article.category || 'undefined').toUpperCase()));
         head.appendChild(el('span', 'text-end', '#' + (article.archiveCode || '')));
         card.appendChild(head);
 

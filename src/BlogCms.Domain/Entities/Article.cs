@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using BlogCms.Domain.Categories;
 using BlogCms.Domain.Enums;
 
 namespace BlogCms.Domain.Entities;
@@ -25,8 +26,14 @@ public class Article : EntityBase
     /// <summary>Teaser/intro, also used for list previews and the paywall preview (mandatory in the UI).</summary>
     public string? Excerpt { get; set; }
 
-    /// <summary>Mandatory editorial category; drives disclaimer/badge logic.</summary>
-    public ArticleCategory Category { get; set; }
+    /// <summary>
+    /// Foreign key to the editorial category. Defaults to the system category
+    /// <c>undefined</c> when the author does not choose one.
+    /// </summary>
+    public Guid CategoryId { get; set; } = CategoryIds.Default;
+
+    /// <summary>Editorial category navigation; drives badge and disclaimer rendering.</summary>
+    public Category? Category { get; set; }
 
     /// <summary>Access level (public / registered / premium) — FeatureFix1 BR-110/BR-113.</summary>
     public ArticleAccessLevel AccessLevel { get; set; } = ArticleAccessLevel.Public;

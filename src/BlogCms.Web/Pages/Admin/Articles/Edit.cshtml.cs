@@ -1,5 +1,6 @@
 using BlogCms.Domain.Entities;
 using BlogCms.Domain.Enums;
+using BlogCms.Infrastructure.Categories;
 using BlogCms.Infrastructure.Content;
 using BlogCms.Infrastructure.Media;
 using BlogCms.Web.Authorization;
@@ -22,17 +23,20 @@ public class EditModel : PageModel
     private readonly IArticleService _articles;
     private readonly IArticlePostingService _posting;
     private readonly IMediaService _media;
+    private readonly ICategoryService _categories;
     private readonly UserManager<User> _userManager;
 
     public EditModel(
         IArticleService articles,
         IArticlePostingService posting,
         IMediaService media,
+        ICategoryService categories,
         UserManager<User> userManager)
     {
         _articles = articles;
         _posting = posting;
         _media = media;
+        _categories = categories;
         _userManager = userManager;
     }
 
@@ -78,7 +82,7 @@ public class EditModel : PageModel
             TitleImageUrl = article.TitleImageUrl,
             ContentMarkdown = article.ContentMarkdown,
             Excerpt = article.Excerpt,
-            Category = article.Category,
+            CategoryId = article.CategoryId,
             AccessLevel = article.AccessLevel,
             Status = article.Status,
             ScheduledAt = article.ScheduledAt?.ToLocalTime(),
@@ -87,6 +91,7 @@ public class EditModel : PageModel
             VideoUrl = article.VideoEmbeds.FirstOrDefault()?.OriginalUrl
         };
 
+        await LoadCategoriesAsync();
         return Page();
     }
 
@@ -109,6 +114,7 @@ public class EditModel : PageModel
         {
             HasExistingImage = article.MediaAssets.Count > 0;
             await LoadImagesAsync(id);
+            await LoadCategoriesAsync();
             return Page();
         }
 
@@ -122,12 +128,16 @@ public class EditModel : PageModel
 
             HasExistingImage = article.MediaAssets.Count > 0;
             await LoadImagesAsync(id);
+            await LoadCategoriesAsync();
             return Page();
         }
 
         TempData["Message"] = ArticleMessages.ForUpdate(result.Article ?? article);
         return RedirectToPage("Index");
     }
+
+    private async Task LoadCategoriesAsync() =>
+        Input.Categories = await _categories.GetAllAsync();
 
     /// <summary>Sets an uploaded article image as the title image.</summary>
     public async Task<IActionResult> OnPostUseAsTitleAsync(Guid id, Guid imageId)

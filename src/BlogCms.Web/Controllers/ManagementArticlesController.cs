@@ -1,4 +1,6 @@
+using BlogCms.Domain.Categories;
 using BlogCms.Domain.Enums;
+using BlogCms.Infrastructure.Categories;
 using BlogCms.Infrastructure.Content;
 using BlogCms.Web.Configuration;
 using BlogCms.Web.Models.Api;
@@ -40,17 +42,20 @@ public sealed class ManagementArticlesController : ControllerBase
 
     private readonly IArticlePostingService _posting;
     private readonly IArticleService _articles;
+    private readonly ICategoryService _categories;
     private readonly ApiOptions _apiOptions;
     private readonly ILogger<ManagementArticlesController> _logger;
 
     public ManagementArticlesController(
         IArticlePostingService posting,
         IArticleService articles,
+        ICategoryService categories,
         IOptions<ApiOptions> apiOptions,
         ILogger<ManagementArticlesController> logger)
     {
         _posting = posting;
         _articles = articles;
+        _categories = categories;
         _apiOptions = apiOptions.Value;
         _logger = logger;
     }
@@ -150,8 +155,15 @@ public sealed class ManagementArticlesController : ControllerBase
                 "Benutzer mit Rolle Author oder Admin gesetzt sein."));
         }
 
+        var categoryId = await ResolveCategoryIdAsync(model.Category, cancellationToken);
+        if (categoryId is null)
+        {
+            return BadRequest(ApiProblems.Validation(
+                [new ApiFieldError("category", "Die angegebene Kategorie existiert nicht.")]));
+        }
+
         var result = await _posting.CreateAsync(
-            ToPostRequest(model), authorId,
+            ToPostRequest(model, categoryId.Value), authorId,
             clientIp: HttpContext.Connection.RemoteIpAddress?.ToString(),
             cancellationToken);
 
@@ -197,7 +209,15 @@ public sealed class ManagementArticlesController : ControllerBase
         // dient der ursprüngliche Autor als Akteur (Medienzuordnung).
         var actorId = _apiOptions.AuthorId ?? existing.AuthorId;
 
-        var result = await _posting.UpdateAsync(id, ToPostRequest(model), actorId, cancellationToken);
+        var categoryId = await ResolveCategoryIdAsync(model.Category, cancellationToken);
+        if (categoryId is null)
+        {
+            return BadRequest(ApiProblems.Validation(
+                [new ApiFieldError("category", "Die angegebene Kategorie existiert nicht.")]));
+        }
+
+        var result = await _posting.UpdateAsync(
+            id, ToPostRequest(model, categoryId.Value), actorId, cancellationToken);
         if (!result.Succeeded)
         {
             return BadRequest(ApiProblems.Validation(
@@ -241,14 +261,47 @@ public sealed class ManagementArticlesController : ControllerBase
     /// bewusst nicht Teil des JSON-Workflows — Titelbilder erfolgen über
     /// <c>titleImageUrl</c> oder <c>uploadedImageIds</c>.
     /// </summary>
-    private static ArticlePostRequest ToPostRequest(ArticleWriteModel model) =>
+    private async Task<Guid?> ResolveCategoryIdAsync(
+        string? category, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(category))
+        {
+            // Guid.Empty is the sentinel that ArticlePostingService maps to undefined.
+            return Guid.Empty;
+        }
+
+        var bySlug = await _categories.GetBySlugAsync(category, cancellationToken);
+        if (bySlug is not null)
+        {
+            return bySlug.Id;
+        }
+
+        // Tolerate the legacy enum names and the human-readable display names.
+        var all = await _categories.GetAllAsync(cancellationToken);
+        var trimmed = category.Trim();
+        var byName = all.FirstOrDefault(c =>
+            string.Equals(c.Name, trimmed, StringComparison.OrdinalIgnoreCase));
+        if (byName is not null)
+        {
+            return byName.Id;
+        }
+
+        if (Guid.TryParse(trimmed, out var byId) && all.Any(c => c.Id == byId))
+        {
+            return byId;
+        }
+
+        return null;
+    }
+
+    private static ArticlePostRequest ToPostRequest(ArticleWriteModel model, Guid categoryId) =>
         new(
             Title: model.Title ?? string.Empty,
             Slug: model.Slug,
             TitleImageUrl: model.TitleImageUrl,
             Excerpt: model.Excerpt ?? string.Empty,
             ContentMarkdown: model.ContentMarkdown ?? string.Empty,
-            Category: model.Category,
+            CategoryId: categoryId,
             AccessLevel: model.AccessLevel,
             Status: model.Status,
             ScheduledAt: model.ScheduledAt,

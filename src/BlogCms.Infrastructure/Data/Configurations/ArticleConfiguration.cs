@@ -1,3 +1,4 @@
+using BlogCms.Domain.Categories;
 using BlogCms.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -25,6 +26,18 @@ public class ArticleConfiguration : IEntityTypeConfiguration<Article>
         // Slug must be unique (collisions prevented at save time).
         builder.HasIndex(a => a.Slug)
             .IsUnique();
+
+        // Articles always have a category; the system category "undefined" is the
+        // fallback for articles saved without an explicit selection.
+        builder.Property(a => a.CategoryId)
+            .HasDefaultValue(CategoryIds.Undefined);
+
+        builder.HasOne(a => a.Category)
+            .WithMany(c => c.Articles)
+            .HasForeignKey(a => a.CategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(a => a.CategoryId);
 
         builder.HasOne(a => a.Author)
             .WithMany(u => u.Articles)

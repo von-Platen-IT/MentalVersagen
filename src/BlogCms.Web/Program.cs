@@ -4,6 +4,7 @@ using BlogCms.Domain.Entities;
 using BlogCms.Domain.Enums;
 using BlogCms.Infrastructure.Activity;
 using BlogCms.Infrastructure.Captcha;
+using BlogCms.Infrastructure.Categories;
 using BlogCms.Infrastructure.Comments;
 using BlogCms.Infrastructure.Contact;
 using BlogCms.Infrastructure.Content;
@@ -153,6 +154,7 @@ builder.Services.AddScoped<IAppEmailSender>(serviceProvider =>
 // Content: Markdown rendering (sanitized), slug generation and article logic.
 builder.Services.AddSingleton<IMarkdownRenderer, MarkdownRenderer>();
 builder.Services.AddSingleton<ISlugGenerator, SlugGenerator>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IArticleService, ArticleService>();
 builder.Services.AddScoped<IArticlePostingService, ArticlePostingService>();
 
@@ -494,6 +496,10 @@ using (var scope = app.Services.CreateScope())
     {
         await db.Database.EnsureCreatedAsync();
     }
+
+    // The system category "undefined" and the three legacy categories must exist
+    // before any article is saved (idempotent, admin edits are preserved).
+    await CategorySeeder.SeedAsync(db);
 
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
     foreach (var roleName in Enum.GetNames<UserRole>())

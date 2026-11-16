@@ -9,8 +9,8 @@ Für das Schreiben/Verwalten von Artikeln siehe
 - Artikel werden in **Markdown** verfasst und beim Ausliefern serverseitig
   gerendert und bereinigt (Markdig + HtmlSanitizer).
 - Jeder Artikel hat ein **Titelbild**, eine **Kurzbeschreibung**, eine
-  **Kategorie** (Politik, Satire, Verschwörungstheorien), optionale **Tags** und
-  **Hashtags** sowie einen **Slug** für die URL.
+  **Kategorie** (dynamisch vom Admin gepflegt; ohne Zuordnung `undefined`),
+  optionale **Tags** und **Hashtags** sowie einen **Slug** für die URL.
 - Nur `Published`-Artikel sind öffentlich sichtbar; geplante Beiträge werden
   automatisch zum festgelegten Zeitpunkt veröffentlicht.
 - Artikel besitzen eine **Zugriffsstufe**: `Public` (alle), `Registered` (nur
@@ -30,7 +30,7 @@ Für das Schreiben/Verwalten von Artikeln siehe
 - Zeigt die veröffentlichten Artikel, **10 pro Seite**, sortiert nach
   Veröffentlichungsdatum (neueste zuerst; umschaltbar).
 - **Freitextsuche:** `/Articles?query={suchbegriff}`
-- Filter nach **Kategorie**: `/Articles?category=Satire`
+- Filter nach **Kategorie**: `/Suche?category={slug}` (z. B. `satire` oder `undefined`)
 - Filter nach **Tag**: `/Articles?tag={tag-slug}`
 - Filter nach **Hashtag**: `/Articles?hashtag={hashtag-slug}`
 - Filter nach **Autor**, **Zugriffsstufe** und **Veröffentlichungsdatum**.

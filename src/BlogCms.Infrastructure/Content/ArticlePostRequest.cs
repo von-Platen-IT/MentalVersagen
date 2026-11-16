@@ -27,7 +27,7 @@ public sealed record ArticlePostRequest(
     string? TitleImageUrl,
     string Excerpt,
     string ContentMarkdown,
-    ArticleCategory Category,
+    Guid CategoryId,
     ArticleAccessLevel AccessLevel,
     ArticleStatus Status,
     DateTime? ScheduledAt,

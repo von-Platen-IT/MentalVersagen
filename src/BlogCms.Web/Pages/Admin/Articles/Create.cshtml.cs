@@ -1,5 +1,7 @@
+using BlogCms.Domain.Categories;
 using BlogCms.Domain.Entities;
 using BlogCms.Domain.Enums;
+using BlogCms.Infrastructure.Categories;
 using BlogCms.Infrastructure.Content;
 using BlogCms.Web.Authorization;
 using BlogCms.Web.Content;
@@ -20,19 +22,26 @@ namespace BlogCms.Web.Pages.Admin.Articles;
 public class CreateModel : PageModel
 {
     private readonly IArticlePostingService _posting;
+    private readonly ICategoryService _categories;
     private readonly UserManager<User> _userManager;
 
-    public CreateModel(IArticlePostingService posting, UserManager<User> userManager)
+    public CreateModel(
+        IArticlePostingService posting,
+        ICategoryService categories,
+        UserManager<User> userManager)
     {
         _posting = posting;
+        _categories = categories;
         _userManager = userManager;
     }
 
     [BindProperty]
     public ArticleInputModel Input { get; set; } = new();
 
-    public void OnGet()
+    public async Task OnGetAsync()
     {
+        Input.CategoryId = CategoryIds.Undefined;
+        await LoadCategoriesAsync();
     }
 
     public Task<IActionResult> OnPostAsync()
@@ -62,6 +71,7 @@ public class CreateModel : PageModel
     {
         if (!ModelState.IsValid)
         {
+            await LoadCategoriesAsync();
             return Page();
         }
 
@@ -81,10 +91,14 @@ public class CreateModel : PageModel
                 ModelState.AddModelError(error.Field, error.Message);
             }
 
+            await LoadCategoriesAsync();
             return Page();
         }
 
         TempData["Message"] = ArticleMessages.ForCreate(result.Article!);
         return RedirectToPage("Index");
     }
+
+    private async Task LoadCategoriesAsync() =>
+        Input.Categories = await _categories.GetAllAsync();
 }

@@ -30,9 +30,9 @@
             <label class="form-label" for="category">Kategorie</label>
             <select class="form-select" id="category" name="category">
                 <option value="">Alle Kategorien</option>
-                @foreach (var value in Enum.GetValues<ArticleCategory>())
+                @foreach (var item in Model.AllCategories)
                 {
-                    <option value="@value" selected="@(Model.Category == value)">@CategoryDisplay.Label(value)</option>
+                    <option value="@item.Slug" selected="@(Model.CategorySlug == item.Slug)">@item.Name</option>
                 }
             </select>
         </div>
@@ -117,7 +117,7 @@ else
                     <a class="page-link"
                        asp-page="/Suche"
                        asp-route-query="@Model.Query"
-                       asp-route-category="@Model.Category"
+                       asp-route-category="@Model.CategorySlug"
                        asp-route-tag="@Model.TagSlug"
                        asp-route-hashtag="@Model.HashtagSlug"
                        asp-route-dateFrom="@Model.DateFrom?.ToString("yyyy-MM-dd")"

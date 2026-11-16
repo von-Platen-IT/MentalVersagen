@@ -84,6 +84,18 @@
         <a class="mv-search-link" asp-page="/Suche">Erweiterte Suche</a>
     </div>
 
+    @if (Model.Topics.Count > 0)
+    {
+        <nav class="mv-category-chips" aria-label="Themengebiete">
+            @foreach (var topic in Model.Topics)
+            {
+                <a class="btn btn-outline-secondary btn-sm" asp-page="/Suche" asp-route-category="@topic.Slug">
+                    @topic.Name
+                </a>
+            }
+        </nav>
+    }
+
     <p class="mv-filter-status" data-filter-status hidden></p>
 </section>
 

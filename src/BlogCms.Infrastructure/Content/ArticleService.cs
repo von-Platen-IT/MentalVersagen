@@ -48,7 +48,7 @@ public sealed record HashtagUsage(string Name, string Slug, int Count);
 public sealed record ArticleQuery(
     int Page,
     int PageSize,
-    ArticleCategory? Category = null,
+    Guid? CategoryId = null,
     string? TagSlug = null,
     string? HashtagSlug = null,
     Guid? AuthorId = null,
@@ -68,7 +68,7 @@ public interface IArticleService
         ArticleQuery query, CancellationToken cancellationToken = default);
 
     Task<(IReadOnlyList<Article> Items, int TotalCount)> GetPublishedAsync(
-        int page, int pageSize, ArticleCategory? category = null, string? tagSlug = null,
+        int page, int pageSize, Guid? categoryId = null, string? tagSlug = null,
         CancellationToken cancellationToken = default);
 
     Task<Article?> GetPublishedBySlugAsync(string slug, CancellationToken cancellationToken = default);
@@ -174,9 +174,9 @@ public sealed class ArticleService : IArticleService
             .AsNoTracking()
             .Where(a => a.Status == ArticleStatus.Published && a.PublishedAt != null);
 
-        if (query.Category is not null)
+        if (query.CategoryId is not null)
         {
-            articles = articles.Where(a => a.Category == query.Category);
+            articles = articles.Where(a => a.CategoryId == query.CategoryId);
         }
 
         if (!string.IsNullOrWhiteSpace(query.TagSlug))
@@ -291,6 +291,7 @@ public sealed class ArticleService : IArticleService
 
         var items = await articles
             .Include(a => a.Author)
+            .Include(a => a.Category)
             .Include(a => a.ArticleTags).ThenInclude(at => at.Tag)
             .Include(a => a.ArticleHashtags).ThenInclude(ah => ah.Hashtag)
             .Include(a => a.MediaAssets)
@@ -304,11 +305,11 @@ public sealed class ArticleService : IArticleService
     }
 
     public Task<(IReadOnlyList<Article> Items, int TotalCount)> GetPublishedAsync(
-        int page, int pageSize, ArticleCategory? category = null, string? tagSlug = null,
+        int page, int pageSize, Guid? categoryId = null, string? tagSlug = null,
         CancellationToken cancellationToken = default)
     {
         return SearchPublishedAsync(
-            new ArticleQuery(page, pageSize, category, tagSlug), cancellationToken);
+            new ArticleQuery(page, pageSize, categoryId, tagSlug), cancellationToken);
     }
 
     public Task<Article?> GetPublishedBySlugAsync(string slug, CancellationToken cancellationToken = default)
@@ -316,6 +317,7 @@ public sealed class ArticleService : IArticleService
         return _db.Articles
             .AsNoTracking()
             .Include(a => a.Author)
+            .Include(a => a.Category)
             .Include(a => a.ArticleTags).ThenInclude(at => at.Tag)
             .Include(a => a.ArticleHashtags).ThenInclude(ah => ah.Hashtag)
             .Include(a => a.VideoEmbeds)
@@ -330,6 +332,7 @@ public sealed class ArticleService : IArticleService
         return _db.Articles
             .AsNoTracking()
             .Include(a => a.Author)
+            .Include(a => a.Category)
             .Include(a => a.ArticleTags).ThenInclude(at => at.Tag)
             .Include(a => a.ArticleHashtags).ThenInclude(ah => ah.Hashtag)
             .Include(a => a.VideoEmbeds)
@@ -341,6 +344,7 @@ public sealed class ArticleService : IArticleService
     {
         return _db.Articles
             .Include(a => a.Author)
+            .Include(a => a.Category)
             .Include(a => a.ArticleTags).ThenInclude(at => at.Tag)
             .Include(a => a.ArticleHashtags).ThenInclude(ah => ah.Hashtag)
             .Include(a => a.VideoEmbeds)
@@ -362,6 +366,7 @@ public sealed class ArticleService : IArticleService
         var query = _db.Articles
             .AsNoTracking()
             .Include(a => a.Author)
+            .Include(a => a.Category)
             .Include(a => a.MediaAssets)
             .AsQueryable();
 

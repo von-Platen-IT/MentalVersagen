@@ -51,7 +51,7 @@ public class FeedController : Controller
                     new XElement("title", a.Title),
                     new XElement("link", $"{baseUrl}/Articles/{a.Slug}"),
                     new XElement("guid", $"{baseUrl}/Articles/{a.Slug}"),
-                    new XElement("category", a.Category.ToString()),
+                    new XElement("category", CategoryDisplay.Name(a.Category)),
                     new XElement("pubDate", (a.PublishedAt ?? a.CreatedAt).ToUniversalTime().ToString("R")),
                     new XElement("description", a.Excerpt ?? string.Empty));
 

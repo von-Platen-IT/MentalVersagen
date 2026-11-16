@@ -31,9 +31,15 @@
     <h2 class="mv-create__legend">Einordnung & Themengebiet</h2>
     <div class="mv-create__grid mv-create__grid--4">
         <div class="mv-create__field">
-            <label asp-for="Category" class="form-label"></label>
-            <select asp-for="Category" class="form-select" asp-items="Html.GetEnumSelectList<ArticleCategory>()"></select>
-            <span asp-validation-for="Category" class="mv-text-danger"></span>
+            <label asp-for="CategoryId" class="form-label"></label>
+            <select asp-for="CategoryId" class="form-select">
+                @foreach (var category in Model.Categories)
+                {
+                    <option value="@category.Id">@category.Name</option>
+                }
+            </select>
+            <div class="form-text">Ohne Auswahl wird der Beitrag unter „undefined“ einsortiert.</div>
+            <span asp-validation-for="CategoryId" class="mv-text-danger"></span>
         </div>
         <div class="mv-create__field">
             <label asp-for="AccessLevel" class="form-label"></label>

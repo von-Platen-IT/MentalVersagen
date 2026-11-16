@@ -30,12 +30,16 @@ BR-042, BR-070, BR-080 bis BR-092). Der Soll-Ist-Abgleich liegt in
 - Sie dient der Darstellung in Übersichten, Suchergebnissen und RSS-Teaser.
 
 ### Kategorisierung
-- Jeder Artikel erhält genau eine `Category`: `Politik`, `Satire` oder `Verschwoerungstheorien`.
+- Jeder Artikel verweist über `CategoryId` auf genau eine dynamische `Category`.
+  Kategorien werden vom Admin angelegt, umbenannt und gelöscht.
   (FeatureFix1 erlaubt mehrere Kategorien — bewusste Abweichung, siehe Abgleich.)
+- Ohne ausdrückliche Zuordnung wird der Beitrag der geschützten Systemkategorie
+  `undefined` zugeordnet. `undefined` kann weder gelöscht noch umbenannt werden.
+- Beim Löschen einer Kategorie werden ihre Artikel zu `undefined` umgehängt.
 - Zusätzlich frei vergebbare `Tag`s (n:m über `ArticleTag`) und `Hashtag`s (n:m über
   `ArticleHashtag`) für granulare Verschlagwortung/Filterung (BR-026).
-- Die `Category` wird auf der Artikelseite sichtbar angezeigt (Badge); bei `Satire` und
-  `Verschwoerungstheorien` wird ein Hinweistext/Disclaimer eingeblendet.
+- Die `Category` wird auf der Artikelseite sichtbar angezeigt; ein optionaler
+  `Disclaimer` pro Kategorie wird eingeblendet.
 
 ### Status & Workflow
 - Status-Übergänge: `Draft` → `Scheduled` → `Published` → `Archived` (BR-030/031/032).
