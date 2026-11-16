@@ -148,6 +148,7 @@
     var searchRoot = tools.querySelector('[data-autocomplete]');
     var input = searchRoot ? searchRoot.querySelector('.mv-search__input') : null;
     var list = searchRoot ? searchRoot.querySelector('.mv-search__list') : null;
+    var categorySelect = tools.querySelector('.mv-category__select');
     var sortSelect = tools.querySelector('.mv-sort__select');
 
     var apiUrl = tools.getAttribute('data-api') || '/api/articles';
@@ -188,13 +189,18 @@
     // --- Grid per REST aktualisieren --------------------------------------
     function loadArticles() {
         var params = new URLSearchParams();
+        var activeCategory = categorySelect && categorySelect.value ? categorySelect.value : null;
         if (activeHashtag) {
             params.set('hashtag', activeHashtag.slug);
+        }
+        if (activeCategory) {
+            params.set('category', activeCategory);
         }
         if (sortSelect && sortSelect.value) {
             params.set('sort', sortSelect.value);
         }
-        params.set('pageSize', String(activeHashtag ? filteredPageSize : basePageSize));
+        params.set('pageSize', String(
+            activeHashtag || activeCategory ? filteredPageSize : basePageSize));
 
         var requestId = ++requestCounter;
         if (grid) {
@@ -235,7 +241,15 @@
             emptyMessage.hidden = items.length > 0;
         }
         if (heading) {
-            heading.textContent = activeHashtag ? 'Akten zu #' + activeHashtag.name : 'Neueste Akten';
+            var selectedCategory = categorySelect && categorySelect.value ? categorySelect.value : null;
+            if (activeHashtag) {
+                heading.textContent = 'Akten zu #' + activeHashtag.name;
+            } else if (selectedCategory) {
+                heading.textContent = 'Akten in ' +
+                    categorySelect.options[categorySelect.selectedIndex].text;
+            } else {
+                heading.textContent = 'Neueste Akten';
+            }
         }
     }
 
@@ -323,15 +337,20 @@
             return;
         }
 
+        var selectedCategory = categorySelect && categorySelect.value ? categorySelect.value : null;
         status.textContent = '';
-        if (!activeHashtag) {
+        if (!activeHashtag && !selectedCategory) {
             status.hidden = true;
             return;
         }
 
+        var filterLabel = activeHashtag
+            ? '#' + activeHashtag.name
+            : categorySelect.options[categorySelect.selectedIndex].text;
+
         status.hidden = false;
         status.appendChild(document.createTextNode(
-            'Gefiltert nach #' + activeHashtag.name + ' \u00b7 ' + total + ' Treffer'));
+            'Gefiltert nach ' + filterLabel + ' \u00b7 ' + total + ' Treffer'));
 
         var reset = el('a', 'mv-filter-status__reset', 'Zur\u00fccksetzen');
         reset.href = '#';
@@ -425,6 +444,9 @@
         if (input) {
             input.value = '';
         }
+        if (categorySelect) {
+            categorySelect.value = '';
+        }
         closeList();
         loadArticles();
     }
@@ -457,6 +479,10 @@
                 closeList();
             }
         });
+    }
+
+    if (categorySelect) {
+        categorySelect.addEventListener('change', function () { loadArticles(); });
     }
 
     if (sortSelect) {

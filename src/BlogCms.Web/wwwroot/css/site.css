@@ -751,6 +751,7 @@ code { font-family: var(--mv-font-mono); }
 }
 
 .mv-search__input,
+.mv-category__select,
 .mv-sort__select {
   width: 100%;
   min-height: 44px;
@@ -773,16 +774,22 @@ code { font-family: var(--mv-font-mono); }
 }
 
 .mv-search__input:focus,
+.mv-category__select:focus,
 .mv-sort__select:focus {
   outline: none;
   border-color: var(--mv-red);
   box-shadow: 0 0 0 3px rgba(var(--mv-red-rgb), 0.22), var(--mv-glow-red-soft);
 }
 
+.mv-category {
+  flex: 0 1 auto;
+}
+
 .mv-sort {
   flex: 0 1 auto;
 }
 
+.mv-category__select,
 .mv-sort__select {
   cursor: pointer;
   /* Eigenes Pfeil-Symbol: plattformunabhängige Optik. */
@@ -796,6 +803,7 @@ code { font-family: var(--mv-font-mono); }
   background-repeat: no-repeat;
 }
 
+.mv-category__select option,
 .mv-sort__select option {
   background: var(--mv-bg-card);
   color: var(--mv-text);
@@ -1894,6 +1902,7 @@ input[type="file"]::file-selector-button {
   /* Werkzeuge untereinander, damit die Suchbox volle Breite bekommt. */
   .hero-tools { gap: 0.6rem; }
   .mv-search { flex: 1 1 100%; }
+  .mv-category { flex: 1 1 100%; }
   .mv-sort { flex: 1 1 100%; }
   .mv-search-link { flex: 1 1 100%; justify-content: center; }
   .mv-cases { grid-template-columns: 1fr; }
@@ -2029,25 +2038,6 @@ input[type="file"]::file-selector-button {
 }
 
 /* ---------- Dynamic categories ---------- */
-
-/* Landing-page topic chips below the hero tools. */
-.mv-category-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-
-.mv-category-chips .btn {
-  border-color: var(--mv-border);
-  color: var(--mv-text-dim);
-}
-
-.mv-category-chips .btn:hover,
-.mv-category-chips .btn:focus-visible {
-  border-color: var(--mv-red);
-  color: var(--mv-text);
-}
 
 /* Quick category switch in the admin article list. */
 .mv-admin-category-select {

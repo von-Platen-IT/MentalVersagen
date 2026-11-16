@@ -1,4 +1,5 @@
 using BlogCms.Domain.Enums;
+using BlogCms.Infrastructure.Categories;
 using BlogCms.Infrastructure.Content;
 using BlogCms.Infrastructure.Media;
 using BlogCms.Web.Content;
@@ -17,16 +18,20 @@ public class ArticlesController : Controller
 
     private readonly IArticleService _articles;
     private readonly IMediaService _media;
+    private readonly ICategoryService _categories;
 
-    public ArticlesController(IArticleService articles, IMediaService media)
+    public ArticlesController(
+        IArticleService articles, IMediaService media, ICategoryService categories)
     {
         _articles = articles;
         _media = media;
+        _categories = categories;
     }
 
     [HttpGet]
     public async Task<IActionResult> Index(
         string? hashtag = null,
+        string? category = null,
         string? query = null,
         string? sort = null,
         DateTime? dateFrom = null,
@@ -39,9 +44,17 @@ public class ArticlesController : Controller
             ? parsed
             : ArticleSortOrder.Newest;
 
+        Guid? categoryId = null;
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            var match = await _categories.GetBySlugAsync(category, cancellationToken);
+            categoryId = match?.Id;
+        }
+
         var articleQuery = new ArticleQuery(
             Page: Math.Max(1, page),
             PageSize: Math.Clamp(pageSize, 1, MaxPageSize),
+            CategoryId: categoryId,
             HashtagSlug: string.IsNullOrWhiteSpace(hashtag) ? null : hashtag,
             Search: string.IsNullOrWhiteSpace(query) ? null : query,
             Sort: sortOrder,
