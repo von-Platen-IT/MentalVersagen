@@ -28,6 +28,7 @@ public class SitemapBuilder(AppDbContext db, IHttpContextAccessor accessor)
         ("/Kontakt", "0.5", "monthly"),
         ("/Datenschutz", "0.3", "yearly"),
         ("/Impressum", "0.3", "yearly"),
+        ("/Hinweise", "0.4", "yearly"),
         ("/Newsletter/Subscribe", "0.5", "monthly")
     ];
 

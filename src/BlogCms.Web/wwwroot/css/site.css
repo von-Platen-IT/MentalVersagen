@@ -2027,3 +2027,87 @@ input[type="file"]::file-selector-button {
   }
   .mv-navbar .nav-link::after { transition: none; }
 }
+
+/* ---------- Dynamic categories ---------- */
+
+/* Landing-page topic chips below the hero tools. */
+.mv-category-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.mv-category-chips .btn {
+  border-color: var(--mv-border);
+  color: var(--mv-text-dim);
+}
+
+.mv-category-chips .btn:hover,
+.mv-category-chips .btn:focus-visible {
+  border-color: var(--mv-red);
+  color: var(--mv-text);
+}
+
+/* Quick category switch in the admin article list. */
+.mv-admin-category-select {
+  min-width: 11rem;
+}
+
+/* The protected "undefined" category is visually muted. */
+.mv-category-system {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.mv-category-system td {
+  color: var(--mv-text-dim);
+}
+/* ---------- Kennzeichnung nach Artikel 50 der KI-Verordnung ----------
+ * Symbol und Text, nicht nur Farbe: die Kennzeichnung muss klar und deutlich
+ * sein und ohne Farbwahrnehmung verstaendlich bleiben. Der Rahmen zieht die
+ * Textfarbe des umgebenden Bereichs (currentColor) und traegt damit auf dem
+ * dunklen Seitengrund wie auf dem Papier des Akten-Containers.
+ */
+.mv-kennzeichnung {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 100%;
+  padding: 0.32rem 0.7rem;
+  border: 1px solid currentColor;
+  background: rgba(var(--mv-sepia-rgb), 0.10);
+  font-family: var(--mv-font-mono);
+  font-size: 0.66rem;
+  line-height: 1.45;
+  letter-spacing: 0.03em;
+}
+
+.mv-kennzeichnung__icon {
+  flex: none;
+  width: 1.05em;
+  height: 1.05em;
+}
+
+.mv-kennzeichnung__text {
+  min-width: 0;
+}
+
+.mv-kennzeichnung__link {
+  color: inherit;
+  white-space: nowrap;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.mv-kennzeichnung__link:hover {
+  color: var(--mv-red-text);
+}
+
+.mv-footer .mv-kennzeichnung {
+  background: rgba(var(--mv-sepia-rgb), 0.06);
+}
+
+.mv-abschluss a {
+  font-family: var(--mv-font-mono);
+  font-size: 0.72rem;
+}

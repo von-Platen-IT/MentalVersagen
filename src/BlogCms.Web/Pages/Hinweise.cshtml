@@ -1,0 +1,85 @@
+@page
+@using BlogCms.Web.Seo
+@model BlogCms.Web.Pages.HinweiseModel
+@{
+    ViewData["Title"] = "Hinweise zu Inhalten und Urheberschaft";
+
+    // SEO-Beschreibung: kurz, ohne Wertung — die Seite erklärt den Charakter
+    // des Projekts und den Umgang mit maschinell erstellten Inhalten.
+    ViewData[SeoMeta.DescriptionKey] =
+        "Mentalversagen ist ein digitales Kunstprojekt. Hinweise zu Inhalten, "
+        + "Urheberschaft und dem Einsatz künstlicher Intelligenz.";
+
+    var header = new BlogCms.Web.Models.PageHeaderModel
+    {
+        Title = "Hinweise zu Inhalten und Urheberschaft",
+        Sub = "Kunstprojekt, Gedankenexperiment, Mensch und Maschine."
+    };
+
+    // Text der Kennzeichnung: Wortwahl bewusst als Moeglichkeit formuliert
+    // ("können ... erstellt sein"), weil der maschinelle Anteil nicht je
+    // Beitrag getrennt ausgewiesen wird. Das Zeichen steht hier zur Erklaerung.
+    var kennzeichnung = new BlogCms.Web.Models.KiKennzeichnungModel(
+        "Inhalte können mit künstlicher Intelligenz erstellt sein.");
+}
+
+<partial name="_PageHeader" model="header" />
+
+<div class="mv-doc mt-4">
+    <p class="meta-mono">Stand: November 2026</p>
+
+    <h2 class="h4">1. Dies ist ein Kunstprojekt</h2>
+    <p>
+        Diese Seite ist als digitales Kunstprojekt zu verstehen. Sie gibt nicht
+        notwendigerweise die Wahrheit wieder, sondern dient als Spielraum für
+        Gedankenexperimente und für das Spiel mit neuen Medien. In freundschaftlicher
+        Koexistenz zwischen Mensch und Maschine entstehen hier neue, spielerische
+        Ausdrucksformen digitaler Medien, die sich auch inhaltlich mit dem Thema des
+        zukünftigen Zusammenlebens zwischen Mensch und Maschine beschäftigen – auch
+        wenn dazu ab und zu ein Rückblick auf die manchmal unrühmliche Vergangenheit
+        des Homo sapiens gehören muss. Die Seite macht keine Vorgaben für betreutes
+        Denken und erhebt keinen Anspruch auf Wahrheit, Klugheit oder moralische
+        Überlegenheit. Sie ist ein digitales Kunstwerk, dessen volle Wertigkeit sich
+        erst im Kopf des Betrachters entfaltet.
+    </p>
+
+    <h2 class="h4 mt-4">2. Umgang mit den Inhalten</h2>
+    <p>
+        Die Beiträge bewegen sich bewusst an den Rändern des Sagbaren und arbeiten mit
+        Übertreibung, Ironie, Fiktion und offener Provokation. Sie sind als Kunst und
+        Meinungsäußerung zu lesen, nicht als Tatsachenbehauptung, Bericht, Beweis oder
+        Aufforderung zu irgendetwas. Wer einzelne Passagen wörtlich nimmt und daraus
+        Handlungen ableitet, handelt nicht im Sinne dieser Seite. Die hier vertretenen
+        Positionen sind nicht die des Betreibers. Nichts auf dieser Seite ist
+        medizinische, psychologische, rechtliche, finanzielle oder sonstige Beratung.
+    </p>
+
+    <h2 class="h4 mt-4">3. Mensch und Maschine</h2>
+    <p>
+        Inhalte auf dieser Seite können ganz oder teilweise mit künstlicher Intelligenz
+        erstellt oder bearbeitet worden sein. Welcher Anteil maschinell entstanden ist,
+        wird nicht je Beitrag einzeln ausgewiesen; jeder Beitrag trägt am Anfang den
+        Hinweis auf diese Möglichkeit. Maschinell erstellte Inhalte können Fehler
+        enthalten, Quellen falsch wiedergeben oder Zusammenhänge erfinden. Eine
+        maschinelle Erstellung sagt nichts über den künstlerischen Wert eines Beitrags
+        und nichts über dessen Richtigkeit. Für Auswahl, Prüfung und Veröffentlichung
+        der Inhalte ist der im Impressum genannte Betreiber verantwortlich.
+    </p>
+
+    <h2 class="h4 mt-4">4. Das Zeichen</h2>
+    <p>
+        Wo das folgende Zeichen steht, gilt der Hinweis aus Abschnitt 3: Inhalt des
+        Kunstprojekts, künstliche Intelligenz kann beteiligt gewesen sein. Stift und
+        Knoten stehen für die beiden Seiten dieser Zusammenarbeit – die menschliche
+        Hand und die maschinelle Verarbeitung.
+    </p>
+    <p>
+        <partial name="_KiKennzeichnung" model="kennzeichnung" />
+    </p>
+
+    <h2 class="h4 mt-4">5. Anbieterkennzeichnung und Rechtliches</h2>
+    <p class="mb-0">
+        Anbieterkennzeichnung, Haftung für Inhalte und Links sowie das Urheberrecht
+        regelt das <a asp-page="/Impressum">Impressum</a>.
+    </p>
+</div>

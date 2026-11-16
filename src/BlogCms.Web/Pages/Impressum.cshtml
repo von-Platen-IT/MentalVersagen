@@ -4,74 +4,78 @@
 @{
     ViewData["Title"] = "Impressum";
     ViewData[SeoMeta.DescriptionKey] =
-        "Impressum und Anbieterkennzeichnung von Mentalversagen — verantwortlich "
-        + "für den Inhalt und die Kontaktdaten.";
+        "Impressum von Mentalversagen — privates Kunstprojekt, Angaben zum "
+        + "Betreiber, zur Verantwortlichkeit für die Inhalte und zum Kontakt.";
     var header = new BlogCms.Web.Models.PageHeaderModel
     {
         Title = "Impressum",
-        Sub = "Anbieterkennzeichnung nach § 5 DDG."
+        Sub = "Angaben zum Betreiber dieser Seite."
     };
 }
 
 <partial name="_PageHeader" model="header" />
 
 <div class="mv-doc mt-4">
-    <h2 class="h4">Angaben gemäß § 5 DDG</h2>
-    <p class="mb-0">
-        von Platen IT<br />
-        Inhaber: Bernd von Platen<br />
-        Johann-Hugo-Str. 5b<br />
-        41849 Wassenberg-Orsbeck
-    </p>
-
-    <h2 class="h4 mt-4">Kontakt</h2>
-    <p class="mb-0">
-        Telefon: +49 (0) 157 5834 1637<br />
-        E-Mail: <a href="mailto:bernd@mentalversagen.de">bernd@mentalversagen.de</a>
-    </p>
-
-    <h2 class="h4 mt-4">Umsatzsteuer</h2>
-    <p>
-        Gemäß § 19 UStG wird keine Umsatzsteuer berechnet und ausgewiesen.
-    </p>
-
-    <h2 class="h4 mt-4">Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h2>
+    <h2 class="h4">Betreiber dieser Seite</h2>
     <p class="mb-0">
         Bernd von Platen<br />
         Johann-Hugo-Str. 5b<br />
         41849 Wassenberg-Orsbeck
     </p>
+    <p class="mt-2">
+        Mentalversagen ist ein privates, nicht kommerzielles Kunstprojekt. Die Seite
+        dient keiner geschäftlichen Tätigkeit; es werden keine Waren und keine
+        Dienstleistungen angeboten. Eine Anbieterkennzeichnung nach § 5 DDG ist für
+        ein solches Angebot nicht vorgeschrieben. Die Angaben stehen hier freiwillig,
+        damit erkennbar ist, wer für die Inhalte einsteht.
+    </p>
 
-    <h2 class="h4 mt-4">Verbraucherstreitbeilegung</h2>
-    <p>
-        Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer
-        Verbraucherschlichtungsstelle im Sinne des Verbraucherstreitbeilegungsgesetzes (VSBG)
-        teilzunehmen.
+    <h2 class="h4 mt-4">Kontakt</h2>
+    <p class="mb-0">
+        E-Mail: <a href="mailto:bernd@mentalversagen.de">bernd@mentalversagen.de</a>
+    </p>
+
+    <h2 class="h4 mt-4">Verantwortlich für den Inhalt</h2>
+    <p class="mb-0">
+        Bernd von Platen<br />
+        Johann-Hugo-Str. 5b<br />
+        41849 Wassenberg-Orsbeck
+    </p>
+    <p class="mt-2">
+        Verantwortlich im Sinne des § 18 Absatz 2 des Medienstaatsvertrags (MStV).
     </p>
 
     <h2 class="h4 mt-4">Haftung für Inhalte</h2>
     <p>
-        Als Diensteanbieter sind wir gemäß § 7 Abs. 1 DDG für eigene Inhalte auf diesen Seiten
-        nach den allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 DDG sind wir als
-        Diensteanbieter jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde
-        Informationen zu überwachen oder nach Umständen zu forschen, die auf eine rechtswidrige
-        Tätigkeit hinweisen. Verpflichtungen zur Entfernung oder Sperrung der Nutzung von
-        Informationen nach den allgemeinen Gesetzen bleiben hiervon unberührt.
+        Für eigene Inhalte auf diesen Seiten bin ich nach den allgemeinen Gesetzen
+        verantwortlich. Für übermittelte oder gespeicherte fremde Informationen bin ich
+        nicht verpflichtet, sie zu überwachen oder nach Umständen zu forschen, die auf
+        eine rechtswidrige Tätigkeit hinweisen. Verpflichtungen zur Entfernung oder
+        Sperrung der Nutzung von Informationen nach den allgemeinen Gesetzen bleiben
+        hiervon unberührt.
     </p>
 
     <h2 class="h4 mt-4">Haftung für Links</h2>
     <p>
-        Unser Angebot enthält Links zu externen Websites Dritter, auf deren Inhalte wir keinen
-        Einfluss haben. Deshalb können wir für diese fremden Inhalte auch keine Gewähr
-        übernehmen. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder
-        Betreiber der Seiten verantwortlich.
+        Diese Seite enthält Links zu externen Websites Dritter, auf deren Inhalte ich
+        keinen Einfluss habe. Deshalb kann ich für diese fremden Inhalte keine Gewähr
+        übernehmen. Für die Inhalte der verlinkten Seiten ist stets der jeweilige
+        Anbieter oder Betreiber der Seiten verantwortlich.
     </p>
 
     <h2 class="h4 mt-4">Urheberrecht</h2>
     <p>
-        Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen
-        dem deutschen Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art
-        der Verwertung außerhalb der Grenzen des Urheberrechtes bedürfen der schriftlichen
-        Zustimmung des jeweiligen Autors bzw. Erstellers.
+        Die durch den Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten
+        unterliegen dem deutschen Urheberrecht. Die Vervielfältigung, Bearbeitung,
+        Verbreitung und jede Art der Verwertung außerhalb der Grenzen des
+        Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors
+        bzw. Erstellers.
+    </p>
+
+    <h2 class="h4 mt-4">Hinweise zu Inhalten und Urheberschaft</h2>
+    <p class="mb-0">
+        Diese Seite ist ein Kunstprojekt. Wie die Inhalte entstehen und wie sie zu
+        lesen sind, steht unter
+        <a asp-page="/Hinweise">Hinweise zu Inhalten und Urheberschaft</a>.
     </p>
 </div>

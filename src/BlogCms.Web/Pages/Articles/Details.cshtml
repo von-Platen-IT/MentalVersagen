@@ -47,11 +47,25 @@
     var header = new BlogCms.Web.Models.PageHeaderModel
     {
         Title = article.Title,
-        Meta = $"ARCHIV {article.Category.ToString().ToUpperInvariant()} · {article.PublishedAt?.ToString("dd.MM.yyyy") ?? "–"}"
+        Meta = $"ARCHIV {CategoryDisplay.Name(article.Category).ToUpperInvariant()} · {article.PublishedAt?.ToString("dd.MM.yyyy") ?? "–"}"
     };
+
+    // Kennzeichnung nach Artikel 50 Absatz 5 der KI-Verordnung: die
+    // Information muss spaetestens beim ersten Kontakt mit dem Beitrag
+    // vorliegen, also oben und sichtbar, nicht hinter einem Link versteckt.
+    var kennzeichnung = new BlogCms.Web.Models.KiKennzeichnungModel(
+        "Inhalte können mit künstlicher Intelligenz erstellt sein.");
 }
 
 <partial name="_PageHeader" model="header" />
+
+@*
+    Kennzeichnung direkt unter der Ueberschrift: sie muss vor der Lektuere
+    wahrnehmbar sein, ohne Scrollen, Klick oder Mouseover.
+*@
+<div class="mb-3">
+    <partial name="_KiKennzeichnung" model="kennzeichnung" />
+</div>
 
 @if (Model.IsPreview)
 {
@@ -195,6 +209,14 @@
             </p>
         }
     </section>
+
+    <div class="mv-teaser mv-abschluss mt-3" role="note">
+        <p class="mb-2">
+            Dieser Beitrag ist Teil des Kunstprojekts Mentalversagen. Lies ihn als
+            Kunst, nicht als Tatsachenbehauptung.
+        </p>
+        <a asp-page="/Hinweise">Hinweise zu Inhalten und Urheberschaft</a>
+    </div>
     </article>
 </div>
 
