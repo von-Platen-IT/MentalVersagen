@@ -114,13 +114,18 @@
         }
         else
         {
-            <p class="lead mb-3">@article.Excerpt</p>
             <div class="mv-teaser">
-                @if (Model.RequiresPremium)
+                @if (Model.RequiresPremium || Model.RequiresMembership)
                 {
                     <span class="mv-stamped mb-2">CLASSIFIED</span>
                     <p class="mb-2">Diese Akte ist Premium-Mitgliedern vorbehalten.</p>
-                    @if (FeatureConfig.Value.MonetizationEnabled)
+                    @if (Model.TeaserAvailableAt is DateTime teaserAt)
+                    {
+                        <p class="meta-mono mb-2">
+                            Der Volltext wird am @teaserAt.ToLocalTime().ToString("dd.MM.yyyy 'um' HH:mm") Ortszeit verfügbar.
+                        </p>
+                    }
+                    @if (Model.MembershipEnabled || FeatureConfig.Value.MonetizationEnabled)
                     {
                         <a class="btn btn-primary" asp-page="/Unterstuetzer/Index">Mitglied werden</a>
                     }

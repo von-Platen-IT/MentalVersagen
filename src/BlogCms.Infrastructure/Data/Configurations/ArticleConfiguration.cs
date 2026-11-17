@@ -1,5 +1,6 @@
 using BlogCms.Domain.Categories;
 using BlogCms.Domain.Entities;
+using BlogCms.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -22,6 +23,10 @@ public class ArticleConfiguration : IEntityTypeConfiguration<Article>
 
         builder.Property(a => a.Excerpt)
             .HasMaxLength(500);
+
+        builder.Property(a => a.Origin)
+            .IsRequired()
+            .HasDefaultValue(ArticleOrigin.Human);
 
         // Slug must be unique (collisions prevented at save time).
         builder.HasIndex(a => a.Slug)

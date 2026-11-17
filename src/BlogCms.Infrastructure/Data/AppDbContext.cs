@@ -19,6 +19,9 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
 
     public DbSet<Article> Articles => Set<Article>();
     public DbSet<Category> Categories => Set<Category>();
+    public DbSet<MembershipProfile> MembershipProfiles => Set<MembershipProfile>();
+    public DbSet<StripeEvent> StripeEvents => Set<StripeEvent>();
+    public DbSet<MembershipAuditLog> MembershipAuditLogs => Set<MembershipAuditLog>();
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<ArticleTag> ArticleTags => Set<ArticleTag>();
     public DbSet<Hashtag> Hashtags => Set<Hashtag>();
@@ -26,7 +29,6 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
     public DbSet<VideoEmbed> VideoEmbeds => Set<VideoEmbed>();
-    public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<Donation> Donations => Set<Donation>();
     public DbSet<NewsletterSubscriber> NewsletterSubscribers => Set<NewsletterSubscriber>();
     public DbSet<Report> Reports => Set<Report>();
@@ -34,6 +36,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     public DbSet<LinkList> LinkLists => Set<LinkList>();
     public DbSet<LinkListItem> LinkListItems => Set<LinkListItem>();
     public DbSet<ActivityLogEntry> ActivityLogEntries => Set<ActivityLogEntry>();
+    public DbSet<SiteSetting> SiteSettings => Set<SiteSetting>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

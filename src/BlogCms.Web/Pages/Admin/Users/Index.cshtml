@@ -27,7 +27,6 @@
                     <th>Anzeigename</th>
                     <th>E-Mail</th>
                     <th>Bestätigt</th>
-                    <th>Abo-Status</th>
                     <th>Registriert</th>
                     <th>Rolle</th>
                 </tr>
@@ -43,7 +42,6 @@
                             @(user.EmailConfirmed ? "Ja" : "Nein")
                         </span>
                     </td>
-                    <td class="meta-mono">@user.SubscriptionStatus</td>
                     <td class="meta-mono">@user.CreatedAt.ToString("dd.MM.yyyy")</td>
                     <td>
                         <form method="post" asp-page-handler="SetRole" class="d-flex align-items-center gap-2">

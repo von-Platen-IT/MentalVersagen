@@ -43,6 +43,17 @@ public enum ArticleSortOrder
 public sealed record HashtagUsage(string Name, string Slug, int Count);
 
 /// <summary>
+/// How multiple category/hashtag filters are combined. Categories are always
+/// OR-combined (an article has exactly one category); <see cref="All"/> only
+/// affects hashtags.
+/// </summary>
+public enum ArticleFilterMatch
+{
+    Any,
+    All
+}
+
+/// <summary>
 /// Filter/query description for the public article list (FeatureFix1 BR-082).
 /// </summary>
 public sealed record ArticleQuery(
@@ -56,7 +67,10 @@ public sealed record ArticleQuery(
     ArticleAccessLevel? AccessLevel = null,
     ArticleSortOrder Sort = ArticleSortOrder.Newest,
     DateTime? DateFrom = null,
-    DateTime? DateTo = null);
+    DateTime? DateTo = null,
+    IReadOnlyList<Guid>? CategoryIds = null,
+    IReadOnlyList<string>? HashtagSlugs = null,
+    ArticleFilterMatch Match = ArticleFilterMatch.Any);
 
 /// <summary>
 /// Application service for article read/write operations, slug uniqueness,
@@ -104,6 +118,9 @@ public interface IArticleService
     /// </summary>
     Task<IReadOnlyList<HashtagUsage>> GetPublishedHashtagsAsync(CancellationToken cancellationToken = default);
 
+    /// <summary>All hashtags with their total usage count (management API).</summary>
+    Task<IReadOnlyList<HashtagUsage>> GetHashtagUsageAsync(CancellationToken cancellationToken = default);
+
     /// <summary>Distinct authors that currently have published articles (for the author filter).</summary>
     Task<IReadOnlyList<User>> GetPublishedAuthorsAsync(CancellationToken cancellationToken = default);
 
@@ -122,6 +139,14 @@ public interface IArticleService
 
     Task UpdateAsync(
         Article article, IEnumerable<string> tagNames, IEnumerable<string> hashtagNames,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Replaces only the hashtags of an existing article (no other fields touched).
+    /// Returns the updated article, or <c>null</c> when the article does not exist.
+    /// </summary>
+    Task<Article?> SetHashtagsAsync(
+        Guid articleId, IEnumerable<string> hashtagNames,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -174,30 +199,84 @@ public sealed class ArticleService : IArticleService
             .AsNoTracking()
             .Where(a => a.Status == ArticleStatus.Published && a.PublishedAt != null);
 
+        var categoryIds = new List<Guid>();
         if (query.CategoryId is not null)
         {
-            articles = articles.Where(a => a.CategoryId == query.CategoryId);
+            categoryIds.Add(query.CategoryId.Value);
         }
-
-        if (!string.IsNullOrWhiteSpace(query.TagSlug))
+        if (query.CategoryIds is not null)
         {
-            // Normalize the incoming slug through the same SlugGenerator used at
-            // write time so URL params match regardless of casing, umlauts ("WÄHLEN")
-            // or a leading '#' ("#waehlen"). The .ToLower() on the column side
-            // additionally tolerates historical rows with mixed-case slugs.
-            var tagSlug = _slugGenerator.Generate(query.TagSlug);
-            if (!string.IsNullOrEmpty(tagSlug))
-            {
-                articles = articles.Where(a => a.ArticleTags.Any(at => at.Tag!.Slug.ToLower() == tagSlug));
-            }
+            categoryIds.AddRange(query.CategoryIds);
         }
+        categoryIds = categoryIds.Distinct().ToList();
 
+        // Normalize the incoming slug through the same SlugGenerator used at
+        // write time so URL params match regardless of casing, umlauts ("WÄHLEN")
+        // or a leading '#' ("#waehlen"). The .ToLower() on the column side
+        // additionally tolerates historical rows with mixed-case slugs.
+        var tagSlug = string.IsNullOrWhiteSpace(query.TagSlug)
+            ? null
+            : _slugGenerator.Generate(query.TagSlug);
+
+        var hashtagSlugs = new List<string>();
         if (!string.IsNullOrWhiteSpace(query.HashtagSlug))
         {
-            var hashtagSlug = _slugGenerator.Generate(query.HashtagSlug);
-            if (!string.IsNullOrEmpty(hashtagSlug))
+            var single = _slugGenerator.Generate(query.HashtagSlug);
+            if (!string.IsNullOrEmpty(single))
             {
-                articles = articles.Where(a => a.ArticleHashtags.Any(ah => ah.Hashtag!.Slug.ToLower() == hashtagSlug));
+                hashtagSlugs.Add(single);
+            }
+        }
+        if (query.HashtagSlugs is not null)
+        {
+            foreach (var raw in query.HashtagSlugs)
+            {
+                if (string.IsNullOrWhiteSpace(raw))
+                {
+                    continue;
+                }
+                var slug = _slugGenerator.Generate(raw);
+                if (!string.IsNullOrEmpty(slug))
+                {
+                    hashtagSlugs.Add(slug);
+                }
+            }
+        }
+        hashtagSlugs = hashtagSlugs.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+        var searchTerm = string.IsNullOrWhiteSpace(query.Search)
+            ? null
+            : query.Search.Trim().ToLowerInvariant();
+        // Inklusives Tagesende: "bis 24.09." umfasst den gesamten Tag.
+        var dateToExclusive = query.DateTo?.Date.AddDays(1);
+
+        if (categoryIds.Count > 0)
+        {
+            articles = articles.Where(a => categoryIds.Contains(a.CategoryId));
+        }
+
+        if (tagSlug is not null)
+        {
+            articles = articles.Where(a => a.ArticleTags.Any(at => at.Tag!.Slug.ToLower() == tagSlug));
+        }
+
+        if (hashtagSlugs.Count > 0)
+        {
+            if (query.Match == ArticleFilterMatch.All)
+            {
+                // One Where per hashtag keeps the query EF-translatable (no All()
+                // over a navigation collection).
+                foreach (var slug in hashtagSlugs)
+                {
+                    var current = slug;
+                    articles = articles.Where(a =>
+                        a.ArticleHashtags.Any(ah => ah.Hashtag!.Slug.ToLower() == current));
+                }
+            }
+            else
+            {
+                articles = articles.Where(a =>
+                    a.ArticleHashtags.Any(ah => hashtagSlugs.Contains(ah.Hashtag!.Slug.ToLower())));
             }
         }
 
@@ -216,21 +295,17 @@ public sealed class ArticleService : IArticleService
             articles = articles.Where(a => a.PublishedAt >= query.DateFrom);
         }
 
-        if (query.DateTo is not null)
+        if (dateToExclusive is not null)
         {
-            // Inklusives Tagesende: "bis 24.09." umfasst den gesamten Tag.
-            var toExclusive = query.DateTo.Value.Date.AddDays(1);
-            articles = articles.Where(a => a.PublishedAt < toExclusive);
+            articles = articles.Where(a => a.PublishedAt < dateToExclusive);
         }
 
-        if (!string.IsNullOrWhiteSpace(query.Search))
+        if (searchTerm is not null)
         {
-            // Volltextsuche über Titel, Kurzbeschreibung und Inhalt.
-            var term = query.Search.Trim().ToLowerInvariant();
             articles = articles.Where(a =>
-                a.Title.ToLower().Contains(term) ||
-                (a.Excerpt != null && a.Excerpt.ToLower().Contains(term)) ||
-                a.ContentMarkdown.ToLower().Contains(term));
+                a.Title.ToLower().Contains(searchTerm) ||
+                (a.Excerpt != null && a.Excerpt.ToLower().Contains(searchTerm)) ||
+                a.ContentMarkdown.ToLower().Contains(searchTerm));
         }
 
         var total = await articles.CountAsync(cancellationToken);
@@ -289,17 +364,31 @@ public sealed class ArticleService : IArticleService
                 .ThenByDescending(a => a.Id)
         };
 
-        var items = await articles
+        // Materialise the page's IDs first, then load the full entities with their
+        // navigations. This avoids an EF InMemory limitation where Include() on a
+        // navigation combined with a Where() on the same navigation returns no rows.
+        var orderedIds = await articles
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(a => a.Id)
+            .ToListAsync(cancellationToken);
+
+        var loaded = await _db.Articles
+            .AsNoTracking()
+            .Where(a => orderedIds.Contains(a.Id))
             .Include(a => a.Author)
             .Include(a => a.Category)
             .Include(a => a.ArticleTags).ThenInclude(at => at.Tag)
             .Include(a => a.ArticleHashtags).ThenInclude(ah => ah.Hashtag)
             .Include(a => a.MediaAssets)
             .Include(a => a.Ratings)
-            .AsSplitQuery()
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
             .ToListAsync(cancellationToken);
+
+        var byId = loaded.ToDictionary(a => a.Id);
+        var items = orderedIds
+            .Where(byId.ContainsKey)
+            .Select(id => byId[id])
+            .ToList();
 
         return (items, total);
     }
@@ -432,6 +521,25 @@ public sealed class ArticleService : IArticleService
         return rows.Select(r => new HashtagUsage(r.Name ?? string.Empty, r.Slug, r.Count)).ToList();
     }
 
+    public async Task<IReadOnlyList<HashtagUsage>> GetHashtagUsageAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var rows = await _db.ArticleHashtags
+            .AsNoTracking()
+            .GroupBy(ah => ah.Hashtag!.Slug.ToLower())
+            .Select(g => new
+            {
+                Slug = g.Key,
+                Count = g.Count(),
+                Name = g.Min(ah => ah.Hashtag!.Name)
+            })
+            .OrderByDescending(x => x.Count)
+            .ThenBy(x => x.Name)
+            .ToListAsync(cancellationToken);
+
+        return rows.Select(r => new HashtagUsage(r.Name ?? string.Empty, r.Slug, r.Count)).ToList();
+    }
+
     public async Task<IReadOnlyList<User>> GetPublishedAuthorsAsync(
         CancellationToken cancellationToken = default)
     {
@@ -512,6 +620,34 @@ public sealed class ArticleService : IArticleService
     {
         await PrepareUpdateAsync(article, article.Slug, tagNames, hashtagNames, cancellationToken);
         await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<Article?> SetHashtagsAsync(
+        Guid articleId, IEnumerable<string> hashtagNames,
+        CancellationToken cancellationToken = default)
+    {
+        var article = await _db.Articles
+            .FirstOrDefaultAsync(a => a.Id == articleId, cancellationToken);
+        if (article is null)
+        {
+            return null;
+        }
+
+        await SyncHashtagsAsync(article, hashtagNames, cancellationToken);
+        article.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        // Detach the tracked instance so the reload below reflects the new links.
+        _db.Entry(article).State = EntityState.Detached;
+
+        return await _db.Articles
+            .AsNoTracking()
+            .Include(a => a.Category)
+            .Include(a => a.ArticleTags).ThenInclude(at => at.Tag)
+            .Include(a => a.ArticleHashtags).ThenInclude(ah => ah.Hashtag)
+            .Include(a => a.MediaAssets)
+            .Include(a => a.VideoEmbeds)
+            .FirstAsync(a => a.Id == articleId, cancellationToken);
     }
 
     public async Task PrepareUpdateAsync(

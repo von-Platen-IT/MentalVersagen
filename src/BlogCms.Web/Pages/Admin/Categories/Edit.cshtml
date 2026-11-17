@@ -59,6 +59,11 @@
                 <div class="form-text">Wird auf jeder Artikelseite dieser Kategorie eingeblendet.</div>
             </div>
             <div class="mv-create__field">
+                <label class="form-label" asp-for="Color">Farbe</label>
+                <input class="form-control form-control-color" asp-for="Color" type="color" />
+                <div class="form-text">Farbe des 3-px-Rahmens in Listen.</div>
+            </div>
+            <div class="mv-create__field">
                 <label class="form-label" asp-for="DisplayOrder">Reihenfolge</label>
                 <input class="form-control" asp-for="DisplayOrder" type="number" min="0" />
             </div>

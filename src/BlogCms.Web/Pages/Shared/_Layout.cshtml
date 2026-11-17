@@ -1,9 +1,12 @@
 ﻿@using Microsoft.AspNetCore.Identity
+@using Microsoft.Extensions.Options
 @using BlogCms.Domain.Entities
+@using BlogCms.Infrastructure.Membership
 @using BlogCms.Web.Extensions
 @using BlogCms.Web.Seo
 @inject SignInManager<User> SignInManager
 @inject UserManager<User> UserManager
+@inject IOptions<MembershipOptions> MembershipOptionsAccessor
 @{
     // Öffentlicher Ursprung für absolute URLs (Canonical, Open Graph, Sitemap).
     var siteUrl = Context.GetPublicBaseUrl();
@@ -105,7 +108,12 @@
                                 {
                                     <li><a class="dropdown-item" asp-page="/Admin/Categories/Index">Kategorien</a></li>
                                     <li><a class="dropdown-item" asp-page="/Admin/LinkLists/Index">Kurieren</a></li>
+                                    @if (MembershipOptionsAccessor.Value.Enabled)
+                                    {
+                                        <li><a class="dropdown-item" asp-page="/Admin/Memberships/Index">Mitgliedschaften & Abos</a></li>
+                                    }
                                     <li><a class="dropdown-item" asp-page="/Admin/Users/Index">Benutzer</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Admin/Settings/Index">Einstellungen</a></li>
                                     <li><a class="dropdown-item" asp-page="/Admin/Activity/Index">Auswertung</a></li>
                                 }
                                 @if (User.IsInRole(nameof(BlogCms.Domain.Enums.UserRole.Moderator)) || User.IsInRole(nameof(BlogCms.Domain.Enums.UserRole.Admin)))

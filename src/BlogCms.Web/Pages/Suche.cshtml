@@ -27,12 +27,11 @@
                    placeholder="Titel, Kurzbeschreibung oder Inhalt" />
         </div>
         <div class="col-6 col-lg-3">
-            <label class="form-label" for="category">Kategorie</label>
-            <select class="form-select" id="category" name="category">
-                <option value="">Alle Kategorien</option>
+            <label class="form-label" for="categories">Kategorien <span class="text-muted">(Mehrfachauswahl)</span></label>
+            <select class="form-select" id="categories" name="categories" multiple size="4">
                 @foreach (var item in Model.AllCategories)
                 {
-                    <option value="@item.Slug" selected="@(Model.CategorySlug == item.Slug)">@item.Name</option>
+                    <option value="@item.Slug" selected="@(Model.CategorySlugs.Contains(item.Slug))">@item.Name</option>
                 }
             </select>
         </div>
@@ -60,12 +59,11 @@
                    value="@Model.DateTo?.ToString("yyyy-MM-dd")" />
         </div>
         <div class="col-12 col-md-3">
-            <label class="form-label" for="hashtag">Hashtag</label>
-            <select class="form-select" id="hashtag" name="hashtag">
-                <option value="">Alle Hashtags</option>
+            <label class="form-label" for="hashtags">Hashtags <span class="text-muted">(Mehrfachauswahl)</span></label>
+            <select class="form-select" id="hashtags" name="hashtags" multiple size="4">
                 @foreach (var hashtag in Model.AllHashtags)
                 {
-                    <option value="@hashtag.Slug" selected="@(Model.HashtagSlug == hashtag.Slug)">
+                    <option value="@hashtag.Slug" selected="@(Model.HashtagSlugs.Contains(hashtag.Slug))">
                         #@hashtag.Name (@hashtag.Count)
                     </option>
                 }
@@ -78,6 +76,16 @@
                 {
                     <option value="@value" selected="@(Model.Sort == value)">@SortDisplay.Label(value)</option>
                 }
+            </select>
+        </div>
+    </div>
+
+    <div class="row g-3 align-items-end mt-1">
+        <div class="col-12 col-md-4">
+            <label class="form-label" for="match">Verknüpfung</label>
+            <select class="form-select" id="match" name="match">
+                <option value="any" selected="@(Model.Match == ArticleFilterMatch.Any)">Mindestens ein Filter (ODER)</option>
+                <option value="all" selected="@(Model.Match == ArticleFilterMatch.All)">Alle Hashtags (UND)</option>
             </select>
         </div>
     </div>
@@ -117,9 +125,10 @@ else
                     <a class="page-link"
                        asp-page="/Suche"
                        asp-route-query="@Model.Query"
-                       asp-route-category="@Model.CategorySlug"
+                       asp-route-categories="@(Model.CategorySlugs.Count > 0 ? string.Join(',', Model.CategorySlugs) : null)"
                        asp-route-tag="@Model.TagSlug"
-                       asp-route-hashtag="@Model.HashtagSlug"
+                       asp-route-hashtags="@(Model.HashtagSlugs.Count > 0 ? string.Join(',', Model.HashtagSlugs) : null)"
+                       asp-route-match="@Model.Match"
                        asp-route-dateFrom="@Model.DateFrom?.ToString("yyyy-MM-dd")"
                        asp-route-dateTo="@Model.DateTo?.ToString("yyyy-MM-dd")"
                        asp-route-sort="@Model.Sort"

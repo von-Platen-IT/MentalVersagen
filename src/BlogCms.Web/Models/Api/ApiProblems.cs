@@ -12,6 +12,7 @@ public static class ProblemTypes
     public const string Validation = "https://mentalversagen.de/problems/validation-error";
     public const string Unauthorized = "https://mentalversagen.de/problems/unauthorized";
     public const string NotFound = "https://mentalversagen.de/problems/not-found";
+    public const string Conflict = "https://mentalversagen.de/problems/conflict";
     public const string RateLimit = "https://mentalversagen.de/problems/rate-limit";
     public const string NotConfigured = "https://mentalversagen.de/problems/not-configured";
     public const string Internal = "https://mentalversagen.de/problems/internal-error";
@@ -71,6 +72,15 @@ public static class ApiProblems
         Type = ProblemTypes.NotFound,
         Title = "Ressource nicht gefunden.",
         Status = StatusCodes.Status404NotFound,
+        Detail = detail
+    };
+
+    /// <summary>409 — die Aktion ist mit dem aktuellen Zustand nicht vereinbar.</summary>
+    public static ProblemDetails Conflict(string detail) => new()
+    {
+        Type = ProblemTypes.Conflict,
+        Title = "Konflikt mit dem aktuellen Zustand.",
+        Status = StatusCodes.Status409Conflict,
         Detail = detail
     };
 

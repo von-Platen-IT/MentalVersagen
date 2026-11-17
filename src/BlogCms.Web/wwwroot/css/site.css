@@ -935,7 +935,8 @@ code { font-family: var(--mv-font-mono); }
 
 .mv-case {
   background: var(--mv-bg-card);
-  border: 1px solid var(--mv-border);
+  /* 3 px frame in the category colour; falls back to the neutral border. */
+  border: 3px solid var(--category-color, var(--mv-border));
   position: relative;
   display: flex;
   flex-direction: column;
@@ -955,7 +956,6 @@ code { font-family: var(--mv-font-mono); }
   .mv-case:hover,
   .mv-case:focus-within {
     transform: rotate(var(--case-rot, 0deg)) translateY(-8px);
-    border-color: rgba(var(--mv-red-rgb), 0.7);
     box-shadow: var(--mv-shadow-lift), var(--mv-glow-red), var(--mv-glow-sepia);
   }
 
@@ -1930,6 +1930,7 @@ input[type="file"]::file-selector-button {
  * AA-konforme Töne (≥ 4,5:1) statt eines ungeprüften Einzelwerts.
  */
 .mv-text-danger { color: var(--mv-red-text); }               /* auf dunklem Grund ~5,9:1 */
+.mv-text-success { color: var(--mv-green); }
 .mv-doc .mv-text-danger { color: #8e1728; }        /* auf Papier ~7,1:1 */
 
 /* ---------- Print: Akten-Dokument-Look ---------- */
@@ -2100,4 +2101,76 @@ input[type="file"]::file-selector-button {
 .mv-abschluss a {
   font-family: var(--mv-font-mono);
   font-size: 0.72rem;
+}
+
+/* ---------- Aktive Filter-Chips und Bookmark-Button (Startseite) ---------- */
+.mv-active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.mv-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--mv-border);
+  background: var(--mv-bg-card);
+  color: var(--mv-text);
+  font-family: var(--mv-font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.mv-filter-chip:hover,
+.mv-filter-chip:focus-visible {
+  border-color: var(--mv-red-text);
+  color: var(--mv-red-text);
+}
+
+.mv-filter-chip--reset {
+  border-style: dashed;
+  color: var(--mv-text-dim);
+}
+
+.mv-bookmark {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+/* ---------- Ursprungs-Kennzeichnung (Mensch / KI / Hybrid) ---------- */
+.mv-case__head-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.mv-origin-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  color: var(--mv-text-dim);
+  cursor: help;
+}
+
+.mv-origin-badge--ai {
+  color: #6c8ebf;
+}
+
+.mv-origin-badge--hybrid {
+  color: #b7950b;
+}
+
+.mv-origin-badge--human {
+  color: var(--mv-text-dim);
 }

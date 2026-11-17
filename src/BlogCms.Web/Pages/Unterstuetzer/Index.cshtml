@@ -29,9 +29,27 @@
                 Veröffentlichung zu sehen und öffnest den vollständigen Zugang zu allen
                 Premium-Akten.
             </p>
-            <button type="button" class="btn btn-primary" disabled>
-                Mitgliedschaft abschließen (bald verfügbar)
-            </button>
+            @if (Model.MembershipEnabled)
+            {
+                <div class="d-flex flex-wrap gap-2">
+                    <form method="post" asp-controller="Membership" asp-action="Checkout">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="plan" value="monthly" />
+                        <button type="submit" class="btn btn-primary">Monatlich unterstützen</button>
+                    </form>
+                    <form method="post" asp-controller="Membership" asp-action="Checkout">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="plan" value="yearly" />
+                        <button type="submit" class="btn btn-outline-secondary">Jährlich unterstützen</button>
+                    </form>
+                </div>
+            }
+            else
+            {
+                <button type="button" class="btn btn-primary" disabled>
+                    Mitgliedschaft abschließen (bald verfügbar)
+                </button>
+            }
         </div>
     </div>
 
@@ -51,6 +69,8 @@
     </div>
 
     <p class="meta-mono mt-3 mb-0">
-        Hinweis: Die Funktionen sind noch nicht aktiv – diese Seite ist vorerst ein Platzhalter.
+        @(Model.MembershipEnabled
+            ? "Die Mitgliedschaft wird über Stripe abgewickelt. Du wirst zur sicheren Zahlungsseite weitergeleitet."
+            : "Hinweis: Die Funktionen sind noch nicht aktiv – diese Seite ist vorerst ein Platzhalter.")
     </p>
 </div>

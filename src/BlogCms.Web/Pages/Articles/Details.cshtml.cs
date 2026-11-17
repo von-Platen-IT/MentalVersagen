@@ -4,13 +4,13 @@ using BlogCms.Infrastructure.Activity;
 using BlogCms.Infrastructure.Comments;
 using BlogCms.Infrastructure.Content;
 using BlogCms.Infrastructure.Media;
+using BlogCms.Infrastructure.Membership;
 using BlogCms.Infrastructure.Ratings;
-using BlogCms.Web.Authorization;
 using BlogCms.Web.Extensions;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Options;
 
 namespace BlogCms.Web.Pages.Articles;
 
@@ -20,9 +20,10 @@ public class DetailsModel : PageModel
     private readonly ICommentService _comments;
     private readonly IMediaService _media;
     private readonly IMarkdownRenderer _markdownRenderer;
-    private readonly IAuthorizationService _authorizationService;
     private readonly IRatingService _ratings;
     private readonly IActivityLogService _activity;
+    private readonly IMembershipService _membership;
+    private readonly MembershipOptions _membershipOptions;
     private readonly UserManager<User> _userManager;
 
     public DetailsModel(
@@ -30,18 +31,20 @@ public class DetailsModel : PageModel
         ICommentService comments,
         IMediaService media,
         IMarkdownRenderer markdownRenderer,
-        IAuthorizationService authorizationService,
         IRatingService ratings,
         IActivityLogService activity,
+        IMembershipService membership,
+        IOptions<MembershipOptions> membershipOptions,
         UserManager<User> userManager)
     {
         _articles = articles;
         _comments = comments;
         _media = media;
         _markdownRenderer = markdownRenderer;
-        _authorizationService = authorizationService;
         _ratings = ratings;
         _activity = activity;
+        _membership = membership;
+        _membershipOptions = membershipOptions.Value;
         _userManager = userManager;
     }
 
@@ -56,6 +59,15 @@ public class DetailsModel : PageModel
     public bool RequiresLogin { get; private set; }
 
     public bool RequiresPremium { get; private set; }
+
+    /// <summary>True when the new membership feature is active for this request.</summary>
+    public bool MembershipEnabled => _membershipOptions.Enabled;
+
+    /// <summary>True when a premium article is gated by the new membership feature.</summary>
+    public bool RequiresMembership { get; private set; }
+
+    /// <summary>When a premium article becomes free for everyone (UTC).</summary>
+    public DateTime? TeaserAvailableAt { get; private set; }
 
     public string? TitleImageUrl { get; private set; }
 
@@ -158,26 +170,36 @@ public class DetailsModel : PageModel
 
     private async Task EvaluateAccessAsync(Article article)
     {
+        RequiresLogin = false;
+        RequiresPremium = false;
+        RequiresMembership = false;
+        TeaserAvailableAt = null;
+
         if (IsAdmin || (CurrentUserId != Guid.Empty && article.AuthorId == CurrentUserId))
         {
             CanReadContent = true;
             return;
         }
 
-        switch (article.AccessLevel)
+        var user = User.Identity?.IsAuthenticated == true
+            ? await _userManager.GetUserAsync(User)
+            : null;
+
+        CanReadContent = await _membership.IsArticleFullyVisibleAsync(
+            article, user, DateTime.UtcNow);
+
+        if (!CanReadContent)
         {
-            case ArticleAccessLevel.Registered:
-                CanReadContent = User.Identity?.IsAuthenticated == true;
-                RequiresLogin = !CanReadContent;
-                break;
-            case ArticleAccessLevel.Premium:
-                var premium = await _authorizationService.AuthorizeAsync(User, Policies.PremiumAccess);
-                CanReadContent = premium.Succeeded;
-                RequiresPremium = !CanReadContent;
-                break;
-            default:
-                CanReadContent = true;
-                break;
+            if (article.AccessLevel == ArticleAccessLevel.Registered && user is null)
+            {
+                RequiresLogin = true;
+            }
+            else
+            {
+                RequiresMembership = true;
+                RequiresPremium = true;
+                TeaserAvailableAt = _membership.GetTeaserAvailableAt(article);
+            }
         }
     }
 

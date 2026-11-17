@@ -18,6 +18,53 @@ Dieses Verzeichnis enthält das Pflichtenheft für das selbst programmierte CMS 
 | `docs/` | Praxisnahe Anleitungen (Rollen/Admin, Admin-Bereich, Blog-Nutzung) — siehe [`docs/README.md`](docs/README.md) |
 | `API_Funktion_Mentalversagen.md` | **Ausführliche Anleitung zur Management-API** — Zweck, Server-Konfiguration, Client-Tools, Skripte (Python/PowerShell), KI-Agenten (Hermes, MCP) |
 
+## Mitgliedschaft und Bezahlfunktionen
+
+Der Blog besitzt eine über `Membership:Enabled` steuerbare
+Stripe-Mitgliedschaft. Sie ist standardmäßig **aus** und ist die **einzige
+Abo-Quelle**; die frühere `Subscription`-Logik wurde entfernt.
+
+Vorhandene Bezahlfunktionen:
+
+- **Monats- und Jahresmitgliedschaft** über Stripe Checkout.
+- **Kundenportal** zur Selbstverwaltung von Zahlungsmittel, Rechnungen und
+  Kündigung.
+- **Kostenlose Admin-Freischaltungen** mit optionalem Ablaufdatum und Audit-Log.
+- **Admin-Abo-Übersicht** unter `/Admin/Memberships` mit Status, Tarif,
+  Laufzeit, Kündigung und letztem Stripe-Sync.
+- **Teaser-/Wartezeitlogik** für Premium-Artikel: Nicht-Mitglieder sehen zunächst
+  nur den Teaser, nach einer konfigurierbaren Wartezeit wird der Volltext frei.
+- **Einmalige Spenden** werden über `DonationService` und `Donation` vorbereitet;
+  die Oberfläche ist noch ein Platzhalter.
+
+Weiterführende Dokumentation:
+
+- Einsteigerfreundliche Erklärung: [`docs/11-bezahlfunktionen-erklaert.md`](docs/11-bezahlfunktionen-erklaert.md)
+- Technische Betriebsdoku: [`docs/09-mitgliedschaft-stripe.md`](docs/09-mitgliedschaft-stripe.md)
+- Abnahmeliste T01–T15: [`docs/10-abnahme-mitgliedschaft.md`](docs/10-abnahme-mitgliedschaft.md)
+
+## Darstellung
+
+Jede Kategorie hat eine **Farbe**, die als 3 px dicker Rahmen um Beitragseinträge
+in Listen erscheint. Der Administrator ändert sie unter `/Admin/Categories` und
+legt unter `/Admin/Settings` fest, wie viele Beiträge gleichzeitig pro Liste
+angezeigt werden.
+
+Ein kleines Icon im Kartenkopf kennzeichnet den **Ursprung** eines Beitrags
+(Mensch, KI oder Hybrid) und zeigt beim Hover einen erklärenden Text. Der
+Ursprung ist im Admin-Formular und über die Management-API (`origin`) pflegbar.
+
+## URL-Filter und Lesezeichen
+
+Artikellisten lassen sich über die URL filtern: `categories` und `hashtags`
+akzeptieren kommagetrennte Slugs, `match=any|all` steuert die Verknüpfung.
+Die Startseite synchronisiert die Adresszeile beim Filtern und bietet einen
+Button **„Diese Auswahl als Lesezeichen speichern“**. Die Management-API kann
+zusätzlich Kategorien (`/api/v1/categories`) und Hashtags
+(`/api/v1/hashtags`, `PUT/DELETE /api/v1/articles/{id}/hashtags`) verwalten.
+Details: [`docs/03-blog-nutzen.md`](docs/03-blog-nutzen.md) und
+[`docs/05-management-api.md`](docs/05-management-api.md).
+
 ## Arbeitsweise für Coding Agents
 
 1. `FeatureFix1.MD` als fachliche Referenz lesen (was das Blog leisten soll).
@@ -43,4 +90,4 @@ Im Projekt dürfen **ausschließlich frei lizenzierte Open-Source-Pakete** verwe
    - `dotnet list src/BlogCms.slnx package --vulnerable --include-transitive`
    - Client-Bibliotheken: [`src/BlogCms.Web/libman.json`](src/BlogCms.Web/libman.json) — Lizenz je Bibliothek prüfen.
 
-**Bestandsprüfung (2026-10-18):** Alle direkten und transitiven NuGet-Pakete sowie alle LibMan-Bibliotheken sind frei lizenziert (MIT, Apache-2.0, BSD-2-Clause, PostgreSQL License, SIL OFL 1.1). Es sind **keine proprietären Pakete** im Projekt. Die kommerzialisierte Bibliothek `SixLabors.ImageSharp` wurde durch `Magick.NET-Q8-AnyCPU` (Apache-2.0) ersetzt — siehe [`plans/imagesharp-ersetzen.md`](plans/imagesharp-ersetzen.md).
+**Bestandsprüfung (2026-11-17):** Alle direkten und transitiven NuGet-Pakete sowie alle LibMan-Bibliotheken sind frei lizenziert (MIT, Apache-2.0, BSD-2-Clause, PostgreSQL License, SIL OFL 1.1). Es sind **keine proprietären Pakete** im Projekt. Die kommerzialisierte Bibliothek `SixLabors.ImageSharp` wurde durch `Magick.NET-Q8-AnyCPU` (Apache-2.0) ersetzt — siehe [`plans/imagesharp-ersetzen.md`](plans/imagesharp-ersetzen.md). `Stripe.net` (Apache-2.0) ist für die Membership-Funktion hinzugekommen.

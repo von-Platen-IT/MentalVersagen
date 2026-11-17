@@ -22,6 +22,11 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
         builder.Property(c => c.Disclaimer)
             .HasMaxLength(1000);
 
+        builder.Property(c => c.Color)
+            .IsRequired()
+            .HasMaxLength(7)
+            .HasDefaultValue("#7f8c8d");
+
         // Category names and slugs are unique; the service additionally normalizes
         // slugs and reports friendly validation errors before hitting the index.
         builder.HasIndex(c => c.Name).IsUnique();

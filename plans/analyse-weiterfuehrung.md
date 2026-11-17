@@ -56,12 +56,12 @@ Das Projekt ist in einem **sehr guten, produktionsnahen Zustand**. Sowohl der Fe
 3. **Backup & Recovery**
    - Regelmäßige DB-Dumps (pg_dump) + Medien-Storage-Backup, dokumentiertes Restore-Verfahren.
 4. **Monitoring & Logging**
-   - Strukturiertes Logging (Serilog o. Ä.), Fehler-Tracking (z. B. Sentry), Health-Endpoint, einfache Metriken (Aufrufe, Registrierungen, Abo-Status).
+   - Strukturiertes Logging (Serilog o. Ä.), Fehler-Tracking (z. B. Sentry), Health-Endpoint, einfache Metriken (Aufrufe, Registrierungen, Membership-Status).
 
 ### Priorität B — Fachliche Vervollständigung (Module 04/05)
 
-1. **PayPal-Spenden-Button** ( [`04-Monetarisierung.md`](../04-Monetarisierung.md) §2) — analog zu [`IStripeService`](../src/BlogCms.Infrastructure/Payments/IStripeService.cs) als [`IPayPalService`](../src/BlogCms.Infrastructure/Payments) mit Dev-Fake kapseln.
-2. **Stripe in den Live-Modus überführen** — [`StripeService`](../src/BlogCms.Infrastructure/Payments/StripeService.cs) ist implementiert; es fehlt die Konfiguration echter Keys, Webhook-Endpunkt-URL in Stripe, Signaturprüfung im Produktivbetrieb verifizieren, [`FakeStripeService`](../src/BlogCms.Infrastructure/Payments/FakeStripeService.cs) per Flag sauber abschaltbar machen.
+1. **PayPal-Spenden-Button** ( [`04-Monetarisierung.md`](../04-Monetarisierung.md) §2) — als eigener `IPayPalService` mit Dev-Fake kapseln.
+2. **Stripe in den Live-Modus überführen** — [`StripeMembershipService`](../src/BlogCms.Infrastructure/Membership/StripeMembershipService.cs) ist implementiert; es fehlt die Konfiguration echter Keys, Webhook-Endpunkt-URL in Stripe, Signaturprüfung im Produktivbetrieb verifizieren, [`FakeStripeMembershipService`](../src/BlogCms.Infrastructure/Membership/FakeStripeMembershipService.cs) per Flag sauber abschaltbar machen.
 3. **Akzeptanzkriterien [`04-Monetarisierung.md`](../04-Monetarisierung.md) §4 formal abnehmen** und die Checkboxen abhaken (Webhook-Signatur, Kündigungs-Flow, Paywall-Teaser).
 4. **Optional (v2):** Externe OAuth-Provider (Google/GitHub) für Login.
 

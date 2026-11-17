@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using BlogCms.Domain.Entities;
+using BlogCms.Infrastructure.Membership;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -9,11 +10,19 @@ namespace BlogCms.Web.Pages.Account;
 public class LoginModel : PageModel
 {
     private readonly SignInManager<User> _signInManager;
+    private readonly UserManager<User> _userManager;
+    private readonly IMembershipSyncService _membershipSync;
     private readonly ILogger<LoginModel> _logger;
 
-    public LoginModel(SignInManager<User> signInManager, ILogger<LoginModel> logger)
+    public LoginModel(
+        SignInManager<User> signInManager,
+        UserManager<User> userManager,
+        IMembershipSyncService membershipSync,
+        ILogger<LoginModel> logger)
     {
         _signInManager = signInManager;
+        _userManager = userManager;
+        _membershipSync = membershipSync;
         _logger = logger;
     }
 
@@ -56,6 +65,22 @@ public class LoginModel : PageModel
 
         if (result.Succeeded)
         {
+            // Refresh a stale membership profile on login. Failures must never
+            // block the login; the last known status stays in effect.
+            var user = await _userManager.FindByEmailAsync(Input.Email);
+            if (user is not null)
+            {
+                try
+                {
+                    await _membershipSync.SyncUserIfStaleAsync(user.Id);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(
+                        ex, "Membership login sync failed for user {UserId}.", user.Id);
+                }
+            }
+
             _logger.LogInformation("User {Email} logged in.", Input.Email);
             return LocalRedirect(returnUrl);
         }

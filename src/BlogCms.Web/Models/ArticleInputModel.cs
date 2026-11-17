@@ -45,6 +45,9 @@ public class ArticleInputModel
     [Display(Name = "Zugriffsstufe")]
     public ArticleAccessLevel AccessLevel { get; set; } = ArticleAccessLevel.Public;
 
+    [Display(Name = "Ursprung")]
+    public ArticleOrigin Origin { get; set; } = ArticleOrigin.Human;
+
     [Display(Name = "Status")]
     public ArticleStatus Status { get; set; } = ArticleStatus.Draft;
 
@@ -111,6 +114,7 @@ public class ArticleInputModel
                 .Where(f => f is { Length: > 0 })
                 .Select(f => new ArticleUpload(f.OpenReadStream(), f.FileName))
                 .ToList(),
-            ArticlePostRequest.ParseUploadedImageIds(UploadedImageIds));
+            ArticlePostRequest.ParseUploadedImageIds(UploadedImageIds),
+            Origin);
     }
 }

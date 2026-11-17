@@ -47,6 +47,12 @@
             <span asp-validation-for="AccessLevel" class="mv-text-danger"></span>
         </div>
         <div class="mv-create__field">
+            <label asp-for="Origin" class="form-label"></label>
+            <select asp-for="Origin" class="form-select" asp-items="Html.GetEnumSelectList<ArticleOrigin>()"></select>
+            <div class="form-text">Wird in Listen als Icon mit Tooltip angezeigt.</div>
+            <span asp-validation-for="Origin" class="mv-text-danger"></span>
+        </div>
+        <div class="mv-create__field">
             <label asp-for="Status" class="form-label"></label>
             <select asp-for="Status" class="form-select" asp-items="Html.GetEnumSelectList<ArticleStatus>()"></select>
             <span asp-validation-for="Status" class="mv-text-danger"></span>

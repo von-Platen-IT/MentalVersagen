@@ -69,7 +69,7 @@ Konfiguration**, nicht über die Signatur.
 | A4 | Passwörter, SMTP-Credentials und API-Keys dürfen **nirgends** im Quellcode, in `appsettings.json` oder im Git-Repository stehen. |
 | A5 | Der gewählte Provider muss austauschbar sein, ohne dass die Aufrufenden Code ändern. |
 | A6 | `DevEmailSender` bleibt als Development-Fallback erhalten (dort ist das Schreiben nach `App_Data` unkritisch, weil der Dev-Root nutzt). |
-| A7 | Das bestehende Options-Muster (`CommentOptions`, `MediaOptions`, `PaymentOptions`) wird eingehalten — inklusive `SectionName`-Konstante und sinnvoller Defaults. |
+| A7 | Das bestehende Options-Muster (`CommentOptions`, `MediaOptions`, `MembershipOptions`) wird eingehalten — inklusive `SectionName`-Konstante und sinnvoller Defaults. |
 | A8 | Zugangsdaten und Fehlerdetails erscheinen **nicht** in Logs und **nicht** in der Fehlerseite. |
 
 ### Providerwahl
@@ -99,8 +99,8 @@ Version unterstützt .NET 10 ausdrücklich (MailKit 4.17.0 / MimeKit 4.17.0). Di
 
 ## 3. Vorgeschlagenes Design
 
-Das Muster ist im Repo bereits etabliert: `PaymentOptions.IsConfigured` steuert, ob
-`StripeService` oder `FakeStripeService` in der DI landet (`Program.cs:132-141`),
+Das Muster ist im Repo bereits etabliert: `MembershipOptions.SecretKey` steuert, ob
+`StripeMembershipService` oder `FakeStripeMembershipService` in der DI landet,
 `MediaOptions.Provider` wählt zwischen `S3StorageService` und
 `LocalDiskStorageService` (`Program.cs:122-128`). Der Mailversand folgt demselben Muster.
 
@@ -148,7 +148,7 @@ public sealed class EmailOptions
 }
 ```
 
-`IsConfigured` als berechnete Eigenschaft — genau wie in `PaymentOptions`. Damit ist
+`IsConfigured` als berechnete Eigenschaft — analog zu `MembershipOptions`. Damit ist
 A1 erfüllt: fehlen Zugangsdaten, greift automatisch der Dev-Fallback.
 
 ### 3.2 Neuer `SmtpEmailSender`

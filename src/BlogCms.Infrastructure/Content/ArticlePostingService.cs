@@ -84,6 +84,7 @@ public sealed class ArticlePostingService : IArticlePostingService
             Excerpt = string.IsNullOrWhiteSpace(request.Excerpt) ? null : request.Excerpt.Trim(),
             CategoryId = categoryId.Value,
             AccessLevel = request.AccessLevel,
+            Origin = request.Origin,
             Status = status,
             ScheduledAt = status == ArticleStatus.Scheduled ? scheduledUtc : null,
             AuthorId = authorId
@@ -156,6 +157,7 @@ public sealed class ArticlePostingService : IArticlePostingService
         article.Excerpt = string.IsNullOrWhiteSpace(request.Excerpt) ? null : request.Excerpt.Trim();
         article.CategoryId = categoryId.Value;
         article.AccessLevel = request.AccessLevel;
+        article.Origin = request.Origin;
         article.Status = status;
         article.ScheduledAt = status == ArticleStatus.Scheduled ? scheduledUtc : null;
 

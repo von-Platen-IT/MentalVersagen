@@ -19,15 +19,16 @@ zusätzliche, projekt-spezifische Rollen erhalten.
 |---|---|---|
 | `Reader` | Viewer | Lesen, kommentieren, bewerten (nach E-Mail-Bestätigung) |
 | `Author` | Autor | wie `Reader`, zusätzlich **eigene** Beiträge erstellen, bearbeiten, als Entwurf speichern, veröffentlichen und planen; eigene Beiträge verwalten; Kommentare der eigenen Beiträge moderieren. Keine fremden Beiträge. |
-| `Premium` | — | wie `Reader`; Zugriff auf Premium-Artikel (gesteuert über aktive `Subscription`, nicht allein über die Rolle — siehe `04-Monetarisierung.md`) |
+| `Premium` | — | wie `Reader`; Zugriff auf Premium-Artikel (gesteuert über `MembershipProfile`, nicht allein über die Rolle — siehe `04-Monetarisierung.md`) |
 | `Moderator` | — | wie `Reader`, zusätzlich Zugriff auf Kommentar-Moderationsansicht (`Report`-Verwaltung, Kommentar-Status ändern) |
 | `Admin` | Administrator | vollständiger Zugriff, inkl. aller Beiträge, Kommentar-Moderation/-Auszeichnung, Linklisten, Nutzer-/Rollenverwaltung |
 
-> Hinweis: Premium-Zugriff wird technisch **nicht** über `User.Role = Premium` als alleinige Prüfung realisiert, sondern über `User.SubscriptionStatus` bzw. eine aktive `Subscription`. Die Rolle `Premium` kann optional zusätzlich gesetzt werden, falls rollenbasierte UI-Steuerung gewünscht ist — die Autorisierungs-Policy basiert primär auf dem Abo-Status.
+> Hinweis: Premium-Zugriff wird technisch **nicht** über `User.Role = Premium` als alleinige Prüfung realisiert, sondern über `MembershipProfile` und `IMembershipService` (Status, Kulanzzeit, Admin-Freigabe). Die Rolle `Premium` kann optional zusätzlich gesetzt werden, falls rollenbasierte UI-Steuerung gewünscht ist.
 
 ### Autorisierung
-- Serverseitige Policies: `PremiumAccess` (Abo-getrieben), `RequireModerator`, `RequireAdmin`
-  und **`RequireAuthor`** (`Author` oder `Admin`).
+- Serverseitige Policies: `RequireModerator`, `RequireAdmin` und
+  **`RequireAuthor`** (`Author` oder `Admin`). Premium-Zugriff wird beim
+  Artikel-Rendering über `IMembershipService` entschieden.
 - **Besitzregel:** `Author` darf ausschließlich eigene Beiträge bearbeiten/verwalten;
   `Admin` unterliegt keiner Besitzbeschränkung.
 - Zugriffsstufen von Beiträgen (`Public`/`Registered`/`Premium`) werden zusätzlich zur
@@ -40,7 +41,7 @@ zusätzliche, projekt-spezifische Rollen erhalten.
 
 - [ ] Nicht bestätigte E-Mail-Adressen können nicht kommentieren.
 - [ ] Rollenprüfung für Moderationsansicht ist serverseitig erzwungen, nicht nur UI-seitig ausgeblendet.
-- [ ] Paywall-Zugriffsprüfung nutzt den aktuellen Abo-Status, nicht ausschließlich die Rolle.
+- [ ] Paywall-Zugriffsprüfung nutzt `MembershipProfile`/`IMembershipService`, nicht ausschließlich die Rolle.
 - [ ] Ein `Author` kann nur eigene Beiträge bearbeiten; fremde Beiträge werden serverseitig verweigert.
 - [ ] Zugriffsstufe `Registered` erfordert eine Anmeldung, `Premium` eine aktive Berechtigung.
 - [ ] Account-Löschung anonymisiert personenbezogene Daten, ohne Kommentar-/Artikel-Historie strukturell zu zerstören.

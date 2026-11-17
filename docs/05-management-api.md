@@ -52,6 +52,14 @@ Basis-URL: `https://<domain>/api/v1` — Authentifizierung über den Header **`X
 | `POST` | `/api/v1/articles` | Artikel **anlegen** |
 | `PUT` | `/api/v1/articles/{id}` | Artikel **bearbeiten** (Voll-Update, inkl. Statuswechsel) |
 | `DELETE` | `/api/v1/articles/{id}` | Artikel **löschen** (Soft-Delete) |
+| `PUT` | `/api/v1/articles/{id}/hashtags` | Hashtags eines Artikels **ersetzen** |
+| `DELETE` | `/api/v1/articles/{id}/hashtags` | Alle Hashtags eines Artikels **entfernen** |
+| `GET` | `/api/v1/hashtags` | Alle Hashtags mit Nutzungszahl |
+| `GET` | `/api/v1/categories` | Alle Kategorien inkl. Artikelanzahl |
+| `GET` | `/api/v1/categories/{idOrSlug}` | Einzelne Kategorie lesen |
+| `POST` | `/api/v1/categories` | Kategorie **anlegen** |
+| `PUT` | `/api/v1/categories/{idOrSlug}` | Kategorie **bearbeiten** |
+| `DELETE` | `/api/v1/categories/{idOrSlug}` | Kategorie **löschen** (Artikel wandern nach `undefined`) |
 
 ### Statuswerte (`status`)
 
@@ -69,6 +77,10 @@ gruppiert den Beitrag unter `undefined`. In Antworten stehen zusätzlich
 `categoryId` und `categoryName` zur Verfügung.
 
 `accessLevel` ist weiterhin ein Enum: `Public`, `Registered`, `Premium`.
+
+`origin` beschreibt den redaktionellen Ursprung: `Human` (Standard), `Ai` oder
+`Hybrid`. In Antworten stehen zusätzlich `origin` und `originLabel` (Mensch, KI,
+Hybrid) zur Verfügung.
 
 ---
 
@@ -132,6 +144,71 @@ curl -X DELETE https://<domain>/api/v1/articles/<ID> -H "X-Api-Key: <KEY>"
 
 Antwort: `204 No Content`. Es handelt sich um einen **Soft-Delete** — der Artikel bleibt in der Datenbank erhalten, ist aber öffentlich und in der Verwaltung nicht mehr sichtbar.
 
+### Hashtags eines Artikels ändern
+
+```bash
+# Hashtags vollständig ersetzen (unbekannte Hashtags werden angelegt)
+curl -X PUT https://<domain>/api/v1/articles/<ID>/hashtags \
+  -H "X-Api-Key: <KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{ "hashtags": ["DeepDive", "Faktencheck"] }'
+
+# Alle Hashtags entfernen
+curl -X DELETE https://<domain>/api/v1/articles/<ID>/hashtags \
+  -H "X-Api-Key: <KEY>"
+
+# Alle Hashtags mit Nutzungszahl auflisten
+curl -H "X-Api-Key: <KEY>" https://<domain>/api/v1/hashtags
+```
+
+`PUT` ersetzt die Hashtags vollständig, ohne andere Felder des Artikels
+anzufassen. Eine leere Liste entfernt alle Hashtags. Das Voll-Update
+(`PUT /api/v1/articles/{id}`) akzeptiert `hashtags` weiterhin.
+
+### Kategorien verwalten
+
+```bash
+# Alle Kategorien inkl. Artikelanzahl
+curl -H "X-Api-Key: <KEY>" https://<domain>/api/v1/categories
+
+# Einzelne Kategorie per UUID oder Slug
+curl -H "X-Api-Key: <KEY>" https://<domain>/api/v1/categories/politik
+
+# Kategorie anlegen
+curl -X POST https://<domain>/api/v1/categories \
+  -H "X-Api-Key: <KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Hintergründe",
+    "description": "Tiefe Analysen und Recherchen",
+    "disclaimer": "Dieser Beitrag ist eine Analyse.",
+    "color": "#b03a2e",
+    "displayOrder": 10
+  }'
+
+# Kategorie bearbeiten (Slug bleibt stabil, solange kein neuer Slug gesendet wird)
+curl -X PUT https://<domain>/api/v1/categories/hintergruende \
+  -H "X-Api-Key: <KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "Hintergründe & Recherchen", "displayOrder": 10 }'
+
+# Kategorie löschen (Artikel werden nach "undefined" verschoben)
+curl -X DELETE https://<domain>/api/v1/categories/hintergruende \
+  -H "X-Api-Key: <KEY>"
+```
+
+**Regeln:**
+
+- `name` ist Pflicht (max. 100 Zeichen); `slug` wird bei Bedarf aus dem Namen
+  generiert.
+- `color` ist eine Hex-Farbe (`#RRGGBB`) für den 3-px-Rahmen in Listen. Ohne
+  Angabe gilt `#7f8c8d`.
+- Die Systemkategorie `undefined` ist geschützt: Sie kann weder umbenannt noch
+  gelöscht werden (Antwort `409 Conflict`).
+- Beim Löschen einer regulären Kategorie werden ihre Artikel automatisch der
+  Kategorie `undefined` zugeordnet.
+- `{idOrSlug}` akzeptiert sowohl die UUID als auch den Slug.
+
 ---
 
 ## 4. Fehlerbehandlung
@@ -153,7 +230,8 @@ Alle Fehler antworten als `application/problem+json` (RFC 7807):
 |---|---|---|
 | 400 | `validation-error` | Eingaben prüfen — die betroffenen Felder stehen in `errors[]` |
 | 401 | `unauthorized` | Fehlender oder ungültiger API-Key |
-| 404 | `not-found` | Unbekannte Artikel-ID |
+| 404 | `not-found` | Unbekannte Artikel-ID, Kategorie oder unbekannter Slug |
+| 409 | `conflict` | Aktion mit dem aktuellen Zustand nicht vereinbar (z. B. `undefined` löschen/umbenennen) |
 | 429 | `rate-limit` | Anfragen-Limit überschritten (Standard 60/min pro IP) |
 | 503 | `not-configured` | `Api__AuthorId` fehlt (nur beim Anlegen) |
 | 500 | `internal-error` | Unerwarteter Serverfehler |
@@ -166,7 +244,12 @@ Die API ist darauf ausgelegt, von LLM-Clients (z. B. **ChatGPT Actions**, **Clau
 
 1. **Spec-URL** im Tool hinterlegen: `https://<domain>/swagger/v1/swagger.json`
 2. **Authentifizierung** wählen: „API Key", Header-Name `X-Api-Key`, Wert = der konfigurierte Key.
-3. Die Spec enthält eine Kurzanleitung, die fünf `operationId`s (`listArticles`, `getArticle`, `createArticle`, `updateArticle`, `deleteArticle`) und Feldbeschreibungen inkl. Formatangaben.
+3. Die Spec enthält eine Kurzanleitung, die `operationId`s für Artikel
+   (`listArticles`, `getArticle`, `createArticle`, `updateArticle`,
+   `deleteArticle`), Hashtags (`setArticleHashtags`, `clearArticleHashtags`,
+   `listHashtags`) und Kategorien (`listCategories`, `getCategory`,
+   `createCategory`, `updateCategory`, `deleteCategory`) sowie
+   Feldbeschreibungen inkl. Formatangaben.
 
 Empfohlener Ablauf für automatisierte Clients:
 

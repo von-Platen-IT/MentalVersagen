@@ -1,0 +1,168 @@
+@page
+@using BlogCms.Infrastructure.Membership
+@model BlogCms.Web.Pages.Admin.Memberships.IndexModel
+@{
+    ViewData["Title"] = "Mitgliedschaften & Abos";
+    var header = new BlogCms.Web.Models.PageHeaderModel
+    {
+        Title = "Mitgliedschaften & Abos",
+        Sub = "Abo-Status, Tarife und Zugänge prüfen, freischalten und entziehen."
+    };
+}
+
+<partial name="_PageHeader" model="header" />
+
+<div class="mv-doc mt-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h2 class="h4 mb-0">Benutzer & Abos (@Model.TotalCount)</h2>
+        <a class="btn btn-outline-secondary" asp-page="/Admin/Users/Index">Zur Benutzerverwaltung</a>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mb-3" aria-label="Abo-Zusammenfassung">
+        <span class="mv-pill">Gesamt: @Model.TotalCount</span>
+        <span class="mv-pill mv-text-success">Aktiv: @Model.ActiveCount</span>
+        <span class="mv-pill mv-text-danger">Zahlung offen: @Model.PastDueCount</span>
+        <span class="mv-pill">Gekündigt: @Model.CanceledCount</span>
+        <span class="mv-pill">Freigeschaltet: @Model.ComplimentaryCount</span>
+        <span class="mv-pill">Basis: @Model.BasicCount</span>
+    </div>
+
+    @if (TempData["Message"] is string message)
+    {
+        <div class="mv-teaser mb-3" role="status">@message</div>
+    }
+    @if (TempData["Error"] is string error)
+    {
+        <div class="mv-teaser mb-3 mv-text-danger" role="alert">@error</div>
+    }
+
+    <form method="get" class="d-flex flex-wrap align-items-end gap-2 mb-3">
+        <div>
+            <label class="form-label visually-hidden" for="search">Suche</label>
+            <input id="search" type="search" name="search" value="@Model.Search"
+                   class="form-control form-control-sm" placeholder="Name oder E-Mail suchen" />
+        </div>
+        <div>
+            <label class="form-label visually-hidden" for="filter">Filter</label>
+            <select id="filter" name="filter" class="form-select form-select-sm">
+                @foreach (var value in Enum.GetValues<MembershipFilter>())
+                {
+                    var label = value switch
+                    {
+                        MembershipFilter.Active => "Aktiv",
+                        MembershipFilter.PastDue => "Zahlung offen",
+                        MembershipFilter.Canceled => "Gekündigt",
+                        MembershipFilter.Complimentary => "Freigeschaltet",
+                        MembershipFilter.Basic => "Basis",
+                        _ => "Alle"
+                    };
+                    <option value="@value" selected="@(Model.Filter == value)">@label</option>
+                }
+            </select>
+        </div>
+        <button type="submit" class="btn btn-sm btn-outline-secondary">Filtern</button>
+    </form>
+
+    @if (Model.Rows.Count == 0)
+    {
+        <p class="text-muted mb-0">Keine Benutzer gefunden.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Benutzer</th>
+                        <th>E-Mail</th>
+                        <th>Rolle</th>
+                        <th>Status</th>
+                        <th>Plan</th>
+                        <th>Laufzeit / Freigabe</th>
+                        <th>Kündigung</th>
+                        <th>Letzter Sync</th>
+                        <th class="text-end">Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    var profile = row.Profile;
+                    <tr>
+                        <td class="fw-semibold">@row.User.DisplayName</td>
+                        <td>@row.User.Email</td>
+                        <td><span class="meta-mono">@row.User.Role</span></td>
+                        <td>
+                            <span class="@Model.StatusPillClass(profile)">@Model.StatusLabel(profile)</span>
+                        </td>
+                        <td class="meta-mono">@(profile?.PlanId ?? "–")</td>
+                        <td class="small">
+                            @if (profile is { IsComplimentary: true })
+                            {
+                                <div>
+                                    Freigabe bis
+                                    @(profile.ComplimentaryUntil is null
+                                        ? "unbegrenzt"
+                                        : profile.ComplimentaryUntil.Value.ToLocalTime().ToString("dd.MM.yyyy"))
+                                </div>
+                            }
+                            @if (profile?.CurrentPeriodEnd is DateTime periodEnd)
+                            {
+                                <div class="text-muted">
+                                    Periode bis @periodEnd.ToLocalTime().ToString("dd.MM.yyyy")
+                                </div>
+                            }
+                            @if (profile is null || (!profile.IsComplimentary && profile.CurrentPeriodEnd is null))
+                            {
+                                <span class="text-muted">–</span>
+                            }
+                        </td>
+                        <td>
+                            @(profile?.CancelAtPeriodEnd == true ? "Zum Periodenende" : "–")
+                        </td>
+                        <td class="meta-mono">
+                            @(profile?.LastSyncedAt is DateTime lastSync
+                                ? lastSync.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                                : "–")
+                        </td>
+                        <td class="text-end">
+                            @if (profile is { IsComplimentary: true })
+                            {
+                                <form method="post" asp-page-handler="Revoke"
+                                      class="d-flex flex-wrap justify-content-end gap-1">
+                                    <input type="hidden" name="targetUserId" value="@row.User.Id" />
+                                    <input type="text" name="Note" class="form-control form-control-sm"
+                                           style="max-width: 10rem;" placeholder="Notiz (optional)" aria-label="Notiz zum Entzug" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Entziehen</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form method="post" asp-page-handler="Grant"
+                                      class="d-flex flex-wrap justify-content-end gap-1">
+                                    <input type="hidden" name="TargetUserId" value="@row.User.Id" />
+                                    <input type="date" name="Until" class="form-control form-control-sm"
+                                           style="max-width: 9rem;" aria-label="Freigabe bis einschließlich" />
+                                    <input type="text" name="Note" class="form-control form-control-sm"
+                                           style="max-width: 10rem;" placeholder="Notiz (optional)" aria-label="Notiz zur Freigabe" />
+                                    <button type="submit" class="btn btn-sm btn-primary">Freischalten</button>
+                                </form>
+                            }
+
+                            <form method="post" asp-page-handler="Sync" class="d-inline">
+                                <input type="hidden" name="targetUserId" value="@row.User.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-secondary mt-1">Sync</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <p class="form-text mt-3 mb-0">
+        Das Ablaufdatum gilt einschließlich des ausgewählten Tages (Ortszeit).
+        „Sync“ fragt den aktuellen Status direkt bei Stripe ab.
+    </p>
+</div>

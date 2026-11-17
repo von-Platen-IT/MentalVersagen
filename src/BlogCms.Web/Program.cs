@@ -12,9 +12,11 @@ using BlogCms.Infrastructure.Data;
 using BlogCms.Infrastructure.Email;
 using BlogCms.Infrastructure.LinkLists;
 using BlogCms.Infrastructure.Media;
+using BlogCms.Infrastructure.Membership;
 using BlogCms.Infrastructure.Newsletter;
 using BlogCms.Infrastructure.Payments;
 using BlogCms.Infrastructure.Ratings;
+using BlogCms.Infrastructure.Settings;
 using BlogCms.Web.Authorization;
 using BlogCms.Web.Configuration;
 using BlogCms.Web.Models.Api;
@@ -155,6 +157,7 @@ builder.Services.AddScoped<IAppEmailSender>(serviceProvider =>
 builder.Services.AddSingleton<IMarkdownRenderer, MarkdownRenderer>();
 builder.Services.AddSingleton<ISlugGenerator, SlugGenerator>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<ISettingsService, SettingsService>();
 builder.Services.AddScoped<IArticleService, ArticleService>();
 builder.Services.AddScoped<IArticlePostingService, ArticlePostingService>();
 
@@ -205,19 +208,28 @@ builder.Services.AddSingleton<IStorageService>(serviceProvider =>
         : ActivatorUtilities.CreateInstance<LocalDiskStorageService>(serviceProvider);
 });
 
-// Payments: Stripe abstraction. Without a secret key the dev fake is used, so
-// checkout/webhooks run locally; the webhook signature check stays real.
-builder.Services.Configure<PaymentOptions>(
-    builder.Configuration.GetSection(PaymentOptions.SectionName));
-builder.Services.AddHttpClient("stripe", client => client.Timeout = TimeSpan.FromSeconds(30));
-builder.Services.AddSingleton<IStripeService>(serviceProvider =>
+// Membership: the single subscription source of truth. Disabled by default;
+// when disabled, Public is free, Registered requires login and Premium is
+// admin-only (the practical behaviour before any subscribers existed).
+builder.Services.Configure<MembershipOptions>(
+    builder.Configuration.GetSection(MembershipOptions.SectionName));
+builder.Services.AddScoped<IMembershipService, MembershipService>();
+builder.Services.AddScoped<IMembershipWebhookHandler, MembershipWebhookHandler>();
+builder.Services.AddScoped<IMembershipSyncService, MembershipSyncService>();
+builder.Services.AddHostedService<MembershipSyncBackgroundService>();
+builder.Services.AddScoped<IStripeMembershipService>(serviceProvider =>
 {
-    var paymentOptions = serviceProvider.GetRequiredService<IOptions<PaymentOptions>>().Value;
-    return paymentOptions.IsConfigured
-        ? ActivatorUtilities.CreateInstance<StripeService>(serviceProvider)
-        : ActivatorUtilities.CreateInstance<FakeStripeService>(serviceProvider);
+    var membershipOptions =
+        serviceProvider.GetRequiredService<IOptions<MembershipOptions>>().Value;
+
+    // Without a secret key the dev fake keeps checkout/webhook runnable locally.
+    return string.IsNullOrWhiteSpace(membershipOptions.SecretKey)
+        ? ActivatorUtilities.CreateInstance<FakeStripeMembershipService>(serviceProvider)
+        : ActivatorUtilities.CreateInstance<StripeMembershipService>(serviceProvider);
 });
-builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
+
+// Donations: one-time donations remain independent from memberships.
+builder.Services.AddScoped<IDonationService, DonationService>();
 
 // Newsletter: double opt-in with token-based unsubscribe and cleanup job.
 builder.Services.Configure<NewsletterOptions>(
@@ -225,7 +237,8 @@ builder.Services.Configure<NewsletterOptions>(
 builder.Services.AddScoped<INewsletterService, NewsletterService>();
 builder.Services.AddHostedService<NewsletterCleanupService>();
 
-// Authorization: role-based moderation/admin plus subscription-driven premium access.
+// Authorization: role-based moderation/admin. Premium access is decided by the
+// membership service during article rendering, not by a separate policy.
 builder.Services.AddAuthorization(options =>
 {
     // Authors manage their own articles; admins manage everything (FeatureFix1 BR-013/BR-014).
@@ -235,13 +248,10 @@ builder.Services.AddAuthorization(options =>
         policy => policy.RequireRole(nameof(UserRole.Moderator), nameof(UserRole.Admin)));
     options.AddPolicy(Policies.RequireAdmin,
         policy => policy.RequireRole(nameof(UserRole.Admin)));
-    options.AddPolicy(Policies.PremiumAccess,
-        policy => policy.Requirements.Add(new PremiumRequirement()));
     // Registered access: any authenticated user (FeatureFix1 BR-110).
     options.AddPolicy(Policies.RegisteredAccess,
         policy => policy.RequireAuthenticatedUser());
 });
-builder.Services.AddScoped<IAuthorizationHandler, PremiumAuthorizationHandler>();
 
 // Captcha für die Registrierung: Aufgabe + signierter Token (Data Protection).
 builder.Services.Configure<CaptchaOptions>(builder.Configuration.GetSection(CaptchaOptions.SectionName));

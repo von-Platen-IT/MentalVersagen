@@ -64,7 +64,9 @@ lokalen PostgreSQL auf 5432). Über die Umgebungsvariable `POSTGRES_PORT` änder
   `ConnectionStrings__DefaultConnection` oder User Secrets — nie hartcodiert.
 - Kommentare: `Comments`-Sektion (`ModerationMode`, `MaxCommentsPerMinute`, `EditWindowMinutes`).
 - Medien: `Media`-Sektion (`Provider`, Limits, `ConvertToWebP`, S3-Zugangsdaten).
-- Zahlungen: `Stripe`-Sektion (`SecretKey`, `WebhookSecret`, Plan-IDs).
+- Membership: `Membership`-Sektion (`Enabled`, `SecretKey`, `WebhookSecret`,
+  `PriceIdMonthly`, `PriceIdYearly`, `TeaserDelayDays`, `GracePeriodDays`,
+  `SyncOnLoginIfOlderThanHours`, `SyncIntervalHours`).
 - Newsletter: `Newsletter`-Sektion (`UnconfirmedRetentionDays`).
 - Feature-Flags: `Features`-Sektion (`MonetizationEnabled`, `LoginEnabled`).
 - Management-API: `Api`-Sektion (`Key`, `AuthorId`, `SwaggerUiEnabled`, `RateLimitPerMinute`) — siehe [`docs/05-management-api.md`](docs/05-management-api.md).
@@ -109,7 +111,7 @@ und KI-Tools. Details: [`docs/05-management-api.md`](docs/05-management-api.md).
 | Bereich | Verhalten im Dev-Modus |
 |---|---|
 | E-Mail | `DevEmailSender` schreibt HTML-Dateien nach `bin/.../App_Data/emails` |
-| Zahlungen | Ohne `Stripe:SecretKey` simuliert `FakeStripeService` Checkout/Portal; Webhook-Signaturprüfung bleibt real |
+| Membership | Ohne `Membership:SecretKey` nutzt die neue Funktion `FakeStripeMembershipService`; die Webhook-Signaturprüfung bleibt real |
 | Medien-Storage | `LocalDiskStorageService` speichert unter `wwwroot/uploads` (Provider `Local`) |
 
 ## Docker
@@ -173,7 +175,7 @@ dotnet test tests/BlogCms.Tests/BlogCms.Tests.csproj
 
 Die Tests bilden zentrale Akzeptanzkriterien der Module 01–05 ab (Slug-Eindeutigkeit,
 Markdown-Sanitizing, Kommentar-Moderation/Rate-Limit/Soft-Delete, Webhook-Signatur,
-Abo-Status-Cache, anonyme Spenden, Newsletter-Double-Opt-in).
+Membership-Status, anonyme Spenden, Newsletter-Double-Opt-in).
 
 ## Projektstruktur
 
@@ -216,13 +218,14 @@ Nutzung von Admin-Bereich und Blog liegen unter [`docs/`](docs/README.md):
 - **Video-Embeds**: Es wird ausschließlich der offizielle oEmbed-Code verwendet,
   eingebettet in ein `<iframe sandbox="allow-scripts allow-popups">` ohne
   `allow-same-origin` ([`VideoEmbedRenderer`](src/BlogCms.Web/Content/VideoEmbedRenderer.cs:1)).
-- **Webhooks**: Die Stripe-Signatur wird per HMAC-SHA256 inkl. Zeitstempel-Toleranz
-  geprüft; ungültige Signaturen werden mit `401` abgewiesen
-  ([`StripeSignatureVerifier`](src/BlogCms.Infrastructure/Payments/PaymentOptions.cs:1)).
+- **Webhooks**: Die Stripe-Signatur wird mit
+  `Stripe.EventUtility.ConstructEvent` geprüft; ungültige Signaturen werden mit
+  `400` abgewiesen ([`StripeMembershipService`](src/BlogCms.Infrastructure/Membership/StripeMembershipService.cs:1)).
 - **Rollenprüfung**: Moderations- und Admin-Bereiche sind serverseitig über Policies
   geschützt, nicht nur UI-seitig ausgeblendet.
-- **Paywall**: Der Premium-Zugriff basiert auf dem aktuellen Abo-Status
-  (`User.SubscriptionStatus`), nicht auf der Rolle allein.
+- **Paywall**: Der Premium-Zugriff basiert auf `MembershipProfile` und
+  `IMembershipService` (Status, Kulanzzeit, Admin-Freigabe), nicht auf der Rolle
+  allein.
 - **Uploads**: Bilder werden anhand des echten Datei-Inhalts validiert, skaliert,
   optional nach WebP konvertiert und ohne EXIF gespeichert.
 
@@ -231,5 +234,6 @@ Nutzung von Admin-Bereich und Blog liegen unter [`docs/`](docs/README.md):
 - EF meldet zwei Modell-Warnungen: Der Soft-Delete-Filter auf `Article` ist
   erforderliches Ende der Beziehungen zu `ArticleTag` und `Comment`. Aktuell
   unkritisch; künftig über passende Filter/optionale Navigationen zu bereinigen.
-- Der echte Stripe-Provider (`StripeService`) nutzt die REST-API direkt; für
-  Produktivbetrieb Zugangsdaten und ein öffentlich erreichbares Webhook-Secret setzen.
+- Die Stripe-Anbindung (`StripeMembershipService`) nutzt `Stripe.net`; für
+  Produktivbetrieb Zugangsdaten und ein öffentlich erreichbares Webhook-Secret
+  setzen.

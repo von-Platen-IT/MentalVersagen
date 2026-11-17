@@ -21,9 +21,12 @@
     damit das Markup nur an einer Stelle gepflegt wird. Die im site.js
     erzeugten Karten (renderCard) halten sich an exakt dieselben Klassen.
 *@
-<article class="mv-case">
+<article class="mv-case" style="--category-color: @CategoryDisplay.Color(article.Category);">
     <div class="mv-case__head">
-        <span>ARCHIV @CategoryDisplay.Name(article.Category).ToUpperInvariant()</span>
+        <span class="mv-case__head-left">
+            <partial name="_OriginBadge" model="article.Origin" />
+            <span>ARCHIV @CategoryDisplay.Name(article.Category).ToUpperInvariant()</span>
+        </span>
         <span class="text-end">#@article.Id.ToString("N").Substring(0, 8).ToUpperInvariant()</span>
     </div>
     @if (Model.ImageUrl is not null)

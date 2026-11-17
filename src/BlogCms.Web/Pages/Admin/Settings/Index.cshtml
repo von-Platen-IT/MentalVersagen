@@ -1,0 +1,32 @@
+@page
+@model BlogCms.Web.Pages.Admin.Settings.IndexModel
+@{
+    ViewData["Title"] = "Einstellungen";
+    var header = new BlogCms.Web.Models.PageHeaderModel
+    {
+        Title = "Einstellungen",
+        Sub = "Darstellung und Listenlänge."
+    };
+}
+
+<partial name="_PageHeader" model="header" />
+
+<div class="mv-doc mt-4">
+    @if (TempData["Message"] is string message)
+    {
+        <div class="mv-teaser mb-3" role="status">@message</div>
+    }
+
+    <form method="post" class="mv-create" style="max-width: 32rem;">
+        <div class="mv-create__field">
+            <label class="form-label" asp-for="ArticlesPerPage">Beiträge pro Liste</label>
+            <input class="form-control" asp-for="ArticlesPerPage" type="number" min="1" max="50" />
+            <div class="form-text">
+                Gilt für Startseite, Suche und das REST-Grid. Erlaubt: 1–50.
+            </div>
+        </div>
+        <div class="mv-create__actions mt-4">
+            <button type="submit" class="btn btn-primary">Speichern</button>
+        </div>
+    </form>
+</div>

@@ -6,6 +6,13 @@
 > `20260913162054_FeatureFix1_NewFeatures` erfolgreich gegen PostgreSQL angewendet,
 > Laufzeit-Smoke-Test der Kernseiten erfolgreich (siehe Abschnitt 12).
 
+> **Hinweis (2026-11-17):** Dieses Dokument beschreibt den historischen
+> Umsetzungsstand. Der alte `Subscription`-Workflow wurde entfernt;
+> `MembershipProfile` ist die einzige Abo-Quelle. Aktuelle Dokumentation:
+> [`04-Monetarisierung.md`](04-Monetarisierung.md),
+> [`docs/09-mitgliedschaft-stripe.md`](docs/09-mitgliedschaft-stripe.md) und
+> [`docs/11-bezahlfunktionen-erklaert.md`](docs/11-bezahlfunktionen-erklaert.md).
+
 **Bezug:** [`FeatureFix1.MD`](FeatureFix1.MD) (generische, technologieunabhängige Blog-Regelsammlung)
 **Projekt:** MentalVersagen / BlogCms (.NET 10, ASP.NET Core Razor Pages, EF Core, PostgreSQL)
 **Stand:** v1.1 — Analyse + Umsetzung

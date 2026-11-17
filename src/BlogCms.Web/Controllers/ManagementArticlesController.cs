@@ -256,6 +256,62 @@ public sealed class ManagementArticlesController : ControllerBase
     }
 
     /// <summary>
+    /// Ersetzt die Hashtags eines Artikels vollständig, ohne andere Felder
+    /// anzufassen. Eine leere Liste entfernt alle Hashtags. Unbekannte Hashtags
+    /// werden angelegt.
+    /// </summary>
+    /// <param name="id">UUID des Artikels.</param>
+    /// <param name="model">Die neuen Hashtags (ohne führendes <c>#</c>).</param>
+    /// <param name="cancellationToken">Bricht die Verarbeitung bei Client-Abbruch ab.</param>
+    /// <response code="200">Der aktualisierte Artikel inklusive neuer Hashtags.</response>
+    /// <response code="401">Fehlender oder ungültiger API-Key.</response>
+    /// <response code="404">Kein Artikel mit dieser ID.</response>
+    [HttpPut("{id:guid}/hashtags", Name = "setArticleHashtags")]
+    [ProducesResponseType(typeof(ArticleReadModel), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SetArticleHashtags(
+        Guid id, [FromBody] HashtagUpdateModel model, CancellationToken cancellationToken)
+    {
+        var updated = await _articles.SetHashtagsAsync(
+            id, model.Hashtags ?? [], cancellationToken);
+        if (updated is null)
+        {
+            return NotFound(ApiProblems.NotFound($"Der Artikel {id} wurde nicht gefunden."));
+        }
+
+        _logger.LogInformation(
+            "API: Hashtags von Artikel {ArticleId} ersetzt ({Count}).",
+            id, updated.ArticleHashtags.Count);
+        return Ok(ArticleReadModel.FromEntity(updated));
+    }
+
+    /// <summary>
+    /// Entfernt alle Hashtags eines Artikels. Andere Felder bleiben unverändert.
+    /// </summary>
+    /// <param name="id">UUID des Artikels.</param>
+    /// <param name="cancellationToken">Bricht die Verarbeitung bei Client-Abbruch ab.</param>
+    /// <response code="204">Hashtags wurden entfernt.</response>
+    /// <response code="401">Fehlender oder ungültiger API-Key.</response>
+    /// <response code="404">Kein Artikel mit dieser ID.</response>
+    [HttpDelete("{id:guid}/hashtags", Name = "clearArticleHashtags")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ClearArticleHashtags(
+        Guid id, CancellationToken cancellationToken)
+    {
+        var updated = await _articles.SetHashtagsAsync(id, [], cancellationToken);
+        if (updated is null)
+        {
+            return NotFound(ApiProblems.NotFound($"Der Artikel {id} wurde nicht gefunden."));
+        }
+
+        _logger.LogInformation("API: Hashtags von Artikel {ArticleId} entfernt.", id);
+        return NoContent();
+    }
+
+    /// <summary>
     /// Bildet das API-Schreibmodell auf den präsentationsunabhängigen
     /// Schreib-Request der Anwendungsschicht ab. Datei-Uploads sind der API
     /// bewusst nicht Teil des JSON-Workflows — Titelbilder erfolgen über
@@ -303,6 +359,7 @@ public sealed class ManagementArticlesController : ControllerBase
             ContentMarkdown: model.ContentMarkdown ?? string.Empty,
             CategoryId: categoryId,
             AccessLevel: model.AccessLevel,
+            Origin: model.Origin,
             Status: model.Status,
             ScheduledAt: model.ScheduledAt,
             Tags: model.Tags ?? [],

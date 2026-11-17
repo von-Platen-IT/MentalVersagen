@@ -96,6 +96,12 @@ namespace BlogCms.Infrastructure.Data.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<string>("Origin")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("Human");
+
                     b.Property<DateTime?>("PublishedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -172,6 +178,13 @@ namespace BlogCms.Infrastructure.Data.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)")
+                        .HasDefaultValue("#7f8c8d");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -445,6 +458,97 @@ namespace BlogCms.Infrastructure.Data.Migrations
                     b.ToTable("MediaAssets");
                 });
 
+            modelBuilder.Entity("BlogCms.Domain.Entities.MembershipAuditLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid?>("ActorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Details")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid>("TargetUserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("TargetUserId");
+
+                    b.ToTable("MembershipAuditLogs");
+                });
+
+            modelBuilder.Entity("BlogCms.Domain.Entities.MembershipProfile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("CancelAtPeriodEnd")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("ComplimentaryUntil")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("CurrentPeriodEnd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsComplimentary")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastSyncedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PlanId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("StripeCustomerId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("StripeSubscriptionId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StripeCustomerId");
+
+                    b.HasIndex("StripeSubscriptionId");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("MembershipProfiles");
+                });
+
             modelBuilder.Entity("BlogCms.Domain.Entities.NewsletterSubscriber", b =>
                 {
                     b.Property<Guid>("Id")
@@ -554,51 +658,57 @@ namespace BlogCms.Infrastructure.Data.Migrations
                     b.ToTable("Reports");
                 });
 
-            modelBuilder.Entity("BlogCms.Domain.Entities.Subscription", b =>
+            modelBuilder.Entity("BlogCms.Domain.Entities.SiteSetting", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Key");
+
+                    b.ToTable("SiteSettings");
+                });
+
+            modelBuilder.Entity("BlogCms.Domain.Entities.StripeEvent", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime?>("CanceledAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime>("CurrentPeriodEnd")
+                    b.Property<string>("PayloadHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("ProcessedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("PlanId")
+                    b.Property<string>("StripeEventId")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
-                    b.Property<string>("Status")
+                    b.Property<string>("Type")
                         .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("StripeCustomerId")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<string>("StripeSubscriptionId")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StripeSubscriptionId")
+                    b.HasIndex("StripeEventId")
                         .IsUnique();
 
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Subscriptions");
+                    b.ToTable("StripeEvents");
                 });
 
             modelBuilder.Entity("BlogCms.Domain.Entities.Tag", b =>
@@ -690,10 +800,6 @@ namespace BlogCms.Infrastructure.Data.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("SecurityStamp")
-                        .HasColumnType("text");
-
-                    b.Property<string>("SubscriptionStatus")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool>("TwoFactorEnabled")
@@ -1051,6 +1157,17 @@ namespace BlogCms.Infrastructure.Data.Migrations
                     b.Navigation("UploadedByUser");
                 });
 
+            modelBuilder.Entity("BlogCms.Domain.Entities.MembershipProfile", b =>
+                {
+                    b.HasOne("BlogCms.Domain.Entities.User", "User")
+                        .WithOne("MembershipProfile")
+                        .HasForeignKey("BlogCms.Domain.Entities.MembershipProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("BlogCms.Domain.Entities.NewsletterSubscriber", b =>
                 {
                     b.HasOne("BlogCms.Domain.Entities.User", "User")
@@ -1103,17 +1220,6 @@ namespace BlogCms.Infrastructure.Data.Migrations
                     b.Navigation("Comment");
 
                     b.Navigation("ReportedByUser");
-                });
-
-            modelBuilder.Entity("BlogCms.Domain.Entities.Subscription", b =>
-                {
-                    b.HasOne("BlogCms.Domain.Entities.User", "User")
-                        .WithMany("Subscriptions")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("BlogCms.Domain.Entities.VideoEmbed", b =>
@@ -1244,11 +1350,11 @@ namespace BlogCms.Infrastructure.Data.Migrations
 
                     b.Navigation("MediaAssets");
 
+                    b.Navigation("MembershipProfile");
+
                     b.Navigation("Ratings");
 
                     b.Navigation("Reports");
-
-                    b.Navigation("Subscriptions");
                 });
 #pragma warning restore 612, 618
         }

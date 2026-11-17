@@ -33,6 +33,7 @@
                     <thead>
                         <tr>
                             <th>Name</th>
+                            <th>Farbe</th>
                             <th>Slug</th>
                             <th class="text-end">Artikel</th>
                             <th class="text-end">Reihenfolge</th>
@@ -56,6 +57,11 @@
                                 {
                                     <div class="small text-muted">@item.Category.Description</div>
                                 }
+                            </td>
+                            <td>
+                                <span class="mv-color-swatch"
+                                      style="--swatch: @item.Category.Color"
+                                      title="@item.Category.Color"></span>
                             </td>
                             <td><code>@item.Category.Slug</code></td>
                             <td class="text-end">@item.ArticleCount</td>
@@ -119,6 +125,11 @@
                             <label class="form-label" asp-for="Disclaimer">Disclaimer (optional)</label>
                             <textarea class="form-control" asp-for="Disclaimer" rows="3" maxlength="1000"
                                       placeholder="Hinweistext, der auf der Artikelseite erscheint."></textarea>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label" asp-for="Color">Farbe</label>
+                            <input class="form-control form-control-color" asp-for="Color" type="color" />
+                            <div class="form-text">Farbe des 3-px-Rahmens in Listen.</div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label" asp-for="DisplayOrder">Reihenfolge (optional)</label>

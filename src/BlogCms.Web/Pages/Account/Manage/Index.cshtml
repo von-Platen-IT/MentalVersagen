@@ -18,10 +18,25 @@
         <dt class="col-sm-3">Rolle</dt>
         <dd class="col-sm-9">@Model.CurrentUser.Role</dd>
 
-        @if (FeatureConfig.Value.MonetizationEnabled)
+        @if (Model.MembershipEnabled)
         {
-            <dt class="col-sm-3">Abo-Status</dt>
-            <dd class="col-sm-9">@Model.CurrentUser.SubscriptionStatus</dd>
+            <dt class="col-sm-3">Mitgliedschaft</dt>
+            <dd class="col-sm-9">
+                <span class="mv-pill">@Model.MembershipStatusLabel</span>
+                @if (Model.MembershipPeriodEnd is DateTime periodEnd)
+                {
+                    <div class="small text-muted">
+                        Laufzeit bis @periodEnd.ToLocalTime().ToString("dd.MM.yyyy")
+                    </div>
+                }
+                @if (Model.CanOpenPortal)
+                {
+                    <form method="post" asp-controller="Membership" asp-action="Portal" class="mt-2">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-outline-secondary">Abo verwalten</button>
+                    </form>
+                }
+            </dd>
         }
     </dl>
 }

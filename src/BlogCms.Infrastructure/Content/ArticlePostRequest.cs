@@ -36,7 +36,8 @@ public sealed record ArticlePostRequest(
     string? VideoUrl,
     ArticleUpload? CoverUpload,
     IReadOnlyList<ArticleUpload> ContentUploads,
-    IReadOnlyList<Guid> UploadedImageIds)
+    IReadOnlyList<Guid> UploadedImageIds,
+    ArticleOrigin Origin = ArticleOrigin.Human)
 {
     /// <summary>
     /// Validates that a title image source is present: either an external URL, a new

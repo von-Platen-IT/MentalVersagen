@@ -18,6 +18,12 @@ public class Category : EntityBase
     /// <summary>Optional hint shown on the article page (e.g. satire disclaimer).</summary>
     public string? Disclaimer { get; set; }
 
+    /// <summary>
+    /// Hex colour (<c>#RRGGBB</c>) used for the 3 px frame around article cards in
+    /// lists. Administrators can change it per category.
+    /// </summary>
+    public string Color { get; set; } = "#7f8c8d";
+
     /// <summary>Sort order in selection lists (lower values first).</summary>
     public int DisplayOrder { get; set; }
 

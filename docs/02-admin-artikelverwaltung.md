@@ -121,8 +121,32 @@ vorhandenen Inhalt automatisch.
   umbenannt werden.
 - Ein optionaler **Disclaimer** pro Kategorie wird auf der Artikelseite
   eingeblendet.
+- Jede Kategorie hat eine **Farbe** (`#RRGGBB`). Sie erscheint als **3 px
+  dicker Rahmen** um jeden Beitragseintrag in Listen und macht die Kategorie
+  auf einen Blick erkennbar. Die Farbe wird im Kategorien-Formular über den
+  Farbwähler geändert; ohne Angabe gilt das neutrale Grau `#7f8c8d`.
 - **Tags** sind frei und werden bei Bedarf neu erzeugt. Sie dienen als
   Filter auf der öffentlichen Artikelliste (`/Articles?tag={slug}`).
+
+## Darstellung & Listenlänge
+
+Unter **Einstellungen** (`/Admin/Settings`) legt der Administrator fest, wie
+viele Beiträge gleichzeitig in einer Liste angezeigt werden. Der Wert gilt für
+Startseite, Suche und das REST-Grid (`/api/articles`) und ist auf 1–50 begrenzt.
+
+## Ursprung (Mensch / KI / Hybrid)
+
+Im Formular unter **Einordnung & Themengebiet** legt der Autor den **Ursprung**
+des Beitrags fest:
+
+| Wert | Bedeutung | Icon in Listen |
+|---|---|---|
+| `Human` | Von einem Menschen erstellt (Standard) | Person |
+| `Ai` | Mit künstlicher Intelligenz erstellt | Roboter |
+| `Hybrid` | Mensch und KI gemeinsam | Person + Funke |
+
+Das Icon erscheint in jeder Beitragskarte; beim Hover zeigt es den erklärenden
+Text. Der Ursprung ist auch über die Management-API pflegbar (`origin`).
 
 ## Veröffentlichen (Publish-Workflow)
 

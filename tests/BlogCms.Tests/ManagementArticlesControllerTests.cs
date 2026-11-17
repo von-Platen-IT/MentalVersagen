@@ -90,6 +90,21 @@ public class ManagementArticlesControllerTests
     // --- createArticle ---
 
     [Fact]
+    public async Task CreateArticle_WithOriginAi_ReturnsOriginAndLabel()
+    {
+        var (controller, _, _) = await CreateControllerAsync();
+        var model = BuildModel();
+        model.Origin = ArticleOrigin.Ai;
+
+        var result = await controller.CreateArticle(model, default);
+
+        var created = Assert.IsType<CreatedAtActionResult>(result);
+        var readModel = Assert.IsType<ArticleReadModel>(created.Value);
+        Assert.Equal(ArticleOrigin.Ai, readModel.Origin);
+        Assert.Equal("KI", readModel.OriginLabel);
+    }
+
+    [Fact]
     public async Task CreateArticle_ValidPublished_Returns201WithReadModel()
     {
         var (controller, _, authorId) = await CreateControllerAsync();

@@ -75,6 +75,14 @@ public class ApiDocumentationTests
         Assert.Contains("createArticle", operationIds);
         Assert.Contains("updateArticle", operationIds);
         Assert.Contains("deleteArticle", operationIds);
+        Assert.Contains("setArticleHashtags", operationIds);
+        Assert.Contains("clearArticleHashtags", operationIds);
+        Assert.Contains("listHashtags", operationIds);
+        Assert.Contains("listCategories", operationIds);
+        Assert.Contains("getCategory", operationIds);
+        Assert.Contains("createCategory", operationIds);
+        Assert.Contains("updateCategory", operationIds);
+        Assert.Contains("deleteCategory", operationIds);
     }
 
     [Fact]
@@ -106,7 +114,7 @@ public class ApiDocumentationTests
     }
 
     [Fact]
-    public void ManagementController_ExposesExactlyFiveActions()
+    public void ManagementController_ExposesArticleAndHashtagActions()
     {
         var actions = typeof(ManagementArticlesController)
             .GetMethods()
@@ -115,11 +123,13 @@ public class ApiDocumentationTests
             .Select(method => method.Name)
             .ToList();
 
-        Assert.Equal(5, actions.Count);
+        Assert.Equal(7, actions.Count);
         Assert.Contains("ListArticles", actions);
         Assert.Contains("GetArticle", actions);
         Assert.Contains("CreateArticle", actions);
         Assert.Contains("UpdateArticle", actions);
         Assert.Contains("DeleteArticle", actions);
+        Assert.Contains("SetArticleHashtags", actions);
+        Assert.Contains("ClearArticleHashtags", actions);
     }
 }

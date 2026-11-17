@@ -1,6 +1,6 @@
 # Lizenzen und Paketregeln
 
-**Stand:** 2026-10-18
+**Stand:** 2026-11-17
 **Verbindliche Regel:** siehe „Paket- und Lizenzregeln" in [`README.md`](../README.md).
 
 Dieses Dokument ist das **Lizenz-Inventar** des Projekts. Jede neue Abhängigkeit
@@ -65,6 +65,7 @@ der in `obj/project.assets.json` gelisteten Bibliotheken.
 | Microsoft.Extensions.Hosting.Abstractions | 10.0.12 | MIT | ✅ frei |
 | Microsoft.Extensions.Http | 10.0.12 | MIT | ✅ frei |
 | Npgsql.EntityFrameworkCore.PostgreSQL | 10.0.3 | PostgreSQL License | ✅ frei |
+| Stripe.net | 53.1.0 | Apache-2.0 | ✅ frei |
 | System.Security.Cryptography.Pkcs | 10.0.13 | MIT | ✅ frei |
 | System.Security.Cryptography.Xml | 10.0.13 | MIT | ✅ frei |
 

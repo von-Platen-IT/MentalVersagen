@@ -36,6 +36,9 @@ public class EditModel : PageModel
     public string? Disclaimer { get; set; }
 
     [BindProperty]
+    public string Color { get; set; } = "#7f8c8d";
+
+    [BindProperty]
     public int DisplayOrder { get; set; }
 
     public async Task<IActionResult> OnGetAsync(Guid id)
@@ -51,6 +54,7 @@ public class EditModel : PageModel
         Slug = category.Slug;
         Description = category.Description;
         Disclaimer = category.Disclaimer;
+        Color = category.Color;
         DisplayOrder = category.DisplayOrder;
         return Page();
     }
@@ -66,7 +70,7 @@ public class EditModel : PageModel
         Category = category;
 
         var result = await _categories.UpdateAsync(
-            id, new CategoryInput(Name, Slug, Description, Disclaimer, DisplayOrder));
+            id, new CategoryInput(Name, Slug, Description, Disclaimer, DisplayOrder, Color));
 
         if (!result.Succeeded)
         {

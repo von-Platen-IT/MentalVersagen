@@ -12,7 +12,8 @@ public sealed record CategoryInput(
     string? Slug,
     string? Description,
     string? Disclaimer,
-    int DisplayOrder = 0);
+    int DisplayOrder = 0,
+    string? Color = null);
 
 /// <summary>Result of a category operation; failures carry a user-facing message.</summary>
 public sealed record CategoryResult(bool Succeeded, Category? Category, string? Error)
@@ -60,6 +61,8 @@ public interface ICategoryService
 
 public sealed class CategoryService : ICategoryService
 {
+    private const string DefaultColor = "#7f8c8d";
+
     private readonly AppDbContext _db;
     private readonly ISlugGenerator _slugGenerator;
 
@@ -152,6 +155,7 @@ public sealed class CategoryService : ICategoryService
             Slug = slug,
             Description = NormalizeOptional(input.Description, 500),
             Disclaimer = NormalizeOptional(input.Disclaimer, 1000),
+            Color = NormalizeColor(input.Color, DefaultColor),
             DisplayOrder = input.DisplayOrder > 0
                 ? input.DisplayOrder
                 : await NextDisplayOrderAsync(cancellationToken)
@@ -192,9 +196,10 @@ public sealed class CategoryService : ICategoryService
                     "Die Systemkategorie „undefined“ kann nicht umbenannt werden.");
             }
 
-            // Description, disclaimer and display order remain editable.
+            // Description, disclaimer, colour and display order remain editable.
             category.Description = NormalizeOptional(input.Description, 500);
             category.Disclaimer = NormalizeOptional(input.Disclaimer, 1000);
+            category.Color = NormalizeColor(input.Color, category.Color);
             category.DisplayOrder = input.DisplayOrder;
             await _db.SaveChangesAsync(cancellationToken);
             return CategoryResult.Ok(category);
@@ -220,6 +225,7 @@ public sealed class CategoryService : ICategoryService
         category.Slug = slug;
         category.Description = NormalizeOptional(input.Description, 500);
         category.Disclaimer = NormalizeOptional(input.Disclaimer, 1000);
+        category.Color = NormalizeColor(input.Color, category.Color);
         category.DisplayOrder = input.DisplayOrder > 0 ? input.DisplayOrder : category.DisplayOrder;
 
         await _db.SaveChangesAsync(cancellationToken);
@@ -360,6 +366,23 @@ public sealed class CategoryService : ICategoryService
             .MaxAsync(c => (int?)c.DisplayOrder, cancellationToken);
 
         return (max ?? 0) + 1;
+    }
+
+    private static string NormalizeColor(string? color, string fallback)
+    {
+        if (string.IsNullOrWhiteSpace(color))
+        {
+            return fallback;
+        }
+
+        var trimmed = color.Trim();
+        if (trimmed.Length == 7 && trimmed[0] == '#' &&
+            trimmed.Skip(1).All(Uri.IsHexDigit))
+        {
+            return trimmed.ToLowerInvariant();
+        }
+
+        return fallback;
     }
 
     private static string? NormalizeName(string? name)

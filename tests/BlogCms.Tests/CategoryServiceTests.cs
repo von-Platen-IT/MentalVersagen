@@ -161,4 +161,44 @@ public class CategoryServiceTests
         var reloaded = await db.Articles.SingleAsync(a => a.Id == article.Id);
         Assert.Equal(created.Category.Id, reloaded.CategoryId);
     }
+
+    [Fact]
+    public async Task CreateAsync_StoresNormalizedColor()
+    {
+        await using var db = TestDb.Create();
+        var service = CreateService(db);
+
+        var result = await service.CreateAsync(
+            new CategoryInput("Technik", null, null, null, 0, "#ABCDEF"));
+
+        Assert.True(result.Succeeded);
+        Assert.Equal("#abcdef", result.Category!.Color);
+    }
+
+    [Fact]
+    public async Task CreateAsync_InvalidColor_FallsBackToDefault()
+    {
+        await using var db = TestDb.Create();
+        var service = CreateService(db);
+
+        var result = await service.CreateAsync(
+            new CategoryInput("Technik", null, null, null, 0, "rot"));
+
+        Assert.True(result.Succeeded);
+        Assert.Equal("#7f8c8d", result.Category!.Color);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_SystemCategory_AllowsColorChange()
+    {
+        await using var db = TestDb.Create();
+        var service = CreateService(db);
+
+        var result = await service.UpdateAsync(
+            CategoryIds.Undefined,
+            new CategoryInput("undefined", null, null, null, 0, "#123456"));
+
+        Assert.True(result.Succeeded);
+        Assert.Equal("#123456", result.Category!.Color);
+    }
 }

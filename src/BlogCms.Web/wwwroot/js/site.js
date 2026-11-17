@@ -158,8 +158,31 @@
 
     var hashtags = [];
     var activeHashtag = null;
+    var activeCategories = [];
+    var activeHashtags = [];
+    var filterMatch = 'any';
     var activeIndex = -1;
     var requestCounter = 0;
+
+    // --- Filterzustand aus der URL lesen (bookmark-fähig) -----------------
+    (function readInitialFilters() {
+        var params = new URLSearchParams(window.location.search);
+        var categoryParam = params.get('categories') || params.get('category') || '';
+        var hashtagParam = params.get('hashtags') || params.get('hashtag') || '';
+        activeCategories = categoryParam.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+        activeHashtags = hashtagParam.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+        filterMatch = (params.get('match') || 'any').toLowerCase() === 'all' ? 'all' : 'any';
+
+        if (categorySelect && activeCategories.length === 1) {
+            categorySelect.value = activeCategories[0];
+        }
+        if (activeHashtags.length > 0) {
+            activeHashtag = { name: activeHashtags[0], slug: activeHashtags[0] };
+            if (input) {
+                input.value = '#' + activeHashtags[0];
+            }
+        }
+    })();
 
     function toArray(nodeList) {
         return Array.prototype.slice.call(nodeList);
@@ -189,18 +212,27 @@
     // --- Grid per REST aktualisieren --------------------------------------
     function loadArticles() {
         var params = new URLSearchParams();
-        var activeCategory = categorySelect && categorySelect.value ? categorySelect.value : null;
-        if (activeHashtag) {
-            params.set('hashtag', activeHashtag.slug);
+        var selectedCategory = categorySelect && categorySelect.value ? categorySelect.value : null;
+        var categories = activeCategories.slice();
+        if (selectedCategory && categories.indexOf(selectedCategory) === -1) {
+            categories = [selectedCategory];
         }
-        if (activeCategory) {
-            params.set('category', activeCategory);
+        if (categories.length > 0) {
+            params.set('categories', categories.join(','));
+        }
+        if (activeHashtags.length > 0) {
+            params.set('hashtags', activeHashtags.join(','));
+        }
+        if (filterMatch === 'all') {
+            params.set('match', 'all');
         }
         if (sortSelect && sortSelect.value) {
             params.set('sort', sortSelect.value);
         }
         params.set('pageSize', String(
-            activeHashtag || activeCategory ? filteredPageSize : basePageSize));
+            categories.length > 0 || activeHashtags.length > 0 ? filteredPageSize : basePageSize));
+
+        syncUrl(categories, activeHashtags);
 
         var requestId = ++requestCounter;
         if (grid) {
@@ -227,6 +259,24 @@
             });
     }
 
+    function syncUrl(categories, hashtags) {
+        var params = new URLSearchParams();
+        if (categories.length > 0) {
+            params.set('categories', categories.join(','));
+        }
+        if (hashtags.length > 0) {
+            params.set('hashtags', hashtags.join(','));
+        }
+        if (filterMatch === 'all') {
+            params.set('match', 'all');
+        }
+        if (sortSelect && sortSelect.value && sortSelect.value !== 'Newest') {
+            params.set('sort', sortSelect.value);
+        }
+        var query = params.toString();
+        window.history.replaceState(null, '', window.location.pathname + (query ? '?' + query : ''));
+    }
+
     function renderGrid(items) {
         if (!grid) {
             return;
@@ -242,8 +292,11 @@
         }
         if (heading) {
             var selectedCategory = categorySelect && categorySelect.value ? categorySelect.value : null;
-            if (activeHashtag) {
-                heading.textContent = 'Akten zu #' + activeHashtag.name;
+            if (activeHashtags.length > 0) {
+                heading.textContent = 'Akten zu ' +
+                    activeHashtags.map(function (h) { return '#' + h; }).join(', ');
+            } else if (activeCategories.length > 0) {
+                heading.textContent = 'Akten in ' + activeCategories.join(', ');
             } else if (selectedCategory) {
                 heading.textContent = 'Akten in ' +
                     categorySelect.options[categorySelect.selectedIndex].text;
@@ -253,12 +306,39 @@
         }
     }
 
+    function originBadge(article) {
+        var origin = String(article.origin || 'Human').toLowerCase();
+        var description = article.originDescription || 'Von einem Menschen erstellt';
+        var badge = el('span', 'mv-origin-badge mv-origin-badge--' + origin);
+        badge.title = description;
+        badge.setAttribute('aria-label', description);
+        badge.setAttribute('role', 'img');
+
+        var svg;
+        if (origin === 'ai') {
+            svg = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="4" y="7" width="16" height="12" rx="3"></rect><circle cx="9" cy="13" r="1.4"></circle><circle cx="15" cy="13" r="1.4"></circle><path d="M12 3v4M8 19v2M16 19v2"></path></svg>';
+        } else if (origin === 'hybrid') {
+            svg = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9" cy="8" r="3"></circle><path d="M3 20c0-3 3-5 6-5s6 2 6 5"></path><path d="M18 4l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"></path></svg>';
+        } else {
+            svg = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6 8-6s8 2 8 6"></path></svg>';
+        }
+
+        badge.innerHTML = svg;
+        return badge;
+    }
+
     function renderCard(article) {
         var card = el('article', 'mv-case');
+        if (article.categoryColor) {
+            card.style.setProperty('--category-color', article.categoryColor);
+        }
 
         var head = el('div', 'mv-case__head');
-        head.appendChild(el('span', null,
+        var headLeft = el('span', 'mv-case__head-left');
+        headLeft.appendChild(originBadge(article));
+        headLeft.appendChild(el('span', null,
             'ARCHIV ' + String(article.categoryLabel || article.category || 'undefined').toUpperCase()));
+        head.appendChild(headLeft);
         head.appendChild(el('span', 'text-end', '#' + (article.archiveCode || '')));
         card.appendChild(head);
 
@@ -339,18 +419,24 @@
 
         var selectedCategory = categorySelect && categorySelect.value ? categorySelect.value : null;
         status.textContent = '';
-        if (!activeHashtag && !selectedCategory) {
+        if (activeHashtags.length === 0 && activeCategories.length === 0 && !selectedCategory) {
             status.hidden = true;
             return;
         }
 
-        var filterLabel = activeHashtag
-            ? '#' + activeHashtag.name
-            : categorySelect.options[categorySelect.selectedIndex].text;
+        var labels = [];
+        if (activeHashtags.length > 0) {
+            labels.push(activeHashtags.map(function (h) { return '#' + h; }).join(', '));
+        }
+        if (activeCategories.length > 0) {
+            labels.push(activeCategories.join(', '));
+        } else if (selectedCategory) {
+            labels.push(categorySelect.options[categorySelect.selectedIndex].text);
+        }
 
         status.hidden = false;
         status.appendChild(document.createTextNode(
-            'Gefiltert nach ' + filterLabel + ' \u00b7 ' + total + ' Treffer'));
+            'Gefiltert nach ' + labels.join(' \u00b7 ') + ' \u00b7 ' + total + ' Treffer'));
 
         var reset = el('a', 'mv-filter-status__reset', 'Zur\u00fccksetzen');
         reset.href = '#';
@@ -432,6 +518,7 @@
 
     function selectHashtag(hashtag) {
         activeHashtag = { name: hashtag.name, slug: hashtag.slug };
+        activeHashtags = [hashtag.slug];
         if (input) {
             input.value = '#' + hashtag.name;
         }
@@ -441,6 +528,9 @@
 
     function clearFilter() {
         activeHashtag = null;
+        activeHashtags = [];
+        activeCategories = [];
+        filterMatch = 'any';
         if (input) {
             input.value = '';
         }
@@ -482,11 +572,36 @@
     }
 
     if (categorySelect) {
-        categorySelect.addEventListener('change', function () { loadArticles(); });
+        categorySelect.addEventListener('change', function () {
+            activeCategories = categorySelect.value ? [categorySelect.value] : [];
+            loadArticles();
+        });
     }
 
     if (sortSelect) {
         sortSelect.addEventListener('change', function () { loadArticles(); });
+    }
+
+    // --- Bookmark-Button: aktuelle Filter-URL in die Zwischenablage --------
+    var bookmarkButton = document.querySelector('[data-bookmark-url]');
+    var bookmarkHint = document.querySelector('[data-bookmark-hint]');
+    if (bookmarkButton) {
+        bookmarkButton.addEventListener('click', function () {
+            var url = window.location.href;
+            var done = function () {
+                if (bookmarkHint) {
+                    bookmarkHint.hidden = false;
+                    window.setTimeout(function () { bookmarkHint.hidden = true; }, 2500);
+                }
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(done, function () {
+                    window.prompt('URL kopieren:', url);
+                });
+            } else {
+                window.prompt('URL kopieren:', url);
+            }
+        });
     }
 })();
 

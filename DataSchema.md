@@ -27,11 +27,10 @@ Zentrale Konto-Entität, Basis: ASP.NET Core Identity (`IdentityUser<Guid>` erwe
 | PasswordHash | string | von Identity verwaltet |
 | Role | enum: `Reader`, `Author`, `Premium`, `Moderator`, `Admin` | steuert Zugriff/Paywall; `Reader` ≙ FeatureFix1-Viewer, `Author` ≙ Autor, `Admin` ≙ Administrator |
 | EmailConfirmed | bool | |
-| SubscriptionStatus | enum: `None`, `Active`, `PastDue`, `Canceled` | Cache-Feld, Quelle der Wahrheit ist `Subscription` (siehe unten) |
 | CreatedAt | DateTime | |
 | DeletedAt | DateTime? | Soft-Delete / Account-Löschung |
 
-**Beziehungen:** 1:n zu `Article` (als Autor), `Comment`, `Subscription`, `Donation`, `MediaAsset` (als Uploader), `Report` (als Melder), `Rating` (als Bewerter).
+**Beziehungen:** 1:1 zu `MembershipProfile`, 1:n zu `Article` (als Autor), `Comment`, `Donation`, `MediaAsset` (als Uploader), `Report` (als Melder), `Rating` (als Bewerter).
 
 ---
 
@@ -47,6 +46,7 @@ Zentrale Konto-Entität, Basis: ASP.NET Core Identity (`IdentityUser<Guid>` erwe
 | Excerpt | string? | Kurzbeschreibung/Teaser; **fachlich Pflicht** validiert (BR-023) |
 | CategoryId | Guid (FK → Category) | Redaktionelle Kategorie; Default ist die Systemkategorie `undefined` |
 | AccessLevel | enum: `Public`, `Registered`, `Premium` | Zugriffsstufe (BR-110/113); ersetzt die alleinige `IsPremium`-Logik |
+| Origin | enum: `Human`, `Ai`, `Hybrid` | Redaktioneller Ursprung; Default `Human`; wird in Listen als Icon mit Tooltip angezeigt |
 | IsPremium | bool | **abgeleitet** (nicht persistiert): `AccessLevel == Premium`, Abwärtskompatibilität |
 | Status | enum: `Draft`, `Scheduled`, `Published`, `Archived` | Lebenszyklus inkl. geplanter Veröffentlichung (BR-032) |
 | ScheduledAt | DateTime? | geplanter Veröffentlichungszeitpunkt (nur bei `Status = Scheduled`) |
@@ -72,11 +72,30 @@ Zentrale Konto-Entität, Basis: ASP.NET Core Identity (`IdentityUser<Guid>` erwe
 | Slug | string, eindeutig | URL-/Filter-Segment, max. 100; bleibt bei Umbenennung stabil |
 | Description | string? | optionale interne Beschreibung, max. 500 |
 | Disclaimer | string? | optionaler Hinweistext auf der Artikelseite, max. 1000 |
+| Color | string | Hex-Farbe (`#RRGGBB`) für den 3-px-Rahmen in Listen; Standard `#7f8c8d` |
 | DisplayOrder | int | Sortierung in Auswahllisten |
 | IsSystem | bool | `true` nur für `undefined`; schützt vor Löschen und Umbenennen |
 | CreatedAt | DateTime | |
 
 **Beziehungen:** 1:n zu `Article`.
+
+---
+
+## 2b. SiteSetting
+
+Laufzeit-editierbare Darstellungsoptionen (Admin-Seite `/Admin/Settings`).
+
+| Feld | Typ | Beschreibung |
+|---|---|---|
+| Key | string (PK) | Einstellungsschlüssel, max. 100, z. B. `Display:ArticlesPerPage` |
+| Value | string | serialisierter Wert, max. 500 |
+| UpdatedAt | DateTime | Zeitpunkt der letzten Änderung |
+
+Bekannte Schlüssel:
+
+| Key | Bedeutung | Standard | Bereich |
+|---|---|---|---|
+| `Display:ArticlesPerPage` | Anzahl der Beiträge pro Liste (Startseite, Suche, REST-Grid) | `6` | 1–50 |
 
 ---
 
@@ -169,21 +188,58 @@ Verknüpfte externe Videos (kein eigenes Hosting).
 
 ---
 
-## 7. Subscription
+## 7. MembershipProfile
 
-Abbildung eines Stripe-Abos (Quelle der Wahrheit für Bezahlstatus).
+Einzige Quelle der Wahrheit für den Mitgliedschafts-/Abo-Status. Ersetzt die
+frühere `Subscription`-Tabelle.
 
 | Feld | Typ | Beschreibung |
 |---|---|---|
 | Id | Guid | PK |
-| UserId | Guid (FK → User) | |
-| StripeCustomerId | string | |
-| StripeSubscriptionId | string | |
-| PlanId | string | Referenz auf Stripe-Preis/Produkt |
-| Status | enum: `Active`, `PastDue`, `Canceled`, `Trialing` | gespiegelt aus Stripe-Webhook |
-| CurrentPeriodEnd | DateTime | |
+| UserId | Guid (FK → User, eindeutig) | ein Profil pro Benutzer |
+| StripeCustomerId | string? | Stripe-Kunden-ID |
+| StripeSubscriptionId | string? | Stripe-Abo-ID |
+| PlanId | string? | Stripe-Preis-ID des aktuellen Tarifs (monatlich/jährlich) |
+| Status | enum: `None`, `Incomplete`, `Trialing`, `Active`, `PastDue`, `Canceled`, `Unpaid` | aus Stripe gespiegelt |
+| CurrentPeriodEnd | DateTime? | Ende der aktuellen Abrechnungsperiode (UTC) |
+| CancelAtPeriodEnd | bool | Kündigung zum Periodenende |
+| IsComplimentary | bool | kostenlose Admin-Freigabe |
+| ComplimentaryUntil | DateTime? | Ablauf der Freigabe; `null` = unbegrenzt |
+| LastSyncedAt | DateTime? | letzter erfolgreicher Stripe-Abgleich |
+| UpdatedAt | DateTime | |
 | CreatedAt | DateTime | |
-| CanceledAt | DateTime? | |
+
+**Beziehungen:** n:1 zu `User`.
+
+---
+
+## 7a. StripeEvent
+
+Idempotenz-Tabelle für verarbeitete Stripe-Webhooks.
+
+| Feld | Typ | Beschreibung |
+|---|---|---|
+| Id | Guid | PK |
+| StripeEventId | string, eindeutig | Stripe-Event-ID |
+| Type | string | z. B. `checkout.session.completed` |
+| ProcessedAt | DateTime | Verarbeitungszeitpunkt |
+| PayloadHash | string? | SHA-256 des Rohtexts, kein Volltext |
+| CreatedAt | DateTime | |
+
+---
+
+## 7b. MembershipAuditLog
+
+Audit-Trail für Admin-Freigaben, Entzug, Webhooks und Syncs.
+
+| Feld | Typ | Beschreibung |
+|---|---|---|
+| Id | Guid | PK |
+| TargetUserId | Guid | betroffener Benutzer |
+| ActorUserId | Guid? | ausführender Admin; `null` bei Systemaktionen |
+| Action | string | `Grant`, `Revoke`, `Sync`, `Webhook` |
+| Details | string? | kurze Beschreibung, keine Geheimnisse |
+| CreatedAt | DateTime | |
 
 ---
 
@@ -311,8 +367,9 @@ Artikel-Detailseite gezählt. Bewertungen werden nur für Beiträge protokollier
 ```
 User 1---n Article
 User 1---n Comment
-User 1---n Subscription
+User 1---1 MembershipProfile
 User 1---n Donation
+User 1---n MembershipAuditLog
 User 1---n MediaAsset
 User 1---n Report (als Melder)
 User 1---n Rating
@@ -349,3 +406,4 @@ Comment 1---n ActivityLogEntry
 | v1.2 | Aktivitätslog | Neue Entität `ActivityLogEntry` (einheitliches Aktivitätslog für Artikelaufrufe, Artikel-Erstellung, Kommentar-Erstellung und Beitrags-Bewertungen) |
 | v1.3 | Backend-Refactoring | `MediaAsset.IsCover` für explizite Titelbild-Kennzeichnung aufgenommen; redundante `Category`-Tabelle zugunsten des `ArticleCategory`-Enums entfernt |
 | v1.4 | Dynamische Kategorien | `ArticleCategory`-Enum durch die administrierbare `Category`-Entität ersetzt; `Article.CategoryId` mit Default `undefined`; Migration übernimmt die drei bisherigen Enum-Werte; Disclaimer pro Kategorie |
+| v1.5 | Membership-Konsolidierung | Alte `Subscription`-Tabelle und `User.SubscriptionStatus` entfernt; `MembershipProfile` (inkl. `PlanId`), `StripeEvent` und `MembershipAuditLog` sind die einzige Abo-Quelle; `Donation` bleibt bestehen |

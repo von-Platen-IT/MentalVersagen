@@ -12,6 +12,9 @@ public static class CategoryDisplay
 {
     public const string UndefinedName = "undefined";
 
+    /// <summary>Neutral fallback colour for categories without an explicit colour.</summary>
+    public const string DefaultColor = "#7f8c8d";
+
     public static string Name(Category? category) =>
         string.IsNullOrWhiteSpace(category?.Name) ? UndefinedName : category!.Name;
 
@@ -21,6 +24,10 @@ public static class CategoryDisplay
     /// <summary>Optional hint text configured per category (e.g. satire disclaimer).</summary>
     public static string? Disclaimer(Category? category) =>
         string.IsNullOrWhiteSpace(category?.Disclaimer) ? null : category!.Disclaimer;
+
+    /// <summary>Hex colour used for the 3 px frame around article cards.</summary>
+    public static string Color(Category? category) =>
+        string.IsNullOrWhiteSpace(category?.Color) ? DefaultColor : category!.Color;
 
     public static string BadgeClass(Category? category) =>
         category?.IsSystem == true ? "bg-secondary" : "bg-primary";

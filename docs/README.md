@@ -19,12 +19,15 @@ Sie ergänzt die bestehenden Dokumente im Projekt-Root:
 |---|---|
 | [`01-rollen-und-admin.md`](01-rollen-und-admin.md) | Rollenmodell, Admin („Root") werden, Admin-Status in der DB prüfen, Moderator-Zugang |
 | [`02-admin-artikelverwaltung.md`](02-admin-artikelverwaltung.md) | Den Admin-Bereich verwenden: Artikel anlegen, bearbeiten, löschen, veröffentlichen |
-| [`03-blog-nutzen.md`](03-blog-nutzen.md) | Rudimentäre Blog-Nutzung: Lesen, Kategorien/Tags, RSS, Kommentare, Newsletter, Mitgliedschaft |
+| [`03-blog-nutzen.md`](03-blog-nutzen.md) | Rudimentäre Blog-Nutzung: Lesen, Kategorien/Tags, URL-Filter und Lesezeichen, RSS, Kommentare, Newsletter, Mitgliedschaft |
 | [`04-mailversand.md`](04-mailversand.md) | Umsetzungsvorgabe für den echten SMTP-Versand (ersetzt den Dev-Platzhalter, der auf Produktion die Registrierung abbrechen lässt) |
-| [`05-management-api.md`](05-management-api.md) | Management-API: Artikel per API anlegen/bearbeiten/löschen (API-Key, Swagger/OpenAPI, Nutzung mit KI-Tools) |
+| [`05-management-api.md`](05-management-api.md) | Management-API: Artikel, Hashtags und Kategorien per API verwalten (API-Key, Swagger/OpenAPI, Nutzung mit KI-Tools) |
 | [`06-lizenzen-und-pakete.md`](06-lizenzen-und-pakete.md) | Lizenz-Inventar und verbindliche Paketregeln (nur freie Lizenzen) |
 | [`07-kontaktformular.md`](07-kontaktformular.md) | Kontaktformular: Konfiguration, Spam-Schutz und Mailversand |
 | [`08-oeffentliche-basis-url.md`](08-oeffentliche-basis-url.md) | Öffentliche Adresse der Anwendung: RSS-Feed und E-Mail-Links korrekt hinter Reverse Proxy und in Produktion |
+| [`09-mitgliedschaft-stripe.md`](09-mitgliedschaft-stripe.md) | Stripe-Mitgliedschaft als einzige Abo-Quelle: Konfiguration, Stripe-Dashboard, Webhook, Hintergrundjob, Admin-Abo-Übersicht, Fehlerbehebung |
+| [`10-abnahme-mitgliedschaft.md`](10-abnahme-mitgliedschaft.md) | Abnahmeliste T01–T15 der Stripe-Mitgliedschaft inkl. Admin-Übersicht, Testergebnissen und offenen Punkten |
+| [`11-bezahlfunktionen-erklaert.md`](11-bezahlfunktionen-erklaert.md) | Bezahlfunktionen für Einsteiger: welche Funktionen es gibt, wie Stripe funktioniert, Ablauf, Admin-Abo-Übersicht, Testmodus, Begriffe und Livegang-Checkliste |
 | [`../API_Funktion_Mentalversagen.md`](../API_Funktion_Mentalversagen.md) | **Ausführliche Anleitung zur Management-API** — Zweck, Webserver-Konfiguration, Client-Tools, Skripte (Python/PowerShell), KI-Agenten (Hermes & MCP) |
 
 ## Schnellnavigation
@@ -46,6 +49,8 @@ Sie ergänzt die bestehenden Dokumente im Projekt-Root:
 | Newsletter | `/Newsletter/Subscribe` |
 | Kontakt | `/Kontakt` |
 | **Management-API (Artikel per API)** | `/api/v1/articles` (Auth: Header `X-Api-Key`) |
+| **Management-API (Kategorien)** | `/api/v1/categories` |
+| **Management-API (Hashtags)** | `/api/v1/hashtags` |
 | OpenAPI-Spec (für KI-Tools) | `/swagger/v1/swagger.json` |
 | Swagger UI (interaktiv) | `/swagger` (in Development bzw. mit `Api__SwaggerUiEnabled=true`) |
 

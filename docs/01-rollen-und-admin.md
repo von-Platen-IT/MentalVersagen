@@ -14,13 +14,14 @@ Mapping zu FeatureFix1: Viewer ≙ `Reader`, Autor ≙ `Author`, Administrator �
 |---|---|---|
 | `Reader` | Lesen, kommentieren, bewerten (nach E-Mail-Bestätigung) | `/Articles`, `/Articles/{slug}` |
 | `Author` | wie `Reader`, zusätzlich **eigene** Beiträge erstellen/bearbeiten/veröffentlichen/planen; Kommentare eigener Beiträge moderieren | `/Admin/Articles` (nur eigene Beiträge) |
-| `Premium` | wie `Reader`, zusätzlich Premium-Artikel (gesteuert über aktives Abo, nicht allein über die Rolle) | `/Membership` |
+| `Premium` | wie `Reader`, zusätzlich Premium-Artikel (gesteuert über `MembershipProfile`, nicht allein über die Rolle) | `/Unterstuetzer` |
 | `Moderator` | wie `Reader`, zusätzlich Kommentar-Moderation | `/Moderation` |
 | `Admin` | vollständiger Zugriff, inkl. aller Artikel, Linklisten und Nutzerverwaltung | `/Admin/Articles`, `/Admin/LinkLists` |
 
 Die Rechte werden **serverseitig** über Autorisierungs-Policies erzwungen
-(`RequireAuthor`, `RequireModerator`, `RequireAdmin`, `PremiumAccess`) — nicht nur über
-ausgeblendete UI-Elemente. Ein `Author` kann ausschließlich **eigene** Beiträge
+(`RequireAuthor`, `RequireModerator`, `RequireAdmin`) — nicht nur über
+ausgeblendete UI-Elemente. Premium-Zugriff wird zusätzlich serverseitig über
+`IMembershipService` geprüft. Ein `Author` kann ausschließlich **eigene** Beiträge
 bearbeiten; diese Besitzregel wird im Service erzwungen.
 
 ## Admin („Root") werden

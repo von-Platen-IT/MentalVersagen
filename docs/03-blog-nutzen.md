@@ -37,6 +37,64 @@ Für das Schreiben/Verwalten von Artikeln siehe
 - **Sortierung** u. a. nach Datum und Bewertung.
 - Seitenwechsel über `?pageNumber=2` usw.
 
+### Listen filtern und als Lesezeichen speichern
+
+Die Startseite (`/`) und die Suchseite (`/Suche`) akzeptieren Filter direkt in
+der URL. Dadurch lässt sich jede Auswahl als **Lesezeichen** speichern oder als
+Link teilen — ohne Login und ohne JavaScript.
+
+| Parameter | Bedeutung | Beispiel |
+|---|---|---|
+| `categories` | Ein oder mehrere Kategorie-Slugs, kommagetrennt | `categories=politik,satire` |
+| `hashtags` | Ein oder mehrere Hashtag-Slugs, kommagetrennt | `hashtags=deepdive,faktencheck` |
+| `match` | `any` (Standard) oder `all` | `match=all` |
+| `sort` | Sortierung, z. B. `MostViewed` | `sort=MostViewed` |
+
+**Verknüpfung:**
+
+- `match=any` (Standard): Ein Artikel passt, wenn er in **einer** der gewählten
+  Kategorien liegt **oder** **einen** der gewählten Hashtags trägt.
+- `match=all`: Ein Artikel muss **alle** gewählten Hashtags tragen. Kategorien
+  bleiben ODER-verknüpft, weil ein Artikel genau eine Kategorie hat.
+
+**Beispiele:**
+
+```
+/                                          → alle Akten
+/?categories=politik,satire                → Politik oder Satire
+/?hashtags=deepdive,faktencheck            → DeepDive oder Faktencheck
+/?categories=politik&hashtags=deepdive     → Politik und DeepDive
+/Suche?categories=politik,satire&hashtags=deepdive&match=any&sort=MostViewed
+```
+
+**So speicherst du eine Auswahl als Lesezeichen:**
+
+1. Auf der Startseite Kategorie, Hashtag und Sortierung wählen.
+2. Auf **„Diese Auswahl als Lesezeichen speichern“** klicken — die aktuelle
+   URL wird in die Zwischenablage kopiert.
+3. Im Browser ein Lesezeichen anlegen und die kopierte URL einfügen.
+4. Beim nächsten Aufruf öffnet sich die Liste direkt mit denselben Filtern.
+
+Die aktiven Filter erscheinen als Chips über der Liste; ein Klick auf **×**
+entfernt den jeweiligen Filter, **„Alle Filter entfernen“** setzt die Liste
+zurück.
+
+### Kategorie-Farben und Ursprung in Listen
+
+Jeder Beitragseintrag trägt einen **3 px dicken Rahmen** in der Farbe seiner
+Kategorie. So ist auf einen Blick erkennbar, ob ein Beitrag zu Politik, Satire,
+Verschwörungstheorien oder einer anderen Kategorie gehört. Die Farben pflegt der
+Administrator unter `/Admin/Categories`; die Anzahl der Beiträge pro Liste stellt
+er unter `/Admin/Settings` ein.
+
+Zusätzlich zeigt ein kleines Icon im Kartenkopf den **Ursprung** des Beitrags:
+
+| Icon | Bedeutung | Hover-Text |
+|---|---|---|
+| Person | Mensch | „Von einem Menschen erstellt“ |
+| Roboter | KI | „Mit künstlicher Intelligenz erstellt“ |
+| Person + Funke | Hybrid | „Mensch und KI (Hybrid)“ |
+
 ### Artikel-Detailseite (`/Articles/{slug}`)
 
 - Zeigt **Titelbild**, Titel, Autor, Kategorie-Badge, Kurzbeschreibung, Inhalt
@@ -116,15 +174,18 @@ gedrosselt (5 pro Minute).
 
 | Aufgabe | URL |
 |---|---|
-| Mitgliedschaft / Übersicht | `/Membership` |
-| Checkout | `/Membership/Checkout` |
-| Spenden | `/Donate` |
+| Mitgliedschaft / Übersicht | `/Unterstuetzer` |
+| Checkout | `POST /membership/checkout` (Button auf `/Unterstuetzer`) |
+| Kundenportal | `/Account/Manage` → „Abo verwalten“ |
+| Admin-Abo-Übersicht | `/Admin/Memberships` |
+| Spenden | `/Unterstuetzer` (aktuell Platzhalter) |
 
-Beiträge mit `AccessLevel = Registered` sind nur für angemeldete Benutzer lesbar;
-Beiträge mit `AccessLevel = Premium` nur mit aktivem Abo. Im Dev-Modus simuliert
-`FakeStripeService` den Checkout (kein echter Stripe-Key nötig). Die
-Zugriffsprüfung basiert auf dem **Abo-Status**, nicht allein auf der Rolle. Admins
-haben immer Zugriff.
+Beiträge mit `AccessLevel = Registered` sind nur für angemeldete Benutzer lesbar.
+Beiträge mit `AccessLevel = Premium` sind für Mitglieder, Admins und
+freigeschaltete Benutzer sofort lesbar; für alle anderen erscheint ein Teaser.
+Nach `Membership:TeaserDelayDays` wird der Volltext für alle frei. Die Funktion
+wird über `Membership:Enabled` aktiviert. Bei deaktivierter Funktion ist
+`Premium` nur für Admins sichtbar. Admins haben immer Zugriff.
 
 ## Newsletter
 
@@ -149,7 +210,7 @@ flowchart TD
     E --> F["/Articles/{slug}"]
     F --> G{"Premium-Artikel?"}
     G -->|nein| H["Inhalt lesen + kommentieren"]
-    G -->|ja| I["/Membership - Abo abschließen"]
+    G -->|ja| I["/Unterstuetzer - Mitglied werden"]
     I --> H
 ```
 

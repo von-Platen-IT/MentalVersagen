@@ -55,6 +55,13 @@ public sealed class ArticleWriteModel
     public ArticleAccessLevel AccessLevel { get; set; } = ArticleAccessLevel.Public;
 
     /// <summary>
+    /// Ursprung des Beitrags: <c>Human</c> (Mensch), <c>Ai</c> (KI) oder
+    /// <c>Hybrid</c>. Standard: <c>Human</c>.
+    /// </summary>
+    /// <example>Human</example>
+    public ArticleOrigin Origin { get; set; } = ArticleOrigin.Human;
+
+    /// <summary>
     /// Workflow-Status. Erlaubte Werte: <c>Draft</c> (Entwurf), <c>Published</c>
     /// (sofort veröffentlichen), <c>Scheduled</c> (zeitgesteuert veröffentlichen —
     /// erfordert <c>scheduledAt</c>), <c>Archived</c>.
@@ -98,6 +105,17 @@ public sealed class ArticleWriteModel
 }
 
 /// <summary>
+/// Request zum gezielten Ersetzen der Hashtags eines Artikels
+/// (Endpunkt <c>setArticleHashtags</c>). Eine leere Liste entfernt alle Hashtags.
+/// </summary>
+public sealed class HashtagUpdateModel
+{
+    /// <summary>Hashtags ohne führendes <c>#</c>. Unbekannte Hashtags werden angelegt.</summary>
+    /// <example>["DeepDive", "Faktencheck"]</example>
+    public List<string> Hashtags { get; set; } = [];
+}
+
+/// <summary>
 /// Vollständige Darstellung eines Artikels in API-Antworten
 /// (Endpunkte <c>getArticle</c>, <c>listArticles</c>, <c>createArticle</c>,
 /// <c>updateArticle</c>).
@@ -127,6 +145,13 @@ public sealed class ArticleReadModel
     public string CategoryName { get; set; } = "undefined";
 
     public ArticleAccessLevel AccessLevel { get; set; }
+
+    /// <summary>Ursprung: <c>Human</c>, <c>Ai</c> oder <c>Hybrid</c>.</summary>
+    public ArticleOrigin Origin { get; set; }
+
+    /// <summary>Kurzlabel des Ursprungs (Mensch, KI, Hybrid).</summary>
+    public string OriginLabel { get; set; } = "Mensch";
+
     public ArticleStatus Status { get; set; }
 
     /// <summary>Geplanter Veröffentlichungszeitpunkt (ISO-8601, UTC), sonst null.</summary>
@@ -164,6 +189,8 @@ public sealed class ArticleReadModel
         Category = article.Category?.Slug ?? CategoryIds.UndefinedSlug,
         CategoryName = article.Category?.Name ?? "undefined",
         AccessLevel = article.AccessLevel,
+        Origin = article.Origin,
+        OriginLabel = BlogCms.Web.Content.OriginDisplay.Label(article.Origin),
         Status = article.Status,
         ScheduledAt = article.ScheduledAt,
         PublishedAt = article.PublishedAt,

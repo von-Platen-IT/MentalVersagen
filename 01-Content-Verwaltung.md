@@ -57,7 +57,7 @@ BR-042, BR-070, BR-080 bis BR-092). Der Soll-Ist-Abgleich liegt in
   Kurzbeschreibung, Datum, ggf. Autor, Kennzeichnung). Der eigentliche Inhalt wird nicht
   vollständig angezeigt.
 - Nicht berechtigte Besucher erhalten einen CTA: bei `Registered` → Anmelden, bei `Premium`
-  → Mitgliedschaft erwerben (`/Membership`).
+  → Mitgliedschaft erwerben (`/Unterstuetzer`).
 
 ### Bewertungen (BR-070)
 - Angemeldete Benutzer können Beiträge mit 👍/👎 bewerten (max. eine Bewertung gleichzeitig,

@@ -42,8 +42,8 @@
          data-article-tools
          data-api="/api/articles"
          data-hashtag-api="/api/hashtags"
-         data-page-size="6"
-         data-filtered-page-size="12">
+         data-page-size="@Model.ArticlesPerPage"
+         data-filtered-page-size="@(Model.ArticlesPerPage * 2)">
 
         <div class="mv-search" data-autocomplete>
             <label class="visually-hidden" for="hashtag-search">Nach Hashtag suchen</label>
@@ -65,7 +65,8 @@
                 <option value="">Alle Kategorien</option>
                 @foreach (var topic in Model.Topics)
                 {
-                    <option value="@topic.Slug">@topic.Name</option>
+                    <option value="@topic.Slug"
+                            selected="@(Model.ActiveCategories.Count == 1 && Model.ActiveCategories[0].Slug == topic.Slug)">@topic.Name</option>
                 }
             </select>
         </div>
@@ -87,10 +88,35 @@
                     ArticleSortOrder.LeastDownvoted
                 })
                 {
-                    <option value="@value" selected="@(value == ArticleSortOrder.Newest)">@SortDisplay.Label(value)</option>
+                    <option value="@value" selected="@(value == Model.Sort)">@SortDisplay.Label(value)</option>
                 }
             </select>
         </div>
+    </div>
+
+    @if (Model.HasActiveFilter)
+    {
+        <div class="mv-active-filters" aria-label="Aktive Filter">
+            <span class="meta-mono">Aktive Filter:</span>
+            @foreach (var category in Model.ActiveCategories)
+            {
+                <a class="mv-filter-chip" href="@Model.BuildFilterUrl(removeCategory: category.Slug)"
+                   title="Filter „@category.Name“ entfernen">@category.Name <span aria-hidden="true">×</span></a>
+            }
+            @foreach (var hashtag in Model.ActiveHashtags)
+            {
+                <a class="mv-filter-chip" href="@Model.BuildFilterUrl(removeHashtag: hashtag.Slug)"
+                   title="Filter „#@hashtag.Name“ entfernen">#@hashtag.Name <span aria-hidden="true">×</span></a>
+            }
+            <a class="mv-filter-chip mv-filter-chip--reset" href="/">Alle Filter entfernen</a>
+        </div>
+    }
+
+    <div class="mv-bookmark">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bookmark-url>
+            Diese Auswahl als Lesezeichen speichern
+        </button>
+        <span class="meta-mono" data-bookmark-hint hidden>Link kopiert.</span>
     </div>
 
     <p class="mv-filter-status" data-filter-status hidden></p>

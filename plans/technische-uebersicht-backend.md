@@ -25,7 +25,7 @@ flowchart TD
         RS[RatingService]
         LLS[LinkListService]
         ALS[ActivityLogService]
-        SUB[SubscriptionService, StripeService, NewsletterService]
+        SUB[MembershipService, StripeMembershipService, NewsletterService]
         DB[AppDbContext EF Core PostgreSQL]
     end
 
@@ -83,7 +83,7 @@ Die Datenbankanbindung erfolgt über [`AppDbContext`](../src/BlogCms.Infrastruct
 | [`Report`](../src/BlogCms.Domain/Entities/Report.cs:8) | `Reports` | Nein | Meldungen zu Kommentaren (`Open`, `Reviewed`, `Dismissed`) |
 | [`LinkList`](../src/BlogCms.Domain/Entities/LinkList.cs:7) / [`LinkListItem`](../src/BlogCms.Domain/Entities/LinkListItem.cs:6) | `LinkLists`, `LinkListItems` | Nein | Geordnete Empfehlungslisten über `Position` |
 | [`ActivityLogEntry`](../src/BlogCms.Domain/Entities/ActivityLogEntry.cs:9) | `ActivityLogEntries` | Nein (Append-only) | Erfasst Views, Artikel-Erstellung, Kommentare, Artikel-Ratings |
-| [`Subscription`](../src/BlogCms.Domain/Entities/Subscription.cs:8) / [`Donation`](../src/BlogCms.Domain/Entities/Donation.cs:8) | `Subscriptions`, `Donations` | Nein | Monetarisierungs-Entitäten (Stripe / PayPal) |
+| [`MembershipProfile`](../src/BlogCms.Domain/Entities/MembershipProfile.cs:9) / [`Donation`](../src/BlogCms.Domain/Entities/Donation.cs:8) | `MembershipProfiles`, `Donations` | Nein | Membership- und Spenden-Entitäten |
 | [`NewsletterSubscriber`](../src/BlogCms.Domain/Entities/NewsletterSubscriber.cs:6) | `NewsletterSubscribers` | Nein (`UnsubscribedAt`) | Double-Opt-In mit `ConfirmationToken` und `UnsubscribeToken` |
 
 ### 2.2 Festgestellte Schema-Divergenzen (Code vs. `DataSchema.md`)
@@ -130,7 +130,7 @@ Die Beitrags-Erstellung und -Bearbeitung ist auf zwei Services aufgeteilt:
 ## 4. Zusammenfassung der Stärken und Schwächen des Ist-Zustands
 
 ### Was bereits gut gelöst ist:
-- Klare Trennung von externen Diensten über Interfaces (`IStorageService`, `IStripeService`, `IAppEmailSender`, `IOEmbedService`) mit lokalen Dev-Fallbacks.
+- Klare Trennung von externen Diensten über Interfaces (`IStorageService`, `IStripeMembershipService`, `IAppEmailSender`, `IOEmbedService`) mit lokalen Dev-Fallbacks.
 - Sicheres Markdown-Rendering (Markdig + HtmlSanitizer) und XSS-freies Video-Embedding über strikte Video-ID-Extraktion + Sandboxed-Iframes.
 - Solide Testabdeckung der Grundfunktionen über xUnit.
 

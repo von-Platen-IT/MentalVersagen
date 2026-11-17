@@ -36,6 +36,9 @@ public class IndexModel : PageModel
     public string? Disclaimer { get; set; }
 
     [BindProperty]
+    public string Color { get; set; } = "#7f8c8d";
+
+    [BindProperty]
     public int DisplayOrder { get; set; }
 
     public async Task OnGetAsync()
@@ -46,7 +49,7 @@ public class IndexModel : PageModel
     public async Task<IActionResult> OnPostCreateAsync()
     {
         var result = await _categories.CreateAsync(
-            new CategoryInput(Name, Slug, Description, Disclaimer, DisplayOrder));
+            new CategoryInput(Name, Slug, Description, Disclaimer, DisplayOrder, Color));
 
         if (!result.Succeeded)
         {

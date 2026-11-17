@@ -84,6 +84,7 @@ public class EditModel : PageModel
             Excerpt = article.Excerpt,
             CategoryId = article.CategoryId,
             AccessLevel = article.AccessLevel,
+            Origin = article.Origin,
             Status = article.Status,
             ScheduledAt = article.ScheduledAt?.ToLocalTime(),
             Tags = string.Join(", ", article.ArticleTags.Select(at => at.Tag!.Name)),

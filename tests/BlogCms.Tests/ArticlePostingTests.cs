@@ -55,12 +55,26 @@ public class ArticlePostingServiceTests
         DateTime? scheduledAt = null,
         string? videoUrl = null,
         ArticleUpload? coverUpload = null,
-        string? tags = null) =>
+        string? tags = null,
+        ArticleOrigin origin = ArticleOrigin.Human) =>
         new(
             title, slug, titleImageUrl, "Kurzer Teaser", "Inhalt in Markdown",
             CategoryIds.Politik, ArticleAccessLevel.Public, status, scheduledAt,
             ArticlePostRequest.ParseTags(tags), ArticlePostRequest.ParseHashtags(null),
-            videoUrl, coverUpload, [], []);
+            videoUrl, coverUpload, [], [], origin);
+
+    [Fact]
+    public async Task CreateAsync_StoresOrigin()
+    {
+        var (service, db) = CreateService();
+        var authorId = await CreateUserAsync(db);
+
+        var result = await service.CreateAsync(
+            BuildRequest(origin: ArticleOrigin.Ai), authorId);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(ArticleOrigin.Ai, result.Article!.Origin);
+    }
 
     // --- Validation (BR-022 / BR-032) ---
 
