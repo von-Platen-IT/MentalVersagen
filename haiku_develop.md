@@ -49,7 +49,10 @@ Nach jeder Änderung: Build und Tests ausführen, bevor eine Aufgabe als erledig
 - Primärschlüssel: `Guid`. Zeitstempel: UTC.
 - Enums werden als String gespeichert (`EnumToStringConverter`, nur bei relationalen Providern aktiv).
 - Soft-Delete über `DeletedAt`. `Article` hat einen globalen Query-Filter (`DeletedAt == null`). `Comment` bewusst ohne Filter, damit Antworten erhalten bleiben.
-- `Category` ist **ein Enum** (`ArticleCategory`), keine Tabelle.
+- `Category` ist eine **dynamische Tabelle** (`Categories`), kein Enum. Jeder
+  Artikel verweist über `CategoryId` auf genau eine Kategorie; ohne Auswahl
+  greift die geschützte Systemkategorie `undefined`. Kategorien haben eine
+  Farbe (`Color`) für den 3-px-Rahmen in Listen.
 - Titelbild-Auflösung (`ArticleDisplay.ResolveTitleImage`): `TitleImageUrl` → Asset mit `IsCover` → ältestes Asset.
 - `MediaAsset.IsCover` setzt man ausschließlich über `IMediaService.SetCoverAsync`, damit nur ein Cover pro Artikel existiert.
 - Editor-Uploads ohne Artikel-Bezug (`ArticleId == null`) werden nach 24 h durch `ArticleSchedulerService` bereinigt.

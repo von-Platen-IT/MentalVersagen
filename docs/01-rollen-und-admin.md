@@ -16,7 +16,7 @@ Mapping zu FeatureFix1: Viewer ≙ `Reader`, Autor ≙ `Author`, Administrator �
 | `Author` | wie `Reader`, zusätzlich **eigene** Beiträge erstellen/bearbeiten/veröffentlichen/planen; Kommentare eigener Beiträge moderieren | `/Admin/Articles` (nur eigene Beiträge) |
 | `Premium` | wie `Reader`, zusätzlich Premium-Artikel (gesteuert über `MembershipProfile`, nicht allein über die Rolle) | `/Unterstuetzer` |
 | `Moderator` | wie `Reader`, zusätzlich Kommentar-Moderation | `/Moderation` |
-| `Admin` | vollständiger Zugriff, inkl. aller Artikel, Linklisten und Nutzerverwaltung | `/Admin/Articles`, `/Admin/LinkLists` |
+| `Admin` | vollständiger Zugriff, inkl. aller Artikel, Kategorien, Linklisten, Benutzer, Mitgliedschaften, Einstellungen und Auswertung | `/Admin/Articles`, `/Admin/Categories`, `/Admin/LinkLists`, `/Admin/Users`, `/Admin/Memberships`, `/Admin/Settings`, `/Admin/Activity` |
 
 Die Rechte werden **serverseitig** über Autorisierungs-Policies erzwungen
 (`RequireAuthor`, `RequireModerator`, `RequireAdmin`) — nicht nur über
@@ -43,10 +43,15 @@ Die Anmeldung erfordert eine bestätigte E-Mail-Adresse
 3. Die neueste `.html`-Datei öffnen und den Link „E-Mail-Adresse bestätigen"
    (`/Account/ConfirmEmail?userId=…&code=…`) im Browser aufrufen.
 
-### 2. Die Rolle `Admin` in der Datenbank zuweisen
+### 2. Die Rolle `Admin` vergeben
 
-Maßgeblich für die Autorisierung ist die Identity-Tabelle `AspNetUserRoles`.
-Die Zuordnung erfolgt über SQL (es gibt keine Benutzerverwaltungs-UI):
+**Primärer Weg:** Sobald mindestens ein Admin existiert, verwaltet er Rollen im
+Admin-Bereich unter **`/Admin/Users`**. Der Rollenwechsel synchronisiert die
+Identity-Rolle (`AspNetUserRoles`) mit dem Domänenfeld `User.Role`.
+
+**Erstmalige Vergabe (Bootstrap):** Solange noch kein Admin existiert, wird die
+erste Admin-Rolle einmalig per SQL gesetzt. Maßgeblich für die Autorisierung ist
+die Identity-Tabelle `AspNetUserRoles`:
 
 ```sql
 INSERT INTO "AspNetUserRoles" ("UserId", "RoleId")
@@ -69,8 +74,8 @@ Optional — das denormalisierte Domänenfeld `AspNetUsers."Role"` angleichen
 UPDATE "AspNetUsers" SET "Role" = 'Admin' WHERE "Email" = 'deine@adresse.example';
 ```
 
-`Moderator` bzw. `Author` werden analog mit `r."Name" = 'Moderator'` bzw.
-`r."Name" = 'Author'` vergeben.
+`Moderator`, `Author` und `Premium` werden danach komfortabel über
+`/Admin/Users` vergeben.
 
 ### 3. Neu anmelden
 

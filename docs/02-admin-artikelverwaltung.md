@@ -3,6 +3,10 @@
 Diese Seite beschreibt, wie man den Admin-Bereich verwendet, um Artikel zu
 erstellen, zu bearbeiten, zu veröffentlichen und zu löschen.
 
+> Für den vollständigen Überblick über alle Verwaltungsseiten siehe
+> [`12-administration.md`](12-administration.md). Eine Schritt-für-Schritt-
+> Anleitung für Autoren liegt in [`13-autoren-handbuch.md`](13-autoren-handbuch.md).
+
 **Voraussetzung:** Das eigene Konto besitzt die Identity-Rolle `Admin` oder
 `Author` (siehe [`01-rollen-und-admin.md`](01-rollen-und-admin.md)). Ist man
 eingeloggt, erscheint in der Navigation der Eintrag **„Verwaltung"**, der direkt

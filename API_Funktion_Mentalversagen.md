@@ -100,7 +100,7 @@ Damit keine Erwartungen aufgebaut werden, die später enttäuschen:
 
 ### 3.1 Endpunkte
 
-Alle Endpunkte liegen unter `/api/v1/articles` und benötigen den Header `X-Api-Key`.
+Alle Endpunkte benötigen den Header `X-Api-Key`.
 
 | Methode | Pfad | operationId | Zweck | Antwort |
 |---|---|---|---|---|
@@ -109,6 +109,14 @@ Alle Endpunkte liegen unter `/api/v1/articles` und benötigen den Header `X-Api-
 | `POST` | `/api/v1/articles` | `createArticle` | Artikel anlegen | `201` + `Location`-Header |
 | `PUT` | `/api/v1/articles/{id}` | `updateArticle` | Artikel **vollständig** überschreiben (auch Statuswechsel) | `200` ArticleReadModel |
 | `DELETE` | `/api/v1/articles/{id}` | `deleteArticle` | Artikel löschen (Soft-Delete) | `204` leer |
+| `PUT` | `/api/v1/articles/{id}/hashtags` | `setArticleHashtags` | Hashtags eines Artikels ersetzen | `200` ArticleReadModel |
+| `DELETE` | `/api/v1/articles/{id}/hashtags` | `clearArticleHashtags` | Alle Hashtags eines Artikels entfernen | `204` leer |
+| `GET` | `/api/v1/hashtags` | `listHashtags` | Alle Hashtags mit Nutzungszahl | `200` Liste |
+| `GET` | `/api/v1/categories` | `listCategories` | Alle Kategorien inkl. Artikelanzahl | `200` Liste |
+| `GET` | `/api/v1/categories/{idOrSlug}` | `getCategory` | Einzelne Kategorie (UUID oder Slug) | `200` CategoryReadModel |
+| `POST` | `/api/v1/categories` | `createCategory` | Kategorie anlegen | `201` + `Location` |
+| `PUT` | `/api/v1/categories/{idOrSlug}` | `updateCategory` | Kategorie bearbeiten | `200` CategoryReadModel |
+| `DELETE` | `/api/v1/categories/{idOrSlug}` | `deleteCategory` | Kategorie löschen (Artikel wandern nach `undefined`) | `204` leer |
 
 **Query-Parameter von `listArticles`:**
 
@@ -152,8 +160,9 @@ Alle Endpunkte liegen unter `/api/v1/articles` und benötigen den Header `X-Api-
 | `slug` | string \| null | nein | URL-Abschnitt. Leer → wird aus dem Titel generiert |
 | `excerpt` | string \| null | bei `Published`/`Scheduled` | Teaser/Kurzbeschreibung |
 | `contentMarkdown` | string | bei `Published`/`Scheduled` | Artikelinhalt in Markdown (Quelltext) |
-| `category` | enum | ja | `Politik` \| `Satire` \| `Verschwoerungstheorien` |
+| `category` | string | nein | Slug der dynamischen Kategorie (z. B. `politik`, `satire`, `undefined`); leer = `undefined` |
 | `accessLevel` | enum | ja | `Public` \| `Registered` \| `Premium` |
+| `origin` | enum | nein | `Human` (Standard) \| `Ai` \| `Hybrid` |
 | `status` | enum | ja | `Draft` \| `Published` \| `Scheduled` \| `Archived` |
 | `scheduledAt` | datetime \| null | bei `Scheduled` | ISO-8601, **UTC**, muss in der Zukunft liegen |
 | `titleImageUrl` | string \| null | bei `Published`/`Scheduled` | externe Bild-URL (Alternativ: `uploadedImageIds`) |
@@ -168,7 +177,8 @@ Alle Endpunkte liegen unter `/api/v1/articles` und benötigen den Header `X-Api-
 |---|---|---|
 | `id` | uuid | stabile Referenz für Folge-Requests |
 | `title`, `slug`, `excerpt`, `contentMarkdown` | string | wie geschrieben; `contentMarkdown` ist der **Quelltext** |
-| `category`, `accessLevel`, `status` | enum | Klartextwerte |
+| `category`, `categoryName`, `categoryColor` | string | Kategorie-Slug, Anzeigename und Hex-Farbe |
+| `accessLevel`, `origin`, `originLabel`, `status` | enum/string | Klartextwerte |
 | `scheduledAt`, `publishedAt` | datetime \| null | ISO-8601 UTC |
 | `titleImageUrl`, `videoUrl` | string \| null | Medienreferenzen |
 | `tags`, `hashtags` | string[] | gespeicherte Namen |
@@ -429,7 +439,7 @@ curl -s -H "X-Api-Key: falsch" https://mentalversagen.de/api/v1/articles | jq .
 # 3) Autor-ID gesetzt? (POST ohne 503 prüfen)
 curl -s -o /dev/null -w "%{http_code}\n" -X POST \
   -H "X-Api-Key: $API_KEY" -H "Content-Type: application/json" \
-  -d '{"title":"Prüfentwurf","status":"Draft","category":"Politik","accessLevel":"Public"}' \
+  -d '{"title":"Prüfentwurf","status":"Draft","category":"politik","accessLevel":"Public"}' \
   https://mentalversagen.de/api/v1/articles
 # 201 = ok, 503 = Api__AuthorId fehlt, 400 = Validierung
 
@@ -490,7 +500,7 @@ curl -s -X POST "$API_URL/articles" \
         "title": "Ein API-Beitrag",
         "excerpt": "Kurzer Teaser.",
         "contentMarkdown": "# Überschrift\n\nText in **Markdown**.",
-        "category": "Politik",
+        "category": "politik",
         "accessLevel": "Public",
         "status": "Draft",
         "tags": ["Innenpolitik"],
@@ -516,7 +526,7 @@ export API_KEY="<KEY>"
 http GET https://mentalversagen.de/api/v1/articles status==Draft pageSize==5 X-Api-Key:$API_KEY
 http POST https://mentalversagen.de/api/v1/articles X-Api-Key:$API_KEY \
     title="Ein Beitrag" excerpt="Teaser" contentMarkdown="# Text" \
-    category=Politik accessLevel=Public status=Draft
+    category=politik accessLevel=Public status=Draft
 ```
 
 ### 5.3 Swagger UI (interaktiv im Browser)
@@ -735,8 +745,8 @@ def main() -> None:
     p_create.add_argument("--excerpt")
     p_create.add_argument("--content")
     p_create.add_argument("--content-file")
-    p_create.add_argument("--category", default="Politik",
-                           choices=["Politik", "Satire", "Verschwoerungstheorien"])
+    p_create.add_argument("--category", default="politik",
+                           choices=["politik", "satire", "verschwoerungstheorien", "undefined"])
     p_create.add_argument("--access-level", default="Public",
                            choices=["Public", "Registered", "Premium"])
     p_create.add_argument("--status", default="Draft",
@@ -966,7 +976,7 @@ api GET "/articles?status=Draft&pageSize=20" | jq -r '.items[] | "\(.id)\t\(.tit
 
 # Entwurf anlegen (mit Titelbild-URL, damit später veröffentlicht werden kann)
 new_id=$(api POST "/articles" "$(jq -nc --arg t "Titel" \
-  '{title:$t, excerpt:"Teaser", contentMarkdown:"# Text", category:"Politik",
+  '{title:$t, excerpt:"Teaser", contentMarkdown:"# Text", category:"politik",
     accessLevel:"Public", status:"Draft", titleImageUrl:"https://example.com/bild.jpg"}')" \
   | jq -r '.id')
 echo "Angelegt: $new_id"
@@ -1301,6 +1311,14 @@ Sortierungen für `/api/articles`: `Newest`, `Oldest`, `MostViewed`,
 | POST | `/api/v1/articles` | `X-Api-Key` | ArticleWriteModel | `201` + `Location` + ArticleReadModel |
 | PUT | `/api/v1/articles/{id}` | `X-Api-Key` | ArticleWriteModel (vollständig) | `200` ArticleReadModel |
 | DELETE | `/api/v1/articles/{id}` | `X-Api-Key` | – | `204` leer |
+| PUT | `/api/v1/articles/{id}/hashtags` | `X-Api-Key` | `{ "hashtags": [...] }` | `200` ArticleReadModel |
+| DELETE | `/api/v1/articles/{id}/hashtags` | `X-Api-Key` | – | `204` leer |
+| GET | `/api/v1/hashtags` | `X-Api-Key` | – | `200` HashtagUsage[] |
+| GET | `/api/v1/categories` | `X-Api-Key` | – | `200` CategoryReadModel[] |
+| GET | `/api/v1/categories/{idOrSlug}` | `X-Api-Key` | – | `200` CategoryReadModel |
+| POST | `/api/v1/categories` | `X-Api-Key` | CategoryWriteModel | `201` + `Location` |
+| PUT | `/api/v1/categories/{idOrSlug}` | `X-Api-Key` | CategoryWriteModel | `200` CategoryReadModel |
+| DELETE | `/api/v1/categories/{idOrSlug}` | `X-Api-Key` | – | `204` leer |
 
 ### 11.2 Minimales vollständiges Beispiel (copy & paste)
 
@@ -1311,7 +1329,7 @@ export API_KEY="<KEY>"
 # Entwurf anlegen
 ID=$(curl -s -X POST "$MV_API_URL/articles" \
   -H "X-Api-Key: $API_KEY" -H "Content-Type: application/json" \
-  -d '{"title":"Testbeitrag","excerpt":"Teaser","contentMarkdown":"# Test\n\nInhalt.","category":"Politik","accessLevel":"Public","status":"Draft","titleImageUrl":"https://example.com/bild.jpg"}' \
+  -d '{"title":"Testbeitrag","excerpt":"Teaser","contentMarkdown":"# Test\n\nInhalt.","category":"politik","accessLevel":"Public","status":"Draft","titleImageUrl":"https://example.com/bild.jpg"}' \
   | jq -r .id)
 
 # Veröffentlichen (Voll-Update)

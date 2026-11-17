@@ -189,10 +189,10 @@ tests/BlogCms.Tests         xUnit-Tests
 ## Rollen
 
 Beim Start werden die Rollen `Reader`, `Author`, `Premium`, `Moderator`, `Admin`
-idempotent angelegt. Neue Konten erhalten `Reader`. Für den Zugriff auf die
-Verwaltung (`/Admin/Articles`, Rolle `Author` oder `Admin`), die Linklisten
-(`/Admin/LinkLists`, `Admin`) bzw. Moderation (`/Moderation`, `Moderator`/`Admin`)
-müssen Nutzer manuell per SQL einer Rolle zugewiesen werden, z. B.:
+idempotent angelegt. Neue Konten erhalten `Reader`. Rollen werden im
+Admin-Bereich unter **`/Admin/Users`** verwaltet; der Wechsel synchronisiert die
+Identity-Rolle mit dem Domänenfeld `User.Role`. Ein manueller SQL-Eingriff ist nur
+noch ein Fallback:
 
 ```sql
 INSERT INTO "AspNetUserRoles" ("UserId", "RoleId")
@@ -200,24 +200,29 @@ SELECT u."Id", r."Id" FROM "AspNetUsers" u, "AspNetRoles" r
 WHERE u."Email" = 'admin@example.com' AND r."Name" = 'Admin';
 ```
 
-Es gibt **keinen vorkonfigurierten Admin-Benutzer** — die Rolle wird immer manuell
-vergeben. Nach einer Rollenänderung muss man sich neu anmelden, damit die
-Rollen-Claims im Auth-Cookie aktualisiert werden. Eine ausführliche Anleitung
-(Admin/„Root" werden, Admin-Status in der DB prüfen, Rollen entziehen) sowie die
-Nutzung von Admin-Bereich und Blog liegen unter [`docs/`](docs/README.md):
+Es gibt **keinen vorkonfigurierten Admin-Benutzer** — die erste Admin-Rolle wird
+einmalig per SQL vergeben. Nach einer Rollenänderung muss man sich neu anmelden,
+damit die Rollen-Claims im Auth-Cookie aktualisiert werden. Eine ausführliche
+Anleitung sowie die Nutzung von Admin-Bereich und Blog liegen unter
+[`docs/`](docs/README.md):
 
 - [`docs/01-rollen-und-admin.md`](docs/01-rollen-und-admin.md)
 - [`docs/02-admin-artikelverwaltung.md`](docs/02-admin-artikelverwaltung.md)
 - [`docs/03-blog-nutzen.md`](docs/03-blog-nutzen.md)
+- [`docs/12-administration.md`](docs/12-administration.md)
+- [`docs/13-autoren-handbuch.md`](docs/13-autoren-handbuch.md)
 
 ## Sicherheit (Modul-übergreifend)
 
 - **Markdown/XSS**: Rendering erfolgt serverseitig über Markdig und wird zwingend
   mit HtmlSanitizer bereinigt ([`MarkdownRenderer`](src/BlogCms.Infrastructure/Content/MarkdownRenderer.cs:1));
   `javascript:`-URLs werden entfernt.
-- **Video-Embeds**: Es wird ausschließlich der offizielle oEmbed-Code verwendet,
-  eingebettet in ein `<iframe sandbox="allow-scripts allow-popups">` ohne
-  `allow-same-origin` ([`VideoEmbedRenderer`](src/BlogCms.Web/Content/VideoEmbedRenderer.cs:1)).
+- **Video-Embeds**: Die Embed-URL wird aus einer serverseitig validierten
+  Video-ID gebaut und in ein sandboxed `<iframe>` gesetzt
+  (`sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"`).
+  `allow-same-origin` ist nötig, damit der plattformfremde Player seine eigene
+  Origin behält; die URL selbst ist nicht vom Nutzer beeinflussbar
+  ([`VideoEmbedRenderer`](src/BlogCms.Web/Content/VideoEmbedRenderer.cs:1)).
 - **Webhooks**: Die Stripe-Signatur wird mit
   `Stripe.EventUtility.ConstructEvent` geprüft; ungültige Signaturen werden mit
   `400` abgewiesen ([`StripeMembershipService`](src/BlogCms.Infrastructure/Membership/StripeMembershipService.cs:1)).
@@ -231,9 +236,10 @@ Nutzung von Admin-Bereich und Blog liegen unter [`docs/`](docs/README.md):
 
 ## Bekannte Punkte / Ausblick
 
-- EF meldet zwei Modell-Warnungen: Der Soft-Delete-Filter auf `Article` ist
-  erforderliches Ende der Beziehungen zu `ArticleTag` und `Comment`. Aktuell
-  unkritisch; künftig über passende Filter/optionale Navigationen zu bereinigen.
+- EF meldet Modell-Warnungen: Der Soft-Delete-Filter auf `Article` ist
+  erforderliches Ende der Beziehungen zu `ArticleTag`, `ArticleHashtag`,
+  `Comment` und `LinkListItem`. Aktuell unkritisch; künftig über passende
+  Filter/optionale Navigationen zu bereinigen.
 - Die Stripe-Anbindung (`StripeMembershipService`) nutzt `Stripe.net`; für
   Produktivbetrieb Zugangsdaten und ein öffentlich erreichbares Webhook-Secret
   setzen.

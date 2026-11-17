@@ -407,3 +407,5 @@ Comment 1---n ActivityLogEntry
 | v1.3 | Backend-Refactoring | `MediaAsset.IsCover` für explizite Titelbild-Kennzeichnung aufgenommen; redundante `Category`-Tabelle zugunsten des `ArticleCategory`-Enums entfernt |
 | v1.4 | Dynamische Kategorien | `ArticleCategory`-Enum durch die administrierbare `Category`-Entität ersetzt; `Article.CategoryId` mit Default `undefined`; Migration übernimmt die drei bisherigen Enum-Werte; Disclaimer pro Kategorie |
 | v1.5 | Membership-Konsolidierung | Alte `Subscription`-Tabelle und `User.SubscriptionStatus` entfernt; `MembershipProfile` (inkl. `PlanId`), `StripeEvent` und `MembershipAuditLog` sind die einzige Abo-Quelle; `Donation` bleibt bestehen |
+| v1.6 | Kategorie-Farbe und Einstellungen | `Category.Color` (`#RRGGBB`, Default `#7f8c8d`) für den 3-px-Rahmen in Listen; neue Entität `SiteSetting` für laufzeit-editierbare Darstellungsoptionen (`Display:ArticlesPerPage`) |
+| v1.7 | Ursprungs-Kennzeichnung | Neues Enum `ArticleOrigin` (`Human`, `Ai`, `Hybrid`) und `Article.Origin` (Default `Human`); Icon mit Tooltip in Listen, API-Feld `origin` |

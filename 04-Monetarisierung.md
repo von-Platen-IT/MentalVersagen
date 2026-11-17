@@ -84,15 +84,16 @@ Wichtige Felder:
 
 ## Teil C — Newsletter
 
-- Eintragung über Formular (Startseite, Artikelseiten, dedizierte Landingpage).
+- Eintragung über die dedizierte Seite `/Newsletter/Subscribe`.
 - **Double-Opt-in verpflichtend**: nach Eintragung wird eine Bestätigungs-E-Mail
   versendet, `ConfirmedAt` wird erst nach Klick auf den Bestätigungslink gesetzt.
-  Unbestätigte Einträge werden nach konfigurierbarer Frist automatisch gelöscht.
+  Unbestätigte Einträge werden nach `Newsletter:UnconfirmedRetentionDays`
+  automatisch gelöscht.
 - Abmeldung jederzeit über Link in jeder versendeten Mail (`UnsubscribedAt` wird
   gesetzt, kein Hard-Delete, um erneute Anmeldung sauber zu behandeln).
-- Versand in v1 über Anbindung an einen Transaktions-/Newsletter-Mailanbieter per
-  API (kein eigener Massenversand-Server), um Zustellbarkeitsprobleme (Spam-
-  Reputation) zu vermeiden.
+- Versand über SMTP (`SmtpEmailSender`, `Email`-Sektion) bzw. im Dev-Modus über
+  `DevEmailSender` (HTML-Dateien unter `App_Data/emails`). Ein eigener
+  Massenversand-Server ist nicht Teil der Anwendung.
 
 ## Akzeptanzkriterien
 

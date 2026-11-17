@@ -25,6 +25,13 @@ zusätzliche, projekt-spezifische Rollen erhalten.
 
 > Hinweis: Premium-Zugriff wird technisch **nicht** über `User.Role = Premium` als alleinige Prüfung realisiert, sondern über `MembershipProfile` und `IMembershipService` (Status, Kulanzzeit, Admin-Freigabe). Die Rolle `Premium` kann optional zusätzlich gesetzt werden, falls rollenbasierte UI-Steuerung gewünscht ist.
 
+### Rollenverwaltung
+- Administratoren verwalten Rollen unter `/Admin/Users`.
+- Der Rollenwechsel synchronisiert die Identity-Rolle (`AspNetUserRoles`) mit dem
+  denormalisierten Domänenfeld `User.Role`.
+- Die frühere ausschließliche SQL-Zuweisung ist nur noch ein Fallback (siehe
+  [`docs/01-rollen-und-admin.md`](docs/01-rollen-und-admin.md)).
+
 ### Autorisierung
 - Serverseitige Policies: `RequireModerator`, `RequireAdmin` und
   **`RequireAuthor`** (`Author` oder `Admin`). Premium-Zugriff wird beim

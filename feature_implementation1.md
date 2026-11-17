@@ -51,21 +51,32 @@ flowchart TD
     TESTS --> INFRA
 ```
 
-- **Domain:** `User`, `Article`, `Tag`, `ArticleTag`, `Comment`, `MediaAsset`, `VideoEmbed`,
-  `Subscription`, `Donation`, `NewsletterSubscriber`, `Report`.
-- **Enums:** `UserRole` (Reader, Premium, Moderator, Admin), `ArticleStatus` (Draft, Published,
-  Archived), `ArticleCategory` (Politik, Satire, Verschwoerungstheorien), `CommentStatus`,
-  `MediaOwnerType`, `VideoPlatform`, `SubscriptionStatus`, `UserSubscriptionStatus`,
+> **Aktueller Stand (2026-11-17):** Die folgenden Listen beschreiben den
+> historischen FeatureFix1-Stand. Maßgeblich ist heute
+> [`DataSchema.md`](DataSchema.md). Der alte `Subscription`-Workflow wurde
+> entfernt; `MembershipProfile` ist die einzige Abo-Quelle.
+
+- **Domain (aktuell):** `User`, `Article`, `Category`, `Tag`, `ArticleTag`, `Hashtag`,
+  `ArticleHashtag`, `Comment`, `MediaAsset`, `VideoEmbed`, `MembershipProfile`,
+  `StripeEvent`, `MembershipAuditLog`, `Donation`, `NewsletterSubscriber`, `Report`,
+  `Rating`, `LinkList`, `LinkListItem`, `ActivityLogEntry`, `SiteSetting`.
+- **Enums (aktuell):** `UserRole`, `ArticleStatus`, `ArticleAccessLevel`, `ArticleOrigin`,
+  `MembershipStatus`, `CommentStatus`, `MediaOwnerType`, `VideoPlatform`,
   `DonationStatus`, `PaymentProvider`, `ReportReason`, `ReportStatus`.
-- **Services:** `ArticleService`, `CommentService`, `MediaService`, `OEmbedService`,
-  `SubscriptionService`, `NewsletterService`.
-- **Web:** öffentliche Seiten (`Index`, `Articles/Index`, `Articles/Details`), Admin-Bereich
-  (`Admin/Articles`), Moderation, Membership, Donate, Newsletter, Account; RSS-`FeedController`
-  und `StripeWebhookController`.
+- **Services (aktuell):** `ArticleService`, `ArticlePostingService`, `CategoryService`,
+  `CommentService`, `MediaService`, `OEmbedService`, `MembershipService`,
+  `MembershipSyncService`, `DonationService`, `NewsletterService`, `SettingsService`.
+- **Web (aktuell):** öffentliche Seiten (`Index`, `Suche`, `Articles/Details`,
+  `LinkLists`, `Newsletter`, `Unterstuetzer`, `Membership`, `Donate`, `Account`),
+  Admin-Bereich (`Admin/Articles`, `Admin/Categories`, `Admin/LinkLists`,
+  `Admin/Users`, `Admin/Memberships`, `Admin/Settings`, `Admin/Activity`),
+  Moderation, RSS-`FeedController`, Management-API (`/api/v1/articles`,
+  `/api/v1/categories`, `/api/v1/hashtags`) und `MembershipWebhookController`.
 - **Bereits umgesetzt:** Markdown-Rendering mit Sanitizing, Slug-Eindeutigkeit,
   Bild-Upload/Verarbeitung/EXIF-Strip, oEmbed-Video-Embedding (sandboxed iframe), Kommentare
-  mit Threading/Moderation/Meldungen/Rate-Limit, Paywall über Abo-Status, Stripe/Spenden,
-  Newsletter Double-Opt-in, RSS 2.0, Soft-Delete.
+  mit Threading/Moderation/Meldungen/Rate-Limit, Paywall über `MembershipProfile`,
+  Stripe-Mitgliedschaft, Spenden-Backend, Newsletter Double-Opt-in, RSS 2.0, Soft-Delete,
+  dynamische Kategorien mit Farbe, URL-Mehrfachfilter, Ursprungs-Kennzeichnung.
 
 ---
 

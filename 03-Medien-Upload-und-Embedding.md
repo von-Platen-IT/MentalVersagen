@@ -14,13 +14,17 @@ Fachliche Referenz: [`FeatureFix1.MD`](FeatureFix1.MD) (Regeln BR-022, BR-050 bi
   werden; das Blog übernimmt keine Verantwortung für deren dauerhafte Verfügbarkeit.
 - Upload für Artikel (im Redaktions-Backend) und für Kommentare (im Frontend, für angemeldete Nutzer).
 - Erlaubte Formate: JPEG, PNG, WebP, GIF. Serverseitige Validierung anhand des tatsächlichen Datei-Inhalts (nicht nur Dateiendung/MIME-Header des Clients).
-- Maximale Dateigröße: konfigurierbar, empfohlen unterschiedliche Limits für Artikel- vs. Kommentar-Uploads (Kommentare enger begrenzt, z. B. 5 MB).
+- Maximale Dateigröße: konfigurierbar über `Media:ArticleMaxBytes` (Standard
+  10 MB) und `Media:CommentMaxBytes` (Standard 4 MB).
 - Nach Upload: serverseitige Verarbeitung
-  - Resize auf maximale Kantenlänge (verhindert exzessive Auflösungen)
-  - Optionale Konvertierung nach WebP zur Reduktion der Dateigröße
+  - Resize auf maximale Kantenlänge (`Media:MaxEdgePixels`, Standard 1600)
+  - Konvertierung nach WebP (`Media:ConvertToWebP`, Standard `true`)
   - Entfernen von EXIF-Metadaten (Datenschutz — verhindert versehentliche Preisgabe von Standortdaten etc.)
-- Speicherung im Objekt-Storage (S3-kompatibel / Blob Storage), nicht im Anwendungsserver-Dateisystem. `MediaAsset.StoragePath` referenziert den Storage-Key.
-- Ausgelieferte URLs werden über eine CDN-Schicht oder signierte URLs bereitgestellt (abhängig vom gewählten Storage-Anbieter).
+- Speicherung: standardmäßig lokal unter `wwwroot/uploads`
+  (`LocalDiskStorageService`, `Media:Provider = Local`). Für Produktion ist
+  S3-kompatibler Storage (`S3StorageService`) konfigurierbar.
+  `MediaAsset.StoragePath` referenziert den Storage-Key.
+- Eine CDN-Schicht oder signierte URLs sind derzeit **nicht** implementiert.
 
 ### Moderation von Kommentar-Bildern
 - Bild-Anhänge an Kommentaren folgen demselben Moderationsstatus wie der zugehörige `Comment` (kein separater Freigabeprozess nötig, aber technisch trennbar für spätere Erweiterung, z. B. automatisierte Bilderkennung).

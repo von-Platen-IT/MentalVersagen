@@ -13,7 +13,8 @@ BR-042, BR-070, BR-080 bis BR-092). Der Soll-Ist-Abgleich liegt in
 - `Author` (Autor) legt **eigene** Artikel an und bearbeitet sie; `Admin` darf alle Artikel
   verwalten (BR-013/BR-014/BR-033).
 - Pflichtfelder: `Title`, `TitleImageUrl` **oder** hochgeladenes Titelbild, `Excerpt`
-  (Kurzbeschreibung), `ContentMarkdown`, `Category`, `AccessLevel` (BR-021/022/023/024/110).
+  (Kurzbeschreibung), `ContentMarkdown`, `AccessLevel` (BR-021/022/023/024/110).
+  Die Kategorie ist optional; ohne Auswahl greift `undefined`.
 - Editor: Markdown-Eingabe im Backend (clientseitige Markdown-Editor-Komponente),
   serverseitiges Rendering zu HTML beim Ausliefern (Sanitizing verpflichtend).
 - **Besitzregel:** `Author` darf keine fremden Beiträge bearbeiten/verwalten; `Admin` ist
@@ -36,10 +37,18 @@ BR-042, BR-070, BR-080 bis BR-092). Der Soll-Ist-Abgleich liegt in
 - Ohne ausdrückliche Zuordnung wird der Beitrag der geschützten Systemkategorie
   `undefined` zugeordnet. `undefined` kann weder gelöscht noch umbenannt werden.
 - Beim Löschen einer Kategorie werden ihre Artikel zu `undefined` umgehängt.
+- Jede Kategorie hat eine **Farbe** (`#RRGGBB`), die als 3-px-Rahmen um
+  Beitragseinträge in Listen erscheint.
 - Zusätzlich frei vergebbare `Tag`s (n:m über `ArticleTag`) und `Hashtag`s (n:m über
   `ArticleHashtag`) für granulare Verschlagwortung/Filterung (BR-026).
 - Die `Category` wird auf der Artikelseite sichtbar angezeigt; ein optionaler
   `Disclaimer` pro Kategorie wird eingeblendet.
+
+### Ursprung (Mensch / KI / Hybrid)
+- `Article.Origin` kennzeichnet den redaktionellen Ursprung: `Human` (Standard),
+  `Ai` oder `Hybrid`.
+- In Listen erscheint ein kleines Icon mit Tooltip; der Wert ist im Admin-Formular
+  und über die Management-API (`origin`) pflegbar.
 
 ### Status & Workflow
 - Status-Übergänge: `Draft` → `Scheduled` → `Published` → `Archived` (BR-030/031/032).
@@ -82,7 +91,7 @@ BR-042, BR-070, BR-080 bis BR-092). Der Soll-Ist-Abgleich liegt in
 
 ## Akzeptanzkriterien
 
-- [ ] Artikel ohne `Category` können nicht veröffentlicht werden (Validierung).
+- [ ] Artikel ohne Kategorie werden der Systemkategorie `undefined` zugeordnet.
 - [ ] Artikel ohne Titelbild (externe URL oder Upload) können nicht veröffentlicht werden.
 - [ ] Artikel ohne Kurzbeschreibung (`Excerpt`) können nicht veröffentlicht werden.
 - [ ] Slug ist eindeutig; eine bereits veröffentlichte URL bleibt bei Titeländerung stabil.

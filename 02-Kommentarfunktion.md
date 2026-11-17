@@ -1,6 +1,8 @@
 # 02 — Kommentarfunktion
 
-Referenzierte Entitäten aus `DataSchema.md`: `Comment`, `Report`, `MediaAsset` (OwnerType = Comment), `VideoEmbed` (OwnerType = Comment).
+Referenzierte Entitäten aus `DataSchema.md`: `Comment`, `Report`, `MediaAsset`
+(OwnerType = Comment). Video-Einbettungen sind derzeit nur für Artikel
+implementiert, nicht für Kommentare.
 
 ## Funktionale Anforderungen
 
@@ -12,7 +14,8 @@ Fachliche Referenz: [`FeatureFix1.MD`](FeatureFix1.MD) (Regeln BR-060 bis BR-063
 - Ein Kommentar ist an genau einen `Article` gebunden.
 - Antworten auf Kommentare über `ParentCommentId`; die maximale Verschachtelungstiefe wird
   durch die Anwendung bestimmt (UI stellt Threads derzeit flach/auf eine Antwort-Ebene dar).
-- Kommentare können Bild-Anhänge (`MediaAsset`) und Video-Verknüpfungen (`VideoEmbed`) enthalten (siehe `03-Medien-Upload-und-Embedding.md` für technische Details).
+- Kommentare können Bild-Anhänge (`MediaAsset`) enthalten (siehe
+  `03-Medien-Upload-und-Embedding.md` für technische Details).
 
 ### Moderation
 - Jeder Kommentar hat einen `Status`: `Pending`, `Approved`, `Rejected`, `Flagged`.

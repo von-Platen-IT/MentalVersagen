@@ -1,8 +1,26 @@
-# 04 — Mailversand (SMTP) — Umsetzungsvorgabe
+# 04 — Mailversand (SMTP)
 
-Status: Vorgabe für den Coding-Agenten. Ersetzt den Dev-Platzhalter `DevEmailSender`
-durch einen echten, konfigurierbaren SMTP-Versand. Ziel ist, dass der Doppel-Opt-in
-(Registrierung **und** Newsletter) auf Produktion funktioniert.
+**Status: umgesetzt.** `SmtpEmailSender` und `EmailOptions` sind implementiert;
+`DevEmailSender` bleibt der Development-Fallback. Die folgenden Abschnitte
+dokumentieren die ursprüngliche Vorgabe und die tatsächliche Umsetzung.
+
+## Aktuelle Konfiguration
+
+Die Sektion `Email` steuert den Versand:
+
+| Einstellung | Standard | Bedeutung |
+|---|---|---|
+| `Provider` | `Dev` | `Smtp` (Produktion) oder `Dev` (Dateien unter `App_Data/emails`) |
+| `Host` | leer | SMTP-Server, z. B. `smtp.ionos.com` |
+| `Port` | `587` | SMTP-Port (STARTTLS) |
+| `UseStartTls` | `true` | STARTTLS aktivieren |
+| `UserName` / `Password` | leer | SMTP-Zugangsdaten (nur über Umgebungsvariablen/User Secrets) |
+| `FromAddress` | leer | Absenderadresse |
+| `FromDisplayName` | `MentalVersagen` | Anzeigename des Absenders |
+
+Ohne vollständige SMTP-Zugangsdaten bleibt der Dev-Fallback aktiv; die App startet
+auch ohne Credentials. Ein Versandfehler bricht Registrierung oder Newsletter-Abo
+nicht ab.
 
 ---
 

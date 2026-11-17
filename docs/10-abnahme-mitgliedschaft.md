@@ -1,7 +1,8 @@
 # 10 — Abnahmeliste Stripe-Mitgliedschaft
 
-Stand: Refactoring „Membership-Konsolidierung“. Automatisierte Tests:
-**271 erfolgreich, 0 Fehler**.
+Stand: Refactoring „Membership-Konsolidierung“ plus Kategorien-/Hashtag-API,
+URL-Filter, Kategorie-Farben, Listen-Einstellungen und Ursprungs-Kennzeichnung.
+Automatisierte Tests: **301 erfolgreich, 0 Fehler**.
 
 | ID | Szenario | Ergebnis |
 |---|---|---|
